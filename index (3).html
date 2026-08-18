@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>C.E.B.G El Jiral — Control de Bingo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --navy:#12293B;
+    --navy-deep:#0B1D2A;
+    --gold:#E3A93B;
+    --gold-soft:#F1C878;
+    --cream:#FBF4E4;
+    --red:#C13F35;
+    --green:#3E7A57;
+    --ink:#1B2733;
+    --line:rgba(18,41,59,0.14);
+    --radius:14px;
+    --shadow:0 10px 30px rgba(11,29,42,0.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(227,169,59,0.13), transparent 45%),
+      radial-gradient(circle at 92% 85%, rgba(193,63,53,0.10), transparent 50%),
+      var(--cream);
+    color:var(--ink);
+    min-height:100vh;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:28px 18px 80px;}
+
+  /* ---- Header / signature element: bingo ball marquee ---- */
+  header.top{
+    display:flex;align-items:center;gap:16px;margin-bottom:26px;
+  }
+  .ball{
+    width:56px;height:56px;border-radius:50%;flex:none;
+    background:radial-gradient(circle at 32% 28%, #fff8ea, var(--gold) 60%, var(--gold) 100%);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Baloo 2',sans-serif;font-weight:800;font-size:20px;color:var(--navy-deep);
+    box-shadow:0 6px 14px rgba(227,169,59,0.45), inset 0 -4px 6px rgba(0,0,0,0.12);
+    border:2px solid rgba(11,29,42,0.15);
+  }
+  .brand h1{
+    font-family:'Baloo 2',sans-serif;font-weight:800;font-size:26px;line-height:1.1;
+    margin:0;color:var(--navy-deep);letter-spacing:0.2px;
+  }
+  .brand p{margin:2px 0 0;font-size:13px;color:var(--navy);opacity:0.75;font-weight:600;
+    text-transform:uppercase;letter-spacing:1.4px;}
+
+  .card{
+    background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);
+    border:1px solid var(--line);padding:26px;
+  }
+
+  /* ---- Login ---- */
+  #loginView{max-width:400px;margin:60px auto 0;}
+  .balls-row{display:flex;justify-content:center;gap:8px;margin-bottom:18px;}
+  .balls-row span{
+    width:10px;height:10px;border-radius:50%;background:var(--gold-soft);
+  }
+  .balls-row span:nth-child(2){background:var(--red);}
+  .balls-row span:nth-child(3){background:var(--green);}
+  .balls-row span:nth-child(4){background:var(--navy);}
+  #loginView h2{
+    font-family:'Baloo 2',sans-serif;text-align:center;margin:0 0 4px;font-size:22px;color:var(--navy-deep);
+  }
+  #loginView .sub{text-align:center;color:#6b7a86;font-size:13.5px;margin:0 0 22px;}
+  label{display:block;font-size:12.5px;font-weight:600;color:var(--navy);margin:14px 0 6px;
+    text-transform:uppercase;letter-spacing:0.5px;}
+  select,input{
+    width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--line);
+    font-family:'Inter',sans-serif;font-size:15px;background:#fdfbf6;color:var(--ink);
+    transition:border-color .15s ease;
+  }
+  select:focus,input:focus{outline:none;border-color:var(--gold);}
+  button{
+    font-family:'Inter',sans-serif;font-weight:700;font-size:14.5px;border:none;
+    border-radius:10px;cursor:pointer;transition:transform .1s ease, box-shadow .15s ease;
+  }
+  button:active{transform:translateY(1px);}
+  .btn-primary{
+    width:100%;padding:13px 16px;margin-top:20px;background:var(--navy-deep);color:#fff;
+    box-shadow:0 6px 16px rgba(11,29,42,0.28);
+  }
+  .btn-primary:hover{background:var(--navy);}
+  .error{color:var(--red);font-size:13px;margin-top:12px;text-align:center;font-weight:600;min-height:16px;}
+
+  /* ---- App shell after login ---- */
+  #appView{display:none;}
+  .userbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .who{font-size:14px;color:var(--navy);font-weight:600;}
+  .who b{font-family:'Baloo 2',sans-serif;color:var(--navy-deep);font-size:16px;}
+  .logout{background:transparent;color:var(--red);font-weight:700;font-size:13px;padding:6px 10px;}
+
+  .tabs{display:flex;gap:6px;margin-bottom:18px;background:rgba(18,41,59,0.06);padding:5px;border-radius:12px;}
+  .tab{flex:1;padding:10px 8px;text-align:center;border-radius:8px;font-size:13.5px;font-weight:700;
+    color:var(--navy);background:transparent;}
+  .tab.active{background:#fff;box-shadow:0 3px 8px rgba(11,29,42,0.14);color:var(--navy-deep);}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:520px){.grid2{grid-template-columns:1fr;}}
+
+  .section-title{font-family:'Baloo 2',sans-serif;font-size:19px;color:var(--navy-deep);margin:0 0 4px;}
+  .section-sub{font-size:13px;color:#6b7a86;margin:0 0 18px;}
+
+  .total-pill{
+    display:inline-block;background:var(--navy-deep);color:var(--gold-soft);
+    font-family:'JetBrains Mono',monospace;font-weight:600;font-size:13px;
+    padding:6px 12px;border-radius:20px;margin-left:8px;
+  }
+
+  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13.5px;}
+  thead th{
+    text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;
+    color:#7c8a95;padding:8px 10px;border-bottom:2px solid var(--line);font-weight:700;
+  }
+  tbody td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tbody tr:hover{background:rgba(227,169,59,0.06);}
+  .num{font-family:'JetBrains Mono',monospace;}
+  .mono-amt{font-family:'JetBrains Mono',monospace;color:var(--green);font-weight:700;}
+  .row-actions{display:flex;gap:6px;}
+  .icon-btn{
+    background:rgba(18,41,59,0.06);color:var(--navy);padding:6px 9px;font-size:12px;font-weight:700;
+  }
+  .icon-btn.del{color:var(--red);background:rgba(193,63,53,0.08);}
+  .icon-btn:hover{background:rgba(227,169,59,0.18);}
+
+  .empty{text-align:center;padding:40px 10px;color:#8b98a3;font-size:14px;}
+
+  .actions-bar{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;}
+  .btn-secondary{padding:11px 16px;background:var(--gold);color:var(--navy-deep);}
+  .btn-secondary:hover{background:var(--gold-soft);}
+  .btn-outline{padding:11px 16px;background:#fff;border:1.5px solid var(--line);color:var(--navy);}
+  .btn-outline:hover{border-color:var(--gold);}
+
+  .badge{
+    font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;
+    letter-spacing:0.4px;
+  }
+  .badge.samuel{background:rgba(62,122,87,0.14);color:var(--green);}
+  .badge.betzaida{background:rgba(193,63,53,0.12);color:var(--red);}
+
+  footer{text-align:center;margin-top:36px;color:#a3aeb7;font-size:12px;}
+
+  #toast{
+    position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--navy-deep);color:#fff;padding:12px 20px;border-radius:10px;font-size:13.5px;
+    font-weight:600;box-shadow:0 10px 24px rgba(11,29,42,0.3);opacity:0;pointer-events:none;
+    transition:all .25s ease;z-index:50;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .config-note{
+    background:#fff7e6;border:1px solid rgba(227,169,59,0.5);border-radius:10px;
+    padding:14px 16px;font-size:13px;color:var(--navy);margin-bottom:20px;line-height:1.5;
+  }
+  .config-note code{background:rgba(18,41,59,0.08);padding:1px 5px;border-radius:4px;font-size:12px;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="ball">75</div>
+    <div class="brand">
+      <h1>C.E.B.G El Jiral</h1>
+      <p>Control de venta &amp; cobro — Bingo</p>
+    </div>
+  </header>
+
+  <!-- ================= LOGIN ================= -->
+  <div id="loginView" class="card">
+    <div class="balls-row"><span></span><span></span><span></span><span></span></div>
+    <h2>Acceso de cobradores</h2>
+    <p class="sub">Selecciona tu nombre e ingresa tu clave para registrar pagos</p>
+
+    <label for="loginUser">Cobrador</label>
+    <select id="loginUser">
+      <option value="samuel">Samuel</option>
+      <option value="betzaida">Betzaida</option>
+    </select>
+
+    <label for="loginPass">Clave</label>
+    <input id="loginPass" type="password" placeholder="••••••" autocomplete="off" />
+
+    <button class="btn-primary" onclick="doLogin()">Entrar</button>
+    <p class="error" id="loginError"></p>
+  </div>
+
+  <!-- ================= APP ================= -->
+  <div id="appView">
+    <div class="userbar">
+      <div class="who">Sesion de <b id="whoName"></b></div>
+      <button class="logout" onclick="doLogout()">Cerrar sesion</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="registrar" onclick="switchTab('registrar')">Registrar pago</button>
+      <button class="tab" data-tab="historial" onclick="switchTab('historial')">Mi historial</button>
+    </div>
+
+    <div id="configNote" class="config-note" style="display:none;"></div>
+
+    <!-- --- Registrar --- -->
+    <section id="tab-registrar" class="card">
+      <h3 class="section-title">Nuevo pago de boletos</h3>
+      <p class="section-sub">Ingresa los datos de quien compro sus boletos del bingo</p>
+
+      <div class="grid2">
+        <div>
+          <label for="fNombre">Nombre completo</label>
+          <input id="fNombre" type="text" placeholder="Ej. Maria Gonzalez" />
+        </div>
+        <div>
+          <label for="fTelefono">Telefono de contacto</label>
+          <input id="fTelefono" type="tel" placeholder="Ej. 6xxx-xxxx" />
+        </div>
+        <div>
+          <label for="fBoletos">Cantidad de boletos</label>
+          <input id="fBoletos" type="number" min="1" step="1" value="1" oninput="actualizarMonto()" />
+        </div>
+        <div>
+          <label for="fMonto">Monto pagado ($ — $5 por boleto)</label>
+          <input id="fMonto" type="number" min="0" step="0.01" placeholder="0.00" readonly style="background:#f0ede2;font-weight:700;" />
+        </div>
+      </div>
+
+      <div class="actions-bar">
+        <button class="btn-primary" style="width:auto;margin-top:0;" onclick="guardarPago()">Guardar pago</button>
+      </div>
+      <p class="error" id="formError"></p>
+    </section>
+
+    <!-- --- Historial --- -->
+    <section id="tab-historial" class="card" style="display:none;">
+      <h3 class="section-title">Historial de <span id="histWho"></span>
+        <span class="total-pill" id="histTotal">$0.00</span>
+      </h3>
+      <p class="section-sub">Boletos registrados por ti. Puedes imprimir recibos o exportar a Excel.</p>
+
+      <div id="tableWrap">
+        <table id="pagosTable">
+          <thead>
+            <tr>
+              <th>#</th><th>Nombre</th><th>Telefono</th><th>Boletos</th><th>Monto</th><th>Fecha</th><th>Cobrador</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="pagosBody"></tbody>
+        </table>
+        <div class="empty" id="emptyMsg" style="display:none;">Aun no has registrado ningun pago.</div>
+      </div>
+
+      <div class="actions-bar">
+        <button class="btn-secondary" onclick="exportarExcel()">Descargar Excel (solo mios)</button>
+      </div>
+    </section>
+  </div>
+
+  <footer>C.E.B.G El Jiral · Bingo · Control interno de cobros</footer>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* =========================================================
+   CONFIGURA AQUI TU PROYECTO DE SUPABASE
+   Ve a supabase.com > tu proyecto > Settings > API
+   y copia la "Project URL" y la "anon public" key.
+   ========================================================= */
+const SUPABASE_URL = "https://luewrpzgetqslxqmdcxv.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1ZXdycHpnZXRxc2x4cW1kY3h2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NTgzMjEsImV4cCI6MjEwMTEzNDMyMX0.iEgtUxbCZXKJYfIu1DCmrTjyD5yn_leIgc22KF8cKxQ";
+
+let supa = null;
+const configuredOK = SUPABASE_URL.startsWith("http") && SUPABASE_ANON_KEY.length > 20;
+if (configuredOK) {
+  supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+const USERS = {
+  betzaida: { pass: "123456", label: "Betzaida" },
+  samuel:   { pass: "8441",   label: "Samuel" }
+};
+
+const PRECIO_BOLETO = 5; // cada boleto vale $5 (balboas)
+
+let currentUser = null; // 'samuel' | 'betzaida'
+let cache = [];
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
+function showConfigNoteIfNeeded(){
+  const note = document.getElementById('configNote');
+  if (!configuredOK){
+    note.style.display = 'block';
+    note.innerHTML = 'Falta conectar la base de datos. Abre este archivo, busca <code>SUPABASE_URL</code> y <code>SUPABASE_ANON_KEY</code> al final del HTML y pega los datos de tu proyecto de Supabase (Settings &rarr; API). Mientras tanto los pagos se guardan solo en esta pestana.';
+  } else {
+    note.style.display = 'none';
+  }
+}
+
+/* ---------------- Login ---------------- */
+function doLogin(){
+  const user = document.getElementById('loginUser').value;
+  const pass = document.getElementById('loginPass').value;
+  const err = document.getElementById('loginError');
+  if (USERS[user] && USERS[user].pass === pass){
+    currentUser = user;
+    err.textContent = '';
+    sessionStorage.setItem('jiral_user', user);
+    enterApp();
+  } else {
+    err.textContent = 'Clave incorrecta. Intenta de nuevo.';
+  }
+}
+
+function doLogout(){
+  currentUser = null;
+  sessionStorage.removeItem('jiral_user');
+  document.getElementById('appView').style.display = 'none';
+  document.getElementById('loginView').style.display = 'block';
+  document.getElementById('loginPass').value = '';
+}
+
+function enterApp(){
+  document.getElementById('loginView').style.display = 'none';
+  document.getElementById('appView').style.display = 'block';
+  document.getElementById('whoName').textContent = USERS[currentUser].label;
+  document.getElementById('histWho').textContent = USERS[currentUser].label;
+  showConfigNoteIfNeeded();
+  switchTab('registrar');
+  cargarPagos();
+  actualizarMonto();
+}
+
+/* ---------------- Tabs ---------------- */
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
+  document.getElementById('tab-registrar').style.display = name==='registrar' ? 'block':'none';
+  document.getElementById('tab-historial').style.display = name==='historial' ? 'block':'none';
+  if (name==='historial') cargarPagos();
+}
+
+/* ---------------- Local fallback storage (session only, used if Supabase not configured) ---------------- */
+let localFallback = [];
+
+/* ---------------- Calculo automatico del monto ---------------- */
+function actualizarMonto(){
+  const boletos = parseInt(document.getElementById('fBoletos').value, 10) || 0;
+  const monto = boletos * PRECIO_BOLETO;
+  document.getElementById('fMonto').value = monto > 0 ? monto.toFixed(2) : '';
+}
+
+/* ---------------- Guardar pago ---------------- */
+async function guardarPago(){
+  const nombre = document.getElementById('fNombre').value.trim();
+  const telefono = document.getElementById('fTelefono').value.trim();
+  const boletos = parseInt(document.getElementById('fBoletos').value, 10);
+  const monto = parseFloat(document.getElementById('fMonto').value);
+  const errEl = document.getElementById('formError');
+
+  if (!nombre){ errEl.textContent = 'Escribe el nombre de quien compro.'; return; }
+  if (!boletos || boletos < 1){ errEl.textContent = 'La cantidad de boletos debe ser al menos 1.'; return; }
+  if (isNaN(monto) || monto < 0){ errEl.textContent = 'Escribe el monto pagado.'; return; }
+  errEl.textContent = '';
+
+  const registro = {
+    cobrador: currentUser,
+    nombre_comprador: nombre,
+    telefono: telefono || null,
+    boletos: boletos,
+    monto: monto,
+    fecha: new Date().toISOString()
+  };
+
+  if (configuredOK){
+    const { data, error } = await supa.from('pagos').insert(registro).select().single();
+    if (error){ toast('Error al guardar: ' + error.message); return; }
+    await imprimirRecibo(data);
+  } else {
+    registro.id = 'local-' + Date.now();
+    registro.numero_recibo = localFallback.length + 1;
+    localFallback.push(registro);
+    await imprimirRecibo(registro);
+  }
+
+  document.getElementById('fNombre').value = '';
+  document.getElementById('fTelefono').value = '';
+  document.getElementById('fBoletos').value = '1';
+  actualizarMonto();
+  toast('Pago registrado correctamente');
+  cargarPagos();
+}
+
+/* ---------------- Cargar pagos del cobrador actual ---------------- */
+async function cargarPagos(){
+  if (configuredOK){
+    const { data, error } = await supa.from('pagos')
+      .select('*')
+      .eq('cobrador', currentUser)
+      .order('fecha', { ascending:false });
+    if (error){ toast('Error al cargar: ' + error.message); return; }
+    cache = data || [];
+  } else {
+    cache = localFallback.filter(r=>r.cobrador===currentUser).slice().reverse();
+  }
+  renderTabla();
+}
+
+function renderTabla(){
+  const body = document.getElementById('pagosBody');
+  const empty = document.getElementById('emptyMsg');
+  body.innerHTML = '';
+  let total = 0;
+
+  if (cache.length === 0){
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    cache.forEach((r, idx)=>{
+      total += Number(r.monto);
+      const tr = document.createElement('tr');
+      const fecha = new Date(r.fecha);
+      tr.innerHTML = `
+        <td class="num">${r.numero_recibo ?? (cache.length-idx)}</td>
+        <td>${escapeHtml(r.nombre_comprador)}</td>
+        <td>${escapeHtml(r.telefono || '-')}</td>
+        <td class="num">${r.boletos}</td>
+        <td class="mono-amt">$${Number(r.monto).toFixed(2)}</td>
+        <td class="num">${fecha.toLocaleDateString()}</td>
+        <td><span class="badge ${r.cobrador}">${USERS[r.cobrador] ? USERS[r.cobrador].label : r.cobrador}</span></td>
+        <td>
+          <div class="row-actions">
+            <button class="icon-btn" onclick='imprimirRecibo(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Compartir recibo</button>
+            <button class="icon-btn del" onclick="borrarPago('${r.id}')">Borrar</button>
+          </div>
+        </td>`;
+      body.appendChild(tr);
+    });
+  }
+  document.getElementById('histTotal').textContent = '$' + total.toFixed(2);
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------------- Borrar pago ---------------- */
+async function borrarPago(id){
+  if (!confirm('Borrar este registro?')) return;
+  if (configuredOK){
+    const { error } = await supa.from('pagos').delete().eq('id', id);
+    if (error){ toast('Error al borrar: ' + error.message); return; }
+  } else {
+    localFallback = localFallback.filter(r=>r.id!==id);
+  }
+  toast('Registro eliminado');
+  cargarPagos();
+}
+
+/* ---------------- Exportar Excel (solo del cobrador activo) ---------------- */
+function exportarExcel(){
+  if (cache.length === 0){ toast('No hay registros para exportar.'); return; }
+  const rows = cache.map(r=>({
+    'No. Recibo': r.numero_recibo,
+    'Nombre': r.nombre_comprador,
+    'Telefono': r.telefono || '',
+    'Boletos': r.boletos,
+    'Monto Pagado': Number(r.monto),
+    'Fecha': new Date(r.fecha).toLocaleString(),
+    'Cobrador': USERS[r.cobrador] ? USERS[r.cobrador].label : r.cobrador
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, USERS[currentUser].label);
+  XLSX.writeFile(wb, `boletos_${currentUser}.xlsx`);
+}
+
+/* ---------------- Recibo en PDF (compartir o descargar) ---------------- */
+function construirReciboPDF(r){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'mm', format:[100,150] });
+
+  const navy = [18,41,59];
+  const gold = [227,169,59];
+
+  doc.setFillColor(...navy);
+  doc.rect(0,0,100,30,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(13);
+  doc.text('C.E.B.G EL JIRAL', 50, 11, { align:'center' });
+  doc.setFontSize(8.5);
+  doc.setTextColor(...gold);
+  doc.text('APOYO A LA BANDA YADIRA MADRID', 50, 17, { align:'center' });
+  doc.setFontSize(9);
+  doc.setTextColor(255,255,255);
+  doc.text('RECIBO DE PAGO - BINGO', 50, 24, { align:'center' });
+
+  doc.setTextColor(30,30,30);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(9);
+
+  let y = 38;
+  const numero = r.numero_recibo ?? '---';
+  const fecha = new Date(r.fecha);
+
+  const line = (label, value)=>{
+    doc.setFont('helvetica','bold');
+    doc.text(label, 8, y);
+    doc.setFont('helvetica','normal');
+    doc.text(String(value), 38, y);
+    y += 8;
+  };
+
+  doc.setFontSize(9);
+  line('No. Recibo:', numero);
+  line('Fecha:', fecha.toLocaleDateString() + ' ' + fecha.toLocaleTimeString());
+  line('Comprador:', r.nombre_comprador);
+  line('Telefono:', r.telefono || 'N/A');
+  line('Boletos:', r.boletos);
+  line('Monto pagado:', '$' + Number(r.monto).toFixed(2));
+  line('Cobrador:', USERS[r.cobrador] ? USERS[r.cobrador].label : r.cobrador);
+
+  doc.setDrawColor(...gold);
+  doc.setLineWidth(0.6);
+  doc.line(8, y+4, 92, y+4);
+
+  doc.setFontSize(8.5);
+  doc.setTextColor(120,120,120);
+  doc.text('GRACIAS POR SU APOYO', 50, y+10, { align:'center' });
+  doc.setFontSize(7.5);
+  doc.text('Contacto: 6883-6634 - Bingo', 50, y+15, { align:'center' });
+
+  const filename = `recibo_${numero}_${(r.nombre_comprador||'').replace(/\s+/g,'_')}.pdf`;
+  return { doc, filename };
+}
+
+async function imprimirRecibo(r){
+  const { doc, filename } = construirReciboPDF(r);
+
+  // Intenta abrir el menu nativo de compartir (WhatsApp, correo, etc.) en celular
+  try {
+    const blob = doc.output('blob');
+    const file = new File([blob], filename, { type: 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: 'Recibo Bingo El Jiral',
+        text: `Recibo de pago - ${r.nombre_comprador}`
+      });
+      return;
+    }
+  } catch(e){
+    // si el usuario cancela el share, no hacemos nada mas
+    if (e && e.name === 'AbortError') return;
+  }
+
+  // Respaldo: si no se pudo compartir, se descarga el PDF normal
+  doc.save(filename);
+}
+
+/* ---------------- Restore session ---------------- */
+window.addEventListener('DOMContentLoaded', ()=>{
+  const saved = sessionStorage.getItem('jiral_user');
+  if (saved && USERS[saved]){
+    currentUser = saved;
+    enterApp();
+  }
+});
+</script>
+</body>
+</html>
