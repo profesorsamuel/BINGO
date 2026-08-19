@@ -78,3 +78,64 @@ create policy "donaciones_delete" on public.donaciones for delete using (true);
 create index if not exists donaciones_fecha_idx on public.donaciones (fecha_donacion);
 
 grant select, insert, update, delete on public.donaciones to anon;
+
+-- ---------------------------------------------------------
+-- Tabla NUEVA: promesas de donación (aun no han donado)
+-- ---------------------------------------------------------
+create table if not exists public.promesas_donacion (
+  id uuid primary key default gen_random_uuid(),
+  nombre_donante text not null,
+  monto_prometido numeric(10,2) not null check (monto_prometido > 0),
+  fecha_promesa date not null,
+  cobra text not null check (cobra in ('samuel','betzaida','jiral')),
+  notas text,
+  numero_recibo integer generated always as identity,
+  creado_en timestamptz not null default now()
+);
+
+alter table public.promesas_donacion enable row level security;
+
+drop policy if exists "promesas_select" on public.promesas_donacion;
+create policy "promesas_select" on public.promesas_donacion for select using (true);
+
+drop policy if exists "promesas_insert" on public.promesas_donacion;
+create policy "promesas_insert" on public.promesas_donacion for insert with check (true);
+
+drop policy if exists "promesas_update" on public.promesas_donacion;
+create policy "promesas_update" on public.promesas_donacion for update using (true) with check (true);
+
+drop policy if exists "promesas_delete" on public.promesas_donacion;
+create policy "promesas_delete" on public.promesas_donacion for delete using (true);
+
+grant select, insert, update, delete on public.promesas_donacion to anon;
+
+-- ---------------------------------------------------------
+-- Tabla NUEVA: abonos (pagos parciales) de una promesa
+-- ---------------------------------------------------------
+create table if not exists public.abonos_promesa (
+  id uuid primary key default gen_random_uuid(),
+  promesa_id uuid not null references public.promesas_donacion(id) on delete cascade,
+  monto numeric(10,2) not null check (monto > 0),
+  fecha date not null,
+  cobra text not null check (cobra in ('samuel','betzaida','jiral')),
+  numero_abono integer generated always as identity,
+  creado_en timestamptz not null default now()
+);
+
+alter table public.abonos_promesa enable row level security;
+
+drop policy if exists "abonos_select" on public.abonos_promesa;
+create policy "abonos_select" on public.abonos_promesa for select using (true);
+
+drop policy if exists "abonos_insert" on public.abonos_promesa;
+create policy "abonos_insert" on public.abonos_promesa for insert with check (true);
+
+drop policy if exists "abonos_update" on public.abonos_promesa;
+create policy "abonos_update" on public.abonos_promesa for update using (true) with check (true);
+
+drop policy if exists "abonos_delete" on public.abonos_promesa;
+create policy "abonos_delete" on public.abonos_promesa for delete using (true);
+
+create index if not exists abonos_promesa_idx on public.abonos_promesa (promesa_id);
+
+grant select, insert, update, delete on public.abonos_promesa to anon;
