@@ -232,6 +232,26 @@
   #abonoModal h3{font-family:'Baloo 2',sans-serif;margin:0 0 4px;font-size:18px;color:var(--navy-deep);}
   #abonoModal .sub{font-size:12.5px;color:#6b7a86;margin:0 0 16px;}
 
+  /* ---- Modal de historial de abonos (corregir monto de un abono) ---- */
+  #historialAbonosOverlay{
+    display:none;position:fixed;inset:0;background:rgba(11,29,42,0.55);z-index:80;
+    align-items:center;justify-content:center;padding:16px;
+  }
+  #historialAbonosOverlay.show{display:flex;}
+  #historialAbonosModal{
+    background:#fff;border-radius:14px;max-width:420px;width:100%;padding:22px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.3);max-height:82vh;overflow-y:auto;
+  }
+  #historialAbonosModal h3{font-family:'Baloo 2',sans-serif;margin:0 0 4px;font-size:18px;color:var(--navy-deep);}
+  #historialAbonosModal .sub{font-size:12.5px;color:#6b7a86;margin:0 0 16px;line-height:1.4;}
+  .abono-item{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:10px 0;border-bottom:1px solid var(--line);
+  }
+  .abono-item:last-child{border-bottom:none;}
+  .abono-item-monto{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--navy-deep);font-size:14px;}
+  .abono-item-meta{font-size:11.5px;color:#8b98a3;margin-top:2px;}
+
   /* ---- Mode selection (elegir tipo de recibo) ---- */
   #modeView{max-width:440px;margin:50px auto 0;}
   #modeView h2{font-family:'Baloo 2',sans-serif;text-align:center;margin:0 0 4px;font-size:22px;color:var(--navy-deep);}
@@ -846,6 +866,18 @@
       <button class="btn-outline" onclick="cerrarModalAbono()">Cancelar</button>
     </div>
     <p class="error" id="formErrorAbono"></p>
+  </div>
+</div>
+
+<!-- ---------- MODAL: historial de abonos de un graduando (corregir monto) ---------- -->
+<div id="historialAbonosOverlay" onclick="if(event.target===this) cerrarHistorialAbonos()">
+  <div id="historialAbonosModal">
+    <h3 id="historialAbonosTitulo">Abonos registrados</h3>
+    <p class="sub" id="historialAbonosSub">Si algún abono se registró con el monto equivocado, corrígelo aquí. El total pagado y el saldo se recalculan solos.</p>
+    <div id="historialAbonosLista"></div>
+    <div class="actions-bar">
+      <button class="btn-outline" onclick="cerrarHistorialAbonos()">Cerrar</button>
+    </div>
   </div>
 </div>
 
@@ -3045,6 +3077,77 @@ async function guardarAbonoGraduando(){
   descargarReciboGraduando(graduando, abonoGuardado, monto, nuevoSaldo, nuevoAbonado);
 }
 
+/* ---------------- Historial de abonos de un graduando (corregir monto) ---------------- */
+let historialAbonosGradId = null;
+
+function abrirHistorialAbonos(graduandoId, nombre){
+  historialAbonosGradId = graduandoId;
+  document.getElementById('historialAbonosTitulo').textContent = 'Abonos de ' + nombre;
+  renderHistorialAbonos();
+  document.getElementById('historialAbonosOverlay').classList.add('show');
+}
+
+function cerrarHistorialAbonos(){
+  historialAbonosGradId = null;
+  document.getElementById('historialAbonosOverlay').classList.remove('show');
+}
+
+function renderHistorialAbonos(){
+  const cont = document.getElementById('historialAbonosLista');
+  const abonos = cacheAbonosGrad
+    .filter(a=>a.graduando_id===historialAbonosGradId)
+    .sort((a,b)=> new Date(a.creado_en || a.fecha) - new Date(b.creado_en || b.fecha));
+
+  if (abonos.length === 0){
+    cont.innerHTML = '<p class="tel-vacio">Este estudiante todavía no tiene abonos registrados.</p>';
+    return;
+  }
+
+  cont.innerHTML = abonos.map((a, i)=>{
+    const fecha = new Date((a.fecha || '') + 'T00:00:00').toLocaleDateString();
+    return `
+    <div class="abono-item">
+      <div>
+        <div class="abono-item-monto">$${Number(a.monto).toFixed(2)}</div>
+        <div class="abono-item-meta">Abono #${a.numero_abono ?? (i+1)} · ${fecha} · ${COBRA_DONACION[a.cobra] || a.cobra || '—'}</div>
+      </div>
+      <button class="icon-btn" onclick="editarMontoAbono('${a.id}')">Editar monto</button>
+    </div>`;
+  }).join('');
+}
+
+async function editarMontoAbono(abonoId){
+  const abono = cacheAbonosGrad.find(a=>a.id===abonoId);
+  if (!abono){ toast('No se encontró ese abono.'); return; }
+  const graduando = cacheGrad.find(g=>g.id===abono.graduando_id);
+  if (!graduando){ toast('No se encontró al graduando.'); return; }
+
+  const nuevoTexto = prompt('Nuevo monto para este abono ($):', Number(abono.monto).toFixed(2));
+  if (nuevoTexto === null) return; // cancelado
+  const nuevoMonto = parseFloat(nuevoTexto);
+  if (isNaN(nuevoMonto) || nuevoMonto <= 0){ toast('Escribe un monto válido, mayor a $0.'); return; }
+
+  const otrosAbonados = cacheAbonosGrad
+    .filter(a=>a.graduando_id===graduando.id && a.id!==abonoId)
+    .reduce((sum, a)=>sum + Number(a.monto), 0);
+  if (otrosAbonados + nuevoMonto - Number(graduando.monto_total) > 0.01){
+    toast(`Ese monto deja lo pagado por encima del total a pagar ($${Number(graduando.monto_total).toFixed(2)}).`);
+    return;
+  }
+
+  if (configuredOK){
+    const { error } = await supa.from('abonos_graduando').update({ monto: nuevoMonto }).eq('id', abonoId);
+    if (error){ toast('Error al corregir el abono: ' + error.message); return; }
+  } else {
+    const idx = localFallbackAbonosGrad.findIndex(a=>a.id===abonoId);
+    if (idx > -1) localFallbackAbonosGrad[idx].monto = nuevoMonto;
+  }
+
+  toast('Monto corregido correctamente');
+  await cargarGraduandos();
+  if (historialAbonosGradId === graduando.id) renderHistorialAbonos();
+}
+
 /* ---------------- Cargar todos los graduandos y sus abonos ---------------- */
 async function cargarGraduandos(){
   if (configuredOK){
@@ -3126,6 +3229,7 @@ function renderTablaGraduandos(){
         <td>
           <div class="row-actions">
             ${cancelado ? '' : `<button class="icon-btn" onclick='abrirModalAbono("graduando", "${r.id}", ${JSON.stringify(r.nombre_estudiante).replace(/'/g,"&#39;")})'>Agregar abono</button>`}
+            ${pagado > 0.005 ? `<button class="icon-btn" onclick='abrirHistorialAbonos("${r.id}", ${JSON.stringify(r.nombre_estudiante).replace(/'/g,"&#39;")})'>Ver abonos</button>` : ''}
             <button class="icon-btn" onclick='iniciarEdicionGraduando(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Editar</button>
             ${r.whatsapp ? `<button class="icon-btn" onclick='abrirWhatsapp(${JSON.stringify(r.whatsapp).replace(/'/g,"&#39;")}, ${JSON.stringify(mensajeWA).replace(/'/g,"&#39;")})'>WhatsApp</button>` : ''}
             <button class="icon-btn del" onclick="borrarGraduando('${r.id}')">Borrar</button>
