@@ -228,7 +228,7 @@
     <div class="ball">75</div>
     <div class="brand">
       <h1>C.E.B.G El Jiral</h1>
-      <p id="brandSubtitle">Control de venta y cobro — Bingo &amp; Donaciones</p>
+      <p id="brandSubtitle">Libreta de cobro</p>
     </div>
   </header>
 
@@ -1051,7 +1051,7 @@ function enterApp(){
   const esSoloMirian = currentUser === 'mirian';
   document.getElementById('brandSubtitle').textContent = esSoloMirian
     ? 'Cobro de Graduación'
-    : 'Control de venta y cobro — Bingo & Donaciones';
+    : 'Libreta de cobro';
   document.getElementById('modeSwitchBtn').style.display = esSoloMirian ? 'none' : 'inline-block';
 
   document.getElementById('modoBingo').style.display = currentMode==='bingo' ? 'block' : 'none';
@@ -2081,7 +2081,7 @@ function construirReciboPromesaPDF(r){
   measureDoc.setFontSize(9);
   const notasLines = r.notas ? measureDoc.splitTextToSize(r.notas, 84) : [];
 
-  const altoBase = 108;
+  const altoBase = 99;
   const altoTexto = (notasLines.length * 5) + 10;
   const alto = altoBase + altoTexto;
 
@@ -2107,18 +2107,10 @@ function construirReciboPromesaPDF(r){
   doc.setTextColor(255,255,255);
   doc.text('PROMESA DE DONACIÓN', 50, 24, { align:'center' });
 
-  // Banner de advertencia: aun no se ha recibido la donacion
-  doc.setFillColor(...naranja);
-  doc.rect(0, 30, 100, 9, 'F');
-  doc.setTextColor(255,255,255);
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(8);
-  doc.text('AÚN NO SE HA RECIBIDO ESTA DONACIÓN', 50, 36, { align:'center' });
-
   doc.setTextColor(30,30,30);
   doc.setFont('helvetica','normal');
 
-  let y = 46;
+  let y = 38;
   const numero = r.numero_recibo ?? '---';
   const fecha = new Date((r.fecha_promesa || '') + 'T00:00:00');
 
@@ -2153,6 +2145,12 @@ function construirReciboPromesaPDF(r){
   );
   doc.text(gracias, 8, y);
   y += gracias.length * 5 + 6;
+
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...naranja);
+  doc.text('Estaremos en contacto con usted.', 50, y, { align:'center' });
+  y += 9;
 
   if (notasLines.length){
     doc.setFont('helvetica','bold');
