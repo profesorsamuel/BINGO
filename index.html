@@ -136,6 +136,11 @@
   .icon-btn.del{color:var(--red);background:rgba(193,63,53,0.08);}
   .icon-btn:hover{background:rgba(227,169,59,0.18);}
 
+  .tel-link{display:inline-flex;align-items:center;color:var(--navy);font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;text-decoration:none;font-weight:600;border-bottom:1px dashed rgba(18,41,59,0.35);}
+  .tel-link:hover{color:#128C4B;border-bottom-color:#128C4B;}
+  .tel-vacio{color:#b7c0c7;font-size:12.5px;}
+
   .empty{text-align:center;padding:40px 10px;color:#8b98a3;font-size:14px;}
 
   .actions-bar{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;}
@@ -438,7 +443,7 @@
           <table id="donacionesTable">
             <thead>
               <tr>
-                <th>#</th><th>Donante</th><th>Monto</th><th>Fecha donación</th><th>Recibido por</th><th></th>
+                <th>#</th><th>Donante</th><th>Teléfono</th><th>Monto</th><th>Fecha donación</th><th>Recibido por</th><th></th>
               </tr>
             </thead>
             <tbody id="donacionesBody"></tbody>
@@ -549,7 +554,7 @@
           <table id="promesasTable">
             <thead>
               <tr>
-                <th>#</th><th>Donante</th><th>Prometido</th><th>Abonado</th><th>Saldo</th><th>Estado</th><th></th>
+                <th>#</th><th>Donante</th><th>Teléfono</th><th>Prometido</th><th>Abonado</th><th>Saldo</th><th>Estado</th><th></th>
               </tr>
             </thead>
             <tbody id="promesasBody"></tbody>
@@ -680,7 +685,7 @@
           <table id="graduandosTable">
             <thead>
               <tr>
-                <th>#</th><th>Salón</th><th>Estudiante</th><th>Total</th><th>Pagado</th><th>Saldo</th><th>Estado</th><th></th>
+                <th>#</th><th>Salón</th><th>Estudiante</th><th>WhatsApp</th><th>Total</th><th>Pagado</th><th>Saldo</th><th>Estado</th><th></th>
               </tr>
             </thead>
             <tbody id="graduandosBody"></tbody>
@@ -1287,10 +1292,11 @@ function renderTabla(){
       total += Number(r.monto);
       const tr = document.createElement('tr');
       const fecha = new Date(r.fecha);
+      const mensajeWA = `Hola ${r.nombre_comprador}, le comparto su recibo de bingo (No. ${r.numero_recibo ?? ''}) por $${Number(r.monto).toFixed(2)}. ¡Gracias por su compra!`;
       tr.innerHTML = `
         <td class="num">${r.numero_recibo ?? (cache.length-idx)}</td>
         <td>${escapeHtml(r.nombre_comprador)}</td>
-        <td>${escapeHtml(r.telefono || '-')}</td>
+        <td>${telefonoWhatsappCell(r.telefono, mensajeWA)}</td>
         <td class="num">${r.boletos}</td>
         <td class="mono-amt">$${Number(r.monto).toFixed(2)}</td>
         <td class="num">${fecha.toLocaleDateString()}</td>
@@ -1298,7 +1304,9 @@ function renderTabla(){
         <td>
           <div class="row-actions">
             <button class="icon-btn" onclick='iniciarEdicion(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Editar</button>
-            <button class="icon-btn" onclick='compartirRecibo(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Descargar recibo</button>
+            <button class="icon-btn" onclick='descargarRecibo(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Descargar PDF</button>
+            <button class="icon-btn" onclick='compartirRecibo(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Recibo</button>
+            ${r.telefono ? `<button class="icon-btn" onclick="abrirWhatsapp(${JSON.stringify(r.telefono)}, ${JSON.stringify(mensajeWA)})">WhatsApp</button>` : ''}
             <button class="icon-btn del" onclick="borrarPago('${r.id}')">Borrar</button>
           </div>
         </td>`;
@@ -1589,17 +1597,20 @@ function renderTablaDonaciones(){
       total += Number(r.monto);
       const tr = document.createElement('tr');
       const fecha = new Date(r.fecha_donacion + 'T00:00:00');
+      const mensajeWA = `Hola ${r.nombre_donante}, le comparto su recibo de donación (No. ${r.numero_recibo ?? ''}) por $${Number(r.monto).toFixed(2)} a favor de la Banda C.E.B.G El Jiral. ¡Muchas gracias por su generosidad!`;
       tr.innerHTML = `
         <td class="num">${r.numero_recibo ?? (cacheDon.length-idx)}</td>
         <td>${escapeHtml(r.nombre_donante)}</td>
+        <td>${telefonoWhatsappCell(r.telefono, mensajeWA)}</td>
         <td class="mono-amt">$${Number(r.monto).toFixed(2)}</td>
         <td class="num">${fecha.toLocaleDateString()}</td>
         <td><span class="badge ${r.cobra==='jiral' ? 'samuel' : r.cobra}">${COBRA_DONACION[r.cobra] || r.cobra}</span></td>
         <td>
           <div class="row-actions">
             <button class="icon-btn" onclick='iniciarEdicionDonacion(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Editar</button>
-            <button class="icon-btn" onclick='compartirReciboDonacion(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Descargar recibo</button>
-            ${r.telefono ? `<button class="icon-btn" onclick="abrirWhatsapp(${JSON.stringify(r.telefono)})">WhatsApp</button>` : ''}
+            <button class="icon-btn" onclick='descargarReciboDonacion(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Descargar PDF</button>
+            <button class="icon-btn" onclick='compartirReciboDonacion(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Recibo</button>
+            ${r.telefono ? `<button class="icon-btn" onclick="abrirWhatsapp(${JSON.stringify(r.telefono)}, ${JSON.stringify(mensajeWA)})">WhatsApp</button>` : ''}
             <button class="icon-btn del" onclick="borrarDonacion('${r.id}')">Borrar</button>
           </div>
         </td>`;
@@ -1942,9 +1953,11 @@ function renderTablaPromesas(){
       const saldo = Math.max(0, Number(r.monto_prometido) - abonado);
       const cumplida = saldo <= 0.005;
       const tr = document.createElement('tr');
+      const mensajeWA = `Hola ${r.nombre_donante}, le comparto su recibo de promesa de donación (No. ${r.numero_recibo ?? ''}) por $${Number(r.monto_prometido).toFixed(2)} para la Banda C.E.B.G El Jiral. ¡Muchas gracias por su apoyo!`;
       tr.innerHTML = `
         <td class="num">${r.numero_recibo ?? (cacheProm.length-idx)}</td>
         <td>${escapeHtml(r.nombre_donante)}</td>
+        <td>${telefonoWhatsappCell(r.telefono, mensajeWA)}</td>
         <td class="mono-amt">$${Number(r.monto_prometido).toFixed(2)}</td>
         <td class="num">$${abonado.toFixed(2)}</td>
         <td class="num ${cumplida ? 'saldo-zero' : 'saldo-pos'}">$${saldo.toFixed(2)}</td>
@@ -1953,8 +1966,9 @@ function renderTablaPromesas(){
           <div class="row-actions">
             ${cumplida ? '' : `<button class="icon-btn" onclick="abrirModalAbono('promesa', '${r.id}', ${JSON.stringify(r.nombre_donante)})">Agregar abono</button>`}
             <button class="icon-btn" onclick='iniciarEdicionPromesa(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Editar</button>
+            <button class="icon-btn" onclick='descargarReciboPromesa(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Descargar PDF</button>
             <button class="icon-btn" onclick='compartirReciboPromesa(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Recibo</button>
-            ${r.telefono ? `<button class="icon-btn" onclick="abrirWhatsapp(${JSON.stringify(r.telefono)})">WhatsApp</button>` : ''}
+            ${r.telefono ? `<button class="icon-btn" onclick="abrirWhatsapp(${JSON.stringify(r.telefono)}, ${JSON.stringify(mensajeWA)})">WhatsApp</button>` : ''}
             <button class="icon-btn del" onclick="borrarPromesa('${r.id}')">Borrar</button>
           </div>
         </td>`;
@@ -2683,11 +2697,21 @@ function otraFraseGraduacion(){
 }
 
 /* Abre WhatsApp con el numero del estudiante (Panama +507 por defecto) */
-function abrirWhatsapp(numero){
-  if (!numero){ toast('Este graduando no tiene numero de WhatsApp guardado.'); return; }
+function abrirWhatsapp(numero, mensaje){
+  if (!numero){ toast('No hay numero de WhatsApp guardado.'); return; }
   const digits = String(numero).replace(/\D/g,'');
   const conCodigo = digits.length <= 8 ? '507' + digits : digits;
-  window.open(`https://wa.me/${conCodigo}`, '_blank');
+  const texto = mensaje ? `?text=${encodeURIComponent(mensaje)}` : '';
+  window.open(`https://wa.me/${conCodigo}${texto}`, '_blank');
+}
+
+/* Formatea un telefono para mostrarlo en las tablas como enlace clicable
+   que abre WhatsApp directo con ese numero. Si no hay numero, muestra '-'. */
+function telefonoWhatsappCell(numero, mensaje){
+  if (!numero) return '<span class="tel-vacio">-</span>';
+  const msgAttr = mensaje ? ` data-msg="${escapeHtml(mensaje)}"` : '';
+  return `<a href="#" class="tel-link" title="Enviar por WhatsApp" onclick='abrirWhatsapp(${JSON.stringify(numero)}, ${JSON.stringify(mensaje || "")}); return false;'>
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="#25D366" style="vertical-align:-2px;margin-right:3px"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.29-1.39a9.9 9.9 0 0 0 4.75 1.21h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m0 1.67c2.2 0 4.27.86 5.82 2.41a8.2 8.2 0 0 1 2.42 5.83c0 4.55-3.7 8.24-8.25 8.24a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.14.82.84-3.06-.2-.32a8.18 8.18 0 0 1-1.26-4.37c0-4.55 3.7-8.22 8.26-8.22M8.53 6.85c-.16 0-.43.06-.65.3-.22.24-.86.84-.86 2.05 0 1.21.88 2.38 1 2.54.12.17 1.72 2.7 4.29 3.74 2.13.86 2.56.69 3.02.65.46-.04 1.5-.6 1.71-1.19.21-.58.21-1.08.15-1.19-.06-.1-.23-.16-.48-.28-.25-.13-1.5-.74-1.73-.83-.23-.08-.4-.13-.57.13-.16.25-.65.83-.8 1-.15.16-.29.19-.55.06-.25-.13-1.06-.39-2.02-1.25-.75-.66-1.25-1.49-1.4-1.74-.14-.25-.02-.38.11-.5.11-.12.25-.29.37-.44.12-.15.16-.25.25-.42.08-.16.04-.31-.02-.44-.06-.13-.57-1.4-.79-1.92-.2-.5-.42-.44-.57-.44h-.47Z"/></svg>${escapeHtml(numero)}</a>`;
 }
 
 /* ---------------- Salon -> lista de estudiantes (select dinamico) ---------------- */
@@ -3011,10 +3035,12 @@ function renderTablaGraduandos(){
       const saldo = Math.max(0, Number(r.monto_total) - pagado);
       totalGeneral += saldo;
       const tr = document.createElement('tr');
+      const mensajeWA = `Hola ${r.nombre_estudiante}, le comparto su recibo de pago de graduación (No. ${r.numero_recibo ?? ''}). Saldo pendiente: $${saldo.toFixed(2)}. ¡Gracias!`;
       tr.innerHTML = `
         <td class="num">${r.numero_recibo ?? (pendientes.length-idx)}</td>
         <td>${SALON_LABEL[r.salon] || r.salon || '—'}</td>
         <td>${escapeHtml(r.nombre_estudiante)}</td>
+        <td>${telefonoWhatsappCell(r.whatsapp, mensajeWA)}</td>
         <td class="mono-amt">$${Number(r.monto_total).toFixed(2)}</td>
         <td class="num">$${pagado.toFixed(2)}</td>
         <td class="num saldo-pos">$${saldo.toFixed(2)}</td>
@@ -3023,7 +3049,7 @@ function renderTablaGraduandos(){
           <div class="row-actions">
             <button class="icon-btn" onclick="abrirModalAbono('graduando', '${r.id}', ${JSON.stringify(r.nombre_estudiante)})">Agregar abono</button>
             <button class="icon-btn" onclick='iniciarEdicionGraduando(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Editar</button>
-            ${r.whatsapp ? `<button class="icon-btn" onclick="abrirWhatsapp(${JSON.stringify(r.whatsapp)})">WhatsApp</button>` : ''}
+            ${r.whatsapp ? `<button class="icon-btn" onclick="abrirWhatsapp(${JSON.stringify(r.whatsapp)}, ${JSON.stringify(mensajeWA)})">WhatsApp</button>` : ''}
             <button class="icon-btn del" onclick="borrarGraduando('${r.id}')">Borrar</button>
           </div>
         </td>`;
