@@ -2,14 +2,18 @@
 -- BINGO EL JIRAL - Esquema de base de datos para Supabase
 -- ==========================================================
 -- Instrucciones:
--- 1. Entra a tu proyecto de Supabase (el mismo "control-notas-jiral"
---    o crea uno nuevo llamado "BINGO").
+-- 1. Entra a tu proyecto de Supabase ("control-notas-jiral").
 -- 2. Ve a "SQL Editor" (menu izquierdo) > "New query".
 -- 3. Pega TODO este archivo y dale click en "Run".
+--    (Si ya habias creado la tabla "pagos" antes, no pasa nada,
+--    los "create table if not exists" no la vuelven a crear.)
 -- ==========================================================
 
 create extension if not exists "pgcrypto";
 
+-- ---------------------------------------------------------
+-- Tabla de pagos de boletos del BINGO (ya existente)
+-- ---------------------------------------------------------
 create table if not exists public.pagos (
   id uuid primary key default gen_random_uuid(),
   cobrador text not null check (cobrador in ('samuel','betzaida')),
@@ -21,21 +25,56 @@ create table if not exists public.pagos (
   fecha timestamptz not null default now()
 );
 
--- Activamos seguridad a nivel de fila (RLS)
 alter table public.pagos enable row level security;
 
--- Como el login de cobradores lo maneja la propia pagina (no Supabase Auth),
--- dejamos que la llave publica ("anon key") pueda leer, insertar y borrar.
--- Esto es aceptable para una herramienta interna pequena, pero ten en cuenta
--- que cualquiera que tenga tu URL + anon key podria ver/editar los datos.
 drop policy if exists "pagos_select" on public.pagos;
 create policy "pagos_select" on public.pagos for select using (true);
 
 drop policy if exists "pagos_insert" on public.pagos;
 create policy "pagos_insert" on public.pagos for insert with check (true);
 
+drop policy if exists "pagos_update" on public.pagos;
+create policy "pagos_update" on public.pagos for update using (true) with check (true);
+
 drop policy if exists "pagos_delete" on public.pagos;
 create policy "pagos_delete" on public.pagos for delete using (true);
 
--- Indice util para filtrar rapido por cobrador
 create index if not exists pagos_cobrador_idx on public.pagos (cobrador);
+
+-- El login de cobradores lo maneja la propia pagina (no Supabase Auth),
+-- asi que dejamos que la llave publica ("anon key") pueda leer, insertar,
+-- actualizar y borrar. Aceptable para una herramienta interna pequena.
+grant select, insert, update, delete on public.pagos to anon;
+
+-- ---------------------------------------------------------
+-- Tabla NUEVA: donaciones para la Banda C.E.B.G El Jiral
+-- ---------------------------------------------------------
+create table if not exists public.donaciones (
+  id uuid primary key default gen_random_uuid(),
+  nombre_donante text not null,
+  monto numeric(10,2) not null check (monto > 0),
+  fecha_donacion date not null,
+  cobra text not null check (cobra in ('samuel','betzaida','jiral')),
+  agradecimiento text,
+  frase text,
+  numero_recibo integer generated always as identity,
+  creado_en timestamptz not null default now()
+);
+
+alter table public.donaciones enable row level security;
+
+drop policy if exists "donaciones_select" on public.donaciones;
+create policy "donaciones_select" on public.donaciones for select using (true);
+
+drop policy if exists "donaciones_insert" on public.donaciones;
+create policy "donaciones_insert" on public.donaciones for insert with check (true);
+
+drop policy if exists "donaciones_update" on public.donaciones;
+create policy "donaciones_update" on public.donaciones for update using (true) with check (true);
+
+drop policy if exists "donaciones_delete" on public.donaciones;
+create policy "donaciones_delete" on public.donaciones for delete using (true);
+
+create index if not exists donaciones_fecha_idx on public.donaciones (fecha_donacion);
+
+grant select, insert, update, delete on public.donaciones to anon;
