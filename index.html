@@ -3153,7 +3153,17 @@ async function corregirMontoPagadoGraduando(graduandoId, nuevoPagado){
       return false;
     }
     const montoFinal = Math.max(0, nuevoMontoUltimo);
-    if (configuredOK){
+    if (montoFinal <= 0.005){
+      // La base de datos no permite abonos en $0 (monto > 0), asi que en vez de
+      // actualizar a 0 se borra ese abono - el efecto final es el mismo.
+      if (configuredOK){
+        const { error } = await supa.from('abonos_graduando').delete().eq('id', ultimo.id);
+        if (error){ toast('Error al corregir: ' + error.message); return false; }
+      } else {
+        const idx = localFallbackAbonosGrad.findIndex(a=>a.id===ultimo.id);
+        if (idx > -1) localFallbackAbonosGrad.splice(idx, 1);
+      }
+    } else if (configuredOK){
       const { error } = await supa.from('abonos_graduando').update({ monto: montoFinal }).eq('id', ultimo.id);
       if (error){ toast('Error al corregir: ' + error.message); return false; }
     } else {
