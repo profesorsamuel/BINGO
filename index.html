@@ -369,6 +369,7 @@
       <div class="tabs">
         <button class="tab active" data-tab="donar" onclick="switchTab('donar')">Registrar donación</button>
         <button class="tab" data-tab="donaciones" onclick="switchTab('donaciones')">Historial de donaciones</button>
+        <button class="tab" data-tab="resumenDon2" onclick="switchTab('resumenDon2')">Resumen</button>
       </div>
 
       <!-- --- Registrar donación --- -->
@@ -449,6 +450,35 @@
           <button class="btn-secondary" onclick="exportarExcelDonaciones()">Descargar Excel de donaciones</button>
         </div>
       </section>
+
+      <!-- --- Resumen: cuanto se ha donado vs cuanto sigue en promesa (misma info que en Promesas) --- -->
+      <section id="tab-resumenDon2" class="card" style="display:none;">
+        <h3 class="section-title">Resumen de donaciones</h3>
+        <p class="section-sub">Cuánto se ha donado / pagado ya, y cuánto sigue en promesa (aún no recibido) — en total o filtrado por integrante de la banda.</p>
+
+        <div class="grid2">
+          <div>
+            <label for="resumenDonIntegranteSelect2">Integrante de la banda</label>
+            <select id="resumenDonIntegranteSelect2" onchange="actualizarResumenDonaciones('2')">
+              <option value="TODOS">Todos / general</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:26px;flex-wrap:wrap;align-items:center;margin-top:16px;">
+          <canvas id="graficoResumenDon2" width="220" height="220" style="max-width:220px;flex:none;"></canvas>
+          <div id="resumenDonStats2" style="flex:1;min-width:230px;font-size:14px;line-height:1.8;"></div>
+        </div>
+
+        <div class="actions-bar">
+          <button class="btn-outline" onclick="toggleDetalleResumenDon('2')"><span id="detalleResumenDonToggleText2">Ver detalle en pantalla</span></button>
+          <button class="btn-secondary" onclick="generarInformePDFResumenDonaciones('2')">Descargar informe PDF</button>
+        </div>
+
+        <div id="detalleResumenDonWrap2" style="display:none;margin-top:22px;">
+          <div id="detalleResumenDonBody2"></div>
+        </div>
+      </section>
     </div>
 
     <!-- ---------- MODO PROMESA DE DONACION ---------- -->
@@ -456,6 +486,7 @@
       <div class="tabs">
         <button class="tab active" data-tab="prometer" onclick="switchTab('prometer')">Registrar promesa</button>
         <button class="tab" data-tab="promesas" onclick="switchTab('promesas')">Historial de promesas</button>
+        <button class="tab" data-tab="resumenDon" onclick="switchTab('resumenDon')">Resumen</button>
       </div>
 
       <!-- --- Registrar promesa --- -->
@@ -528,6 +559,35 @@
 
         <div class="actions-bar">
           <button class="btn-secondary" onclick="exportarExcelPromesas()">Descargar Excel de promesas</button>
+        </div>
+      </section>
+
+      <!-- --- Resumen: cuanto se ha donado vs cuanto sigue en promesa --- -->
+      <section id="tab-resumenDon" class="card" style="display:none;">
+        <h3 class="section-title">Resumen de donaciones</h3>
+        <p class="section-sub">Cuánto se ha donado / pagado ya, y cuánto sigue en promesa (aún no recibido) — en total o filtrado por integrante de la banda.</p>
+
+        <div class="grid2">
+          <div>
+            <label for="resumenDonIntegranteSelect">Integrante de la banda</label>
+            <select id="resumenDonIntegranteSelect" onchange="actualizarResumenDonaciones()">
+              <option value="TODOS">Todos / general</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:26px;flex-wrap:wrap;align-items:center;margin-top:16px;">
+          <canvas id="graficoResumenDon" width="220" height="220" style="max-width:220px;flex:none;"></canvas>
+          <div id="resumenDonStats" style="flex:1;min-width:230px;font-size:14px;line-height:1.8;"></div>
+        </div>
+
+        <div class="actions-bar">
+          <button class="btn-outline" onclick="toggleDetalleResumenDon()"><span id="detalleResumenDonToggleText">Ver detalle en pantalla</span></button>
+          <button class="btn-secondary" onclick="generarInformePDFResumenDonaciones()">Descargar informe PDF</button>
+        </div>
+
+        <div id="detalleResumenDonWrap" style="display:none;margin-top:22px;">
+          <div id="detalleResumenDonBody"></div>
         </div>
       </section>
     </div>
@@ -1083,8 +1143,8 @@ function switchTab(name){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
   const map = {
     registrar:'tab-registrar', historial:'tab-historial',
-    donar:'tab-donar', donaciones:'tab-donaciones',
-    prometer:'tab-prometer', promesas:'tab-promesas',
+    donar:'tab-donar', donaciones:'tab-donaciones', resumenDon2:'tab-resumenDon2',
+    prometer:'tab-prometer', promesas:'tab-promesas', resumenDon:'tab-resumenDon',
     graduar:'tab-graduar', graduandos:'tab-graduandos',
     resumenGrad:'tab-resumenGrad', recibosGrad:'tab-recibosGrad'
   };
@@ -1094,7 +1154,9 @@ function switchTab(name){
   });
   if (name==='historial') cargarPagos();
   if (name==='donaciones') cargarDonaciones();
+  if (name==='resumenDon2') cargarResumenDonaciones('2');
   if (name==='promesas') cargarPromesas();
+  if (name==='resumenDon') cargarResumenDonaciones();
   if (name==='graduandos') cargarGraduandos();
   if (name==='resumenGrad') cargarGraduandos();
   if (name==='recibosGrad') cargarGraduandos();
@@ -1938,6 +2000,262 @@ function exportarExcelPromesas(){
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Promesas');
   XLSX.writeFile(wb, `promesas_donacion_banda_jiral.xlsx`);
+}
+
+/* =========================================================
+   RESUMEN DE DONACIONES (donado/pagado vs. sigue en promesa)
+   Combina la tabla "donaciones" (ya recibido) con "promesas_donacion"
+   (lo que falta por recibir), en total o filtrado por integrante
+   de la banda.
+   ========================================================= */
+
+function poblarSelectIntegrantesBandaFiltro(selectId){
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const valorActual = sel.value;
+  sel.innerHTML = '<option value="TODOS">Todos / general</option>';
+  ROSTER_BANDA.forEach(({ nombre })=>{
+    const o = document.createElement('option');
+    o.value = nombre;
+    o.textContent = nombre;
+    sel.appendChild(o);
+  });
+  if (valorActual && Array.from(sel.options).some(o=>o.value===valorActual)){
+    sel.value = valorActual;
+  }
+}
+
+/* sufijo: '' para la pestaña dentro de Promesas, '2' para la pestaña
+   dentro de Donación. Ambas pestañas comparten exactamente la misma
+   logica; solo cambian los ids de los elementos en el DOM. */
+async function cargarResumenDonaciones(sufijo){
+  sufijo = sufijo || '';
+  poblarSelectIntegrantesBandaFiltro('resumenDonIntegranteSelect' + sufijo);
+  // Nos aseguramos de tener las dos tablas cargadas, aunque el cobrador
+  // nunca haya entrado a "Historial de donaciones" en esta sesion.
+  await cargarDonaciones();
+  await cargarPromesas();
+  actualizarResumenDonaciones(sufijo);
+}
+
+function construirResumenDonaciones(integrante){
+  const filtrarPor = (lista, campo)=> integrante === 'TODOS'
+    ? lista
+    : lista.filter(r=>r.integrante_banda === integrante);
+
+  const donacionesFiltradas = filtrarPor(cacheDon);
+  const promesasFiltradas = filtrarPor(cacheProm);
+
+  const promesasPendientes = promesasFiltradas
+    .map(p=>{
+      const abonado = abonadoDePromesa(p.id);
+      const saldo = Math.max(0, Number(p.monto_prometido) - abonado);
+      return { ...p, abonado, saldo };
+    })
+    .filter(p=>p.saldo > 0.005);
+
+  const totalDonado = donacionesFiltradas.reduce((sum, r)=>sum + Number(r.monto), 0);
+  const totalPrometidoPendiente = promesasPendientes.reduce((sum, p)=>sum + p.saldo, 0);
+  const totalConocido = totalDonado + totalPrometidoPendiente;
+
+  return {
+    integrante, donacionesFiltradas, promesasPendientes,
+    totalDonado, totalPrometidoPendiente, totalConocido
+  };
+}
+
+let graficosResumenDon = {}; // una instancia de Chart por sufijo ('' y '2')
+
+function actualizarResumenDonaciones(sufijo){
+  sufijo = sufijo || '';
+  const selEl = document.getElementById('resumenDonIntegranteSelect' + sufijo);
+  if (!selEl) return;
+  const integrante = selEl.value || 'TODOS';
+  const r = construirResumenDonaciones(integrante);
+  const pct = n => r.totalConocido ? ((n / r.totalConocido) * 100).toFixed(1) : '0.0';
+
+  const statsEl = document.getElementById('resumenDonStats' + sufijo);
+  if (statsEl){
+    statsEl.innerHTML = `
+      <div><span style="color:var(--green);font-weight:700;">● Donado / pagado:</span> $${r.totalDonado.toFixed(2)} (${pct(r.totalDonado)}%)</div>
+      <div><span style="color:var(--gold);font-weight:700;">● Sigue en promesa (pendiente):</span> $${r.totalPrometidoPendiente.toFixed(2)} (${pct(r.totalPrometidoPendiente)}%)</div>
+      <div style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px;">
+        Total conocido: <b>$${r.totalConocido.toFixed(2)}</b> &nbsp;·&nbsp;
+        ${r.donacionesFiltradas.length} donación(es) &nbsp;·&nbsp; ${r.promesasPendientes.length} promesa(s) pendiente(s)
+      </div>`;
+  }
+
+  dibujarGraficoResumenDonaciones(r, sufijo);
+  renderDetalleResumenDon(r, sufijo);
+}
+
+function dibujarGraficoResumenDonaciones(r, sufijo){
+  sufijo = sufijo || '';
+  const canvas = document.getElementById('graficoResumenDon' + sufijo);
+  if (!canvas || typeof Chart === 'undefined') return;
+  const data = {
+    labels: ['Donado / pagado', 'Sigue en promesa'],
+    datasets: [{
+      data: [Number(r.totalDonado.toFixed(2)), Number(r.totalPrometidoPendiente.toFixed(2))],
+      backgroundColor: ['#3E7A57', '#E3A93B'],
+      borderWidth: 0
+    }]
+  };
+  if (graficosResumenDon[sufijo]){
+    graficosResumenDon[sufijo].data = data;
+    graficosResumenDon[sufijo].update();
+    return;
+  }
+  graficosResumenDon[sufijo] = new Chart(canvas.getContext('2d'), {
+    type: 'doughnut',
+    data,
+    options: {
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx){
+              const total = ctx.dataset.data.reduce((a,b)=>a+b,0) || 1;
+              const pct = (ctx.parsed / total * 100).toFixed(1);
+              return `${ctx.label}: $${ctx.parsed.toFixed(2)} (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function toggleDetalleResumenDon(sufijo){
+  sufijo = sufijo || '';
+  const wrap = document.getElementById('detalleResumenDonWrap' + sufijo);
+  const txt = document.getElementById('detalleResumenDonToggleText' + sufijo);
+  if (!wrap || !txt) return;
+  const visible = wrap.style.display !== 'none';
+  wrap.style.display = visible ? 'none' : 'block';
+  txt.textContent = visible ? 'Ver detalle en pantalla' : 'Ocultar detalle';
+}
+
+function renderDetalleResumenDon(r, sufijo){
+  sufijo = sufijo || '';
+  const wrap = document.getElementById('detalleResumenDonBody' + sufijo);
+  if (!wrap) return;
+
+  const filaVacia = (cols)=>`<tr><td colspan="${cols}" style="text-align:center;color:#8b98a3;padding:16px;">(ninguno)</td></tr>`;
+
+  const tablaDonaciones = `
+    <h4 style="font-family:'Baloo 2',sans-serif;color:var(--green);margin:0 0 6px;font-size:15px;">Donado / pagado (${r.donacionesFiltradas.length})</h4>
+    <table>
+      <thead><tr><th>Donante</th><th>Integrante</th><th>Monto</th><th>Fecha</th></tr></thead>
+      <tbody>${r.donacionesFiltradas.length ? r.donacionesFiltradas.map(d=>`
+        <tr>
+          <td>${escapeHtml(d.nombre_donante)}</td>
+          <td>${escapeHtml(d.integrante_banda || '—')}</td>
+          <td class="mono-amt">$${Number(d.monto).toFixed(2)}</td>
+          <td class="num">${d.fecha_donacion || '—'}</td>
+        </tr>`).join('') : filaVacia(4)}</tbody>
+    </table>`;
+
+  const tablaPendientes = `
+    <h4 style="font-family:'Baloo 2',sans-serif;color:#8a5a12;margin:22px 0 6px;font-size:15px;">Sigue en promesa (${r.promesasPendientes.length})</h4>
+    <table>
+      <thead><tr><th>Donante</th><th>Integrante</th><th>Prometido</th><th>Abonado</th><th>Saldo</th></tr></thead>
+      <tbody>${r.promesasPendientes.length ? r.promesasPendientes.map(p=>`
+        <tr>
+          <td>${escapeHtml(p.nombre_donante)}</td>
+          <td>${escapeHtml(p.integrante_banda || '—')}</td>
+          <td class="mono-amt">$${Number(p.monto_prometido).toFixed(2)}</td>
+          <td class="num">$${p.abonado.toFixed(2)}</td>
+          <td class="num saldo-pos">$${p.saldo.toFixed(2)}</td>
+        </tr>`).join('') : filaVacia(5)}</tbody>
+    </table>`;
+
+  wrap.innerHTML = tablaDonaciones + tablaPendientes;
+}
+
+function generarInformePDFResumenDonaciones(sufijo){
+  sufijo = sufijo || '';
+  try {
+    if (typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF){
+      toast('No se pudo cargar la librería de PDF. Revisa tu conexión y recarga la página.');
+      return;
+    }
+    const { jsPDF } = window.jspdf;
+    if (typeof new jsPDF().autoTable !== 'function'){
+      toast('Falta un componente para armar las tablas del PDF. Recarga la página con Ctrl+Shift+R e intenta de nuevo.');
+      return;
+    }
+
+    const selEl = document.getElementById('resumenDonIntegranteSelect' + sufijo);
+    const integrante = selEl ? (selEl.value || 'TODOS') : 'TODOS';
+    const r = construirResumenDonaciones(integrante);
+    const integranteLabel = integrante === 'TODOS' ? 'Todos / general' : integrante;
+
+    const doc = new jsPDF({ unit:'mm', format:'letter' });
+    const navy = [18,41,59];
+    const gold = [227,169,59];
+
+    doc.setFillColor(...navy);
+    doc.rect(0,0,216,22,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(14);
+    doc.text('C.E.B.G El Jiral — Banda de Música', 12, 10);
+    doc.setFontSize(10);
+    doc.setTextColor(...gold);
+    doc.text('Resumen de donaciones', 12, 17);
+
+    doc.setTextColor(60,60,60);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.text(`Integrante: ${integranteLabel}`, 12, 29);
+    doc.text(`Generado: ${new Date().toLocaleDateString()}`, 150, 29);
+
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(10);
+    doc.setTextColor(...navy);
+    doc.text(`Donado/pagado: $${r.totalDonado.toFixed(2)}   |   Pendiente en promesa: $${r.totalPrometidoPendiente.toFixed(2)}   |   Total conocido: $${r.totalConocido.toFixed(2)}`, 12, 36);
+
+    let y = 46;
+
+    doc.setFontSize(11);
+    doc.setTextColor(...navy);
+    doc.text('Donado / pagado', 12, y);
+    doc.autoTable({
+      startY: y + 3,
+      head: [['Donante','Integrante','Monto','Fecha']],
+      body: r.donacionesFiltradas.length
+        ? r.donacionesFiltradas.map(d=>[d.nombre_donante, d.integrante_banda || '—', '$'+Number(d.monto).toFixed(2), d.fecha_donacion || '—'])
+        : [['—','(ninguno)','—','—']],
+      theme: 'striped',
+      headStyles: { fillColor: [62,122,87] },
+      styles: { fontSize: 8.5 },
+      margin: { left: 12, right: 12 }
+    });
+    y = doc.lastAutoTable.finalY + 10;
+
+    if (y > 250){ doc.addPage(); y = 18; }
+    doc.setFontSize(11);
+    doc.setTextColor(...navy);
+    doc.text('Sigue en promesa (pendiente)', 12, y);
+    doc.autoTable({
+      startY: y + 3,
+      head: [['Donante','Integrante','Prometido','Abonado','Saldo']],
+      body: r.promesasPendientes.length
+        ? r.promesasPendientes.map(p=>[p.nombre_donante, p.integrante_banda || '—', '$'+Number(p.monto_prometido).toFixed(2), '$'+p.abonado.toFixed(2), '$'+p.saldo.toFixed(2)])
+        : [['—','(ninguno)','—','—','—']],
+      theme: 'striped',
+      headStyles: { fillColor: [227,169,59], textColor: [30,30,30] },
+      styles: { fontSize: 8.5 },
+      margin: { left: 12, right: 12 }
+    });
+
+    const nombreArchivo = `informe_donaciones_${integrante}_${hoyISO()}.pdf`;
+    doc.save(nombreArchivo);
+  } catch(e){
+    console.error('Error generando el informe de donaciones:', e);
+    toast('No se pudo generar el PDF: ' + (e && e.message ? e.message : 'error desconocido'));
+  }
 }
 
 /* ---------------- Modal: agregar abono a una promesa ---------------- */
