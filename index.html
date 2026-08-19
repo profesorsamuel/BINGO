@@ -514,6 +514,7 @@
       <div class="tabs">
         <button class="tab active" data-tab="graduar" onclick="switchTab('graduar')">Registrar pago</button>
         <button class="tab" data-tab="graduandos" onclick="switchTab('graduandos')">Historial de graduandos</button>
+        <button class="tab" data-tab="recibosGrad" onclick="switchTab('recibosGrad')">Descargar recibos</button>
       </div>
 
       <!-- --- Registrar pago de graduando --- -->
@@ -639,6 +640,42 @@
             <div id="detalleGraduandosBody"></div>
           </div>
         </div>
+      </section>
+
+      <!-- --- Descargar recibos (individual o por salon completo) --- -->
+      <section id="tab-recibosGrad" class="card" style="display:none;">
+        <h3 class="section-title">Descargar recibos de graduandos</h3>
+        <p class="section-sub">Marca los estudiantes que quieras (o filtra por salón y marca "Seleccionar todos") y descarga el recibo en PDF de cada uno de una sola vez.</p>
+
+        <div class="grid2" style="margin-bottom:10px;">
+          <div>
+            <label for="recibosFiltroSalon">Filtrar por salón</label>
+            <select id="recibosFiltroSalon" onchange="renderTablaRecibosGrad()">
+              <option value="TODOS">Todos los salones</option>
+              <option value="9A">9°A</option>
+              <option value="9B">9°B</option>
+              <option value="9C">9°C</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="tableWrapRecibosGrad">
+          <table id="recibosGradTable">
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="recibosSeleccionarTodos" onchange="toggleSeleccionarTodosRecibos(this.checked)" /></th>
+                <th>Salón</th><th>Estudiante</th><th>Total</th><th>Pagado</th><th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="recibosGradBody"></tbody>
+          </table>
+          <div class="empty" id="emptyRecibosGradMsg" style="display:none;">Aún no se han registrado graduandos.</div>
+        </div>
+
+        <div class="actions-bar">
+          <button class="btn-primary" style="width:auto;margin-top:0;" onclick="descargarRecibosSeleccionados()">Descargar recibos seleccionados</button>
+        </div>
+        <p class="error" id="formErrorRecibosGrad"></p>
       </section>
     </div>
   </div>
@@ -792,6 +829,7 @@ let editingPromId = null; // id de la promesa que se esta corrigiendo (null = re
 let cacheGrad = [];        // graduandos (Promocion 2026)
 let cacheAbonosGrad = [];  // todos los abonos de graduandos
 let editingGradId = null;  // id del graduando que se esta corrigiendo (null = registro nuevo)
+let seleccionadosRecibosGrad = new Set(); // ids marcados en la pestaña "Descargar recibos"
 let gradFraseIdx = 0;
 
 let abonoTipo = null;      // 'promesa' | 'graduando' -- que esta usando el modal de abono
@@ -923,7 +961,7 @@ function switchTab(name){
     registrar:'tab-registrar', historial:'tab-historial',
     donar:'tab-donar', donaciones:'tab-donaciones',
     prometer:'tab-prometer', promesas:'tab-promesas',
-    graduar:'tab-graduar', graduandos:'tab-graduandos'
+    graduar:'tab-graduar', graduandos:'tab-graduandos', recibosGrad:'tab-recibosGrad'
   };
   Object.entries(map).forEach(([key, id])=>{
     const el = document.getElementById(id);
@@ -933,6 +971,7 @@ function switchTab(name){
   if (name==='donaciones') cargarDonaciones();
   if (name==='promesas') cargarPromesas();
   if (name==='graduandos') cargarGraduandos();
+  if (name==='recibosGrad') cargarGraduandos();
 }
 
 /* ---------------- Local fallback storage (session only, used if Supabase not configured) ---------------- */
@@ -2458,6 +2497,7 @@ async function cargarGraduandos(){
   }
   renderTablaGraduandos();
   actualizarResumenGraduandos();
+  renderTablaRecibosGrad();
 }
 
 function abonadoDeGraduando(graduandoId){
@@ -2551,6 +2591,101 @@ function exportarExcelGraduandos(){
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Graduandos 2026');
   XLSX.writeFile(wb, `graduandos_promocion_2026.xlsx`);
+}
+
+/* =========================================================
+   DESCARGAR RECIBOS (individual o de un salon completo)
+   ========================================================= */
+
+/* Marca/desmarca un graduando para descargar su recibo */
+function toggleSeleccionRecibo(id, marcado){
+  if (marcado) seleccionadosRecibosGrad.add(id);
+  else seleccionadosRecibosGrad.delete(id);
+  actualizarCheckboxMaestroRecibos();
+}
+
+/* El checkbox del encabezado marca/desmarca solo lo que esta visible
+   (respeta el filtro de salon actual) */
+function toggleSeleccionarTodosRecibos(marcado){
+  const filtroSel = document.getElementById('recibosFiltroSalon');
+  const filtro = filtroSel ? filtroSel.value : 'TODOS';
+  const visibles = cacheGrad.filter(r=> filtro==='TODOS' || r.salon===filtro);
+  visibles.forEach(r=>{
+    if (marcado) seleccionadosRecibosGrad.add(r.id);
+    else seleccionadosRecibosGrad.delete(r.id);
+  });
+  renderTablaRecibosGrad();
+}
+
+/* Refleja si todos los visibles estan marcados, para el checkbox maestro */
+function actualizarCheckboxMaestroRecibos(){
+  const maestro = document.getElementById('recibosSeleccionarTodos');
+  if (!maestro) return;
+  const filtroSel = document.getElementById('recibosFiltroSalon');
+  const filtro = filtroSel ? filtroSel.value : 'TODOS';
+  const visibles = cacheGrad.filter(r=> filtro==='TODOS' || r.salon===filtro);
+  maestro.checked = visibles.length > 0 && visibles.every(r=>seleccionadosRecibosGrad.has(r.id));
+}
+
+function renderTablaRecibosGrad(){
+  const body = document.getElementById('recibosGradBody');
+  if (!body) return; // la pestaña aun no existe en el DOM (no deberia pasar)
+  const empty = document.getElementById('emptyRecibosGradMsg');
+  const filtroSel = document.getElementById('recibosFiltroSalon');
+  const filtro = filtroSel ? filtroSel.value : 'TODOS';
+
+  const visibles = cacheGrad.filter(r=> filtro==='TODOS' || r.salon===filtro);
+  body.innerHTML = '';
+
+  if (visibles.length === 0){
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    visibles.forEach(r=>{
+      const pagado = abonadoDeGraduando(r.id);
+      const saldo = Number(r.monto_total) - pagado;
+      const cancelado = saldo <= 0.005;
+      const estado = cancelado ? 'Cancelado' : (pagado > 0.005 ? 'Abonando' : 'Pendiente');
+      const marcado = seleccionadosRecibosGrad.has(r.id);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="checkbox" ${marcado ? 'checked' : ''} onchange="toggleSeleccionRecibo('${r.id}', this.checked)" /></td>
+        <td>${SALON_LABEL[r.salon] || r.salon || '—'}</td>
+        <td>${escapeHtml(r.nombre_estudiante)}</td>
+        <td class="mono-amt">$${Number(r.monto_total).toFixed(2)}</td>
+        <td class="num">$${pagado.toFixed(2)}</td>
+        <td><span class="badge ${cancelado ? 'cumplida' : 'pendiente'}">${estado}</span></td>`;
+      body.appendChild(tr);
+    });
+  }
+  actualizarCheckboxMaestroRecibos();
+}
+
+/* Descarga el recibo (con el ultimo abono registrado) de cada graduando marcado */
+async function descargarRecibosSeleccionados(){
+  const errEl = document.getElementById('formErrorRecibosGrad');
+  errEl.textContent = '';
+
+  const seleccionados = cacheGrad.filter(r=>seleccionadosRecibosGrad.has(r.id));
+  if (seleccionados.length === 0){
+    errEl.textContent = 'Marca al menos un estudiante (o usa "Seleccionar todos" arriba de la tabla).';
+    return;
+  }
+
+  for (const graduando of seleccionados){
+    const abonosDeEste = cacheAbonosGrad
+      .filter(a=>a.graduando_id===graduando.id)
+      .sort((a,b)=> new Date(a.creado_en || a.fecha) - new Date(b.creado_en || b.fecha));
+    const ultimoAbono = abonosDeEste[abonosDeEste.length - 1];
+    if (!ultimoAbono){ continue; } // no deberia pasar, pero por si acaso
+
+    const totalAbonado = abonadoDeGraduando(graduando.id);
+    const saldo = Math.max(0, Number(graduando.monto_total) - totalAbonado);
+    descargarReciboGraduando(graduando, ultimoAbono, ultimoAbono.monto, saldo, totalAbonado);
+    await new Promise(res=>setTimeout(res, 400)); // pausa breve entre descargas
+  }
+
+  toast(`Se descargaron ${seleccionados.length} recibo(s).`);
 }
 
 /* =========================================================
