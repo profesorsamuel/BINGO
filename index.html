@@ -239,6 +239,7 @@
     <select id="loginUser">
       <option value="samuel">Samuel</option>
       <option value="betzaida">Betzaida</option>
+      <option value="mirian">Mirian Valencia</option>
     </select>
 
     <label for="loginPass">Clave</label>
@@ -273,6 +274,13 @@
         <span class="mode-text">
           <span class="mode-title">Promesa de Donación</span>
           <span class="mode-desc">Aún no ha donado, pero desea apoyar</span>
+        </span>
+      </button>
+      <button class="mode-card" onclick="selectMode('graduandos')">
+        <span class="mode-icon">🎓</span>
+        <span class="mode-text">
+          <span class="mode-title">Graduandos 2026</span>
+          <span class="mode-desc">Pagos de la Promoción 2026</span>
         </span>
       </button>
     </div>
@@ -498,15 +506,91 @@
         </div>
       </section>
     </div>
+
+    <!-- ---------- MODO GRADUANDOS 2026 ---------- -->
+    <div id="modoGraduandos" style="display:none;">
+      <div class="tabs">
+        <button class="tab active" data-tab="graduar" onclick="switchTab('graduar')">Registrar pago</button>
+        <button class="tab" data-tab="graduandos" onclick="switchTab('graduandos')">Historial de graduandos</button>
+      </div>
+
+      <!-- --- Registrar pago de graduando --- -->
+      <section id="tab-graduar" class="card">
+        <h3 class="section-title">C.E.B.G El Jiral — Promoción 2026</h3>
+        <p class="section-sub">Registro de pago de graduandos</p>
+
+        <div class="grid2">
+          <div>
+            <label for="gNombre">Nombre del estudiante</label>
+            <input id="gNombre" type="text" placeholder="Ej. Maria Gonzalez" />
+          </div>
+          <div>
+            <label for="gWhatsapp">WhatsApp (para enviar el recibo)</label>
+            <input id="gWhatsapp" type="tel" placeholder="Ej. 6xxx-xxxx" />
+          </div>
+          <div>
+            <label for="gMontoTotal">Monto total a pagar ($)</label>
+            <input id="gMontoTotal" type="number" min="0" step="0.01" placeholder="0.00" />
+          </div>
+          <div>
+            <label for="gMontoPagado">Cuánto paga hoy — abono o pago completo ($)</label>
+            <input id="gMontoPagado" type="number" min="0" step="0.01" placeholder="0.00" />
+          </div>
+          <div>
+            <label for="gFecha">Fecha de pago</label>
+            <input id="gFecha" type="date" />
+          </div>
+          <div>
+            <label for="gCobra">Quién recibió</label>
+            <select id="gCobra">
+              <option value="mirian">Mirian Valencia</option>
+              <option value="samuel">Samuel</option>
+              <option value="betzaida">Betzaida</option>
+              <option value="jiral">C.E.B.G El Jiral</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="actions-bar">
+          <button class="btn-primary" style="width:auto;margin-top:0;" onclick="guardarGraduando()"><span id="guardarGradBtnText">Guardar pago</span></button>
+          <button class="btn-outline" id="cancelEditGradBtn" style="display:none;" onclick="cancelarEdicionGraduando()">Cancelar correccion</button>
+        </div>
+        <p class="error" id="formErrorGrad"></p>
+      </section>
+
+      <!-- --- Historial de graduandos --- -->
+      <section id="tab-graduandos" class="card" style="display:none;">
+        <h3 class="section-title">Graduandos — Promoción 2026
+          <span class="total-pill" id="gradTotal">$0.00 total</span>
+        </h3>
+        <p class="section-sub">Puedes registrar abonos poco a poco hasta completar el pago, corregir, enviar por WhatsApp o borrar.</p>
+
+        <div id="tableWrapGrad">
+          <table id="graduandosTable">
+            <thead>
+              <tr>
+                <th>#</th><th>Estudiante</th><th>Total</th><th>Pagado</th><th>Saldo</th><th>Estado</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="graduandosBody"></tbody>
+          </table>
+          <div class="empty" id="emptyGradMsg" style="display:none;">Aun no se han registrado pagos de graduandos.</div>
+        </div>
+
+        <div class="actions-bar">
+          <button class="btn-secondary" onclick="exportarExcelGraduandos()">Descargar Excel de graduandos</button>
+        </div>
+      </section>
+    </div>
   </div>
 
-  <footer>C.E.B.G El Jiral · Bingo &amp; Donaciones a la Banda · Control interno de cobros</footer>
+  <footer>C.E.B.G El Jiral · Bingo, Donaciones &amp; Graduandos 2026 · Control interno de cobros</footer>
 </div>
 
-<!-- ---------- MODAL: registrar abono a una promesa ---------- -->
+<!-- ---------- MODAL: registrar abono (promesa de donacion o pago de graduando) ---------- -->
 <div id="abonoOverlay" onclick="if(event.target===this) cerrarModalAbono()">
   <div id="abonoModal">
-    <h3>Registrar abono</h3>
+    <h3 id="abonoModalTitulo">Registrar abono</h3>
     <p class="sub" id="abonoDonanteLabel"></p>
 
     <label for="aMonto">Monto abonado ($)</label>
@@ -520,6 +604,7 @@
       <option value="samuel">Samuel</option>
       <option value="betzaida">Betzaida</option>
       <option value="jiral">C.E.B.G El Jiral</option>
+      <option value="mirian">Mirian Valencia</option>
     </select>
 
     <div class="actions-bar">
@@ -551,7 +636,8 @@ const BANDA_BG_IMG = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAU
 
 const USERS = {
   betzaida: { pass: "123456", label: "Betzaida" },
-  samuel:   { pass: "8441",   label: "Samuel" }
+  samuel:   { pass: "8441",   label: "Samuel" },
+  mirian:   { pass: "999999", label: "Mirian Valencia" }
 };
 
 const PRECIO_BOLETO = 5; // cada boleto vale $5 (balboas)
@@ -559,7 +645,8 @@ const PRECIO_BOLETO = 5; // cada boleto vale $5 (balboas)
 const COBRA_DONACION = {
   samuel: 'Samuel',
   betzaida: 'Betzaida',
-  jiral: 'C.E.B.G El Jiral'
+  jiral: 'C.E.B.G El Jiral',
+  mirian: 'Mirian Valencia'
 };
 
 const FRASES_DONACION = [
@@ -571,8 +658,17 @@ const FRASES_DONACION = [
   'Gracias por creer en el talento de nuestros jóvenes músicos.'
 ];
 
-let currentUser = null; // 'samuel' | 'betzaida'
-let currentMode = null; // 'bingo' | 'donacion'
+const FRASES_GRADUACION = [
+  'El futuro pertenece a quienes creen en la belleza de sus sueños.',
+  'Promoción 2026: el cierre de un capítulo, el inicio de una historia inolvidable.',
+  'Hoy celebramos el esfuerzo; mañana celebraremos tus logros.',
+  'El éxito es la suma de pequeños esfuerzos repetidos día tras día.',
+  'Un paso más cerca de tus sueños, Promoción 2026.',
+  'El conocimiento es el mejor equipaje para el camino que viene.'
+];
+
+let currentUser = null; // 'samuel' | 'betzaida' | 'mirian'
+let currentMode = null; // 'bingo' | 'donacion' | 'promesa' | 'graduandos'
 let cache = [];
 let editingId = null; // id del registro que se esta corrigiendo (null = registro nuevo)
 let cacheDon = [];
@@ -582,7 +678,14 @@ let fraseIdx = 0;
 let cacheProm = [];      // promesas de donacion
 let cacheAbonos = [];    // todos los abonos (de todas las promesas)
 let editingPromId = null; // id de la promesa que se esta corrigiendo (null = registro nuevo)
-let abonoPromesaId = null; // promesa a la que se le esta agregando un abono en el modal
+
+let cacheGrad = [];        // graduandos (Promocion 2026)
+let cacheAbonosGrad = [];  // todos los abonos de graduandos
+let editingGradId = null;  // id del graduando que se esta corrigiendo (null = registro nuevo)
+let gradFraseIdx = 0;
+
+let abonoTipo = null;      // 'promesa' | 'graduando' -- que esta usando el modal de abono
+let abonoPromesaId = null; // promesa (o graduando) a la que se le esta agregando un abono en el modal
 
 function toast(msg){
   const t = document.getElementById('toast');
@@ -622,6 +725,7 @@ function doLogout(){
   editingId = null;
   editingDonId = null;
   editingPromId = null;
+  editingGradId = null;
   sessionStorage.removeItem('jiral_user');
   document.getElementById('appView').style.display = 'none';
   document.getElementById('modeView').style.display = 'none';
@@ -653,7 +757,8 @@ function enterApp(){
   document.getElementById('appView').style.display = 'block';
   const etiquetaModo = currentMode==='bingo' ? ' · Recibos de Bingo'
     : currentMode==='donacion' ? ' · Recibos de Donación'
-    : ' · Promesas de Donación';
+    : currentMode==='promesa' ? ' · Promesas de Donación'
+    : ' · Graduandos 2026';
   document.getElementById('whoName').textContent = USERS[currentUser].label + etiquetaModo;
   document.getElementById('histWho').textContent = USERS[currentUser].label;
   showConfigNoteIfNeeded();
@@ -661,6 +766,7 @@ function enterApp(){
   document.getElementById('modoBingo').style.display = currentMode==='bingo' ? 'block' : 'none';
   document.getElementById('modoDonacion').style.display = currentMode==='donacion' ? 'block' : 'none';
   document.getElementById('modoPromesa').style.display = currentMode==='promesa' ? 'block' : 'none';
+  document.getElementById('modoGraduandos').style.display = currentMode==='graduandos' ? 'block' : 'none';
 
   if (currentMode==='bingo'){
     switchTab('registrar');
@@ -670,10 +776,14 @@ function enterApp(){
     switchTab('donar');
     prepararFormularioDonacion();
     cargarDonaciones();
-  } else {
+  } else if (currentMode==='promesa'){
     switchTab('prometer');
     prepararFormularioPromesa();
     cargarPromesas();
+  } else {
+    switchTab('graduar');
+    prepararFormularioGraduando();
+    cargarGraduandos();
   }
 }
 
@@ -683,7 +793,8 @@ function switchTab(name){
   const map = {
     registrar:'tab-registrar', historial:'tab-historial',
     donar:'tab-donar', donaciones:'tab-donaciones',
-    prometer:'tab-prometer', promesas:'tab-promesas'
+    prometer:'tab-prometer', promesas:'tab-promesas',
+    graduar:'tab-graduar', graduandos:'tab-graduandos'
   };
   Object.entries(map).forEach(([key, id])=>{
     const el = document.getElementById(id);
@@ -692,6 +803,7 @@ function switchTab(name){
   if (name==='historial') cargarPagos();
   if (name==='donaciones') cargarDonaciones();
   if (name==='promesas') cargarPromesas();
+  if (name==='graduandos') cargarGraduandos();
 }
 
 /* ---------------- Local fallback storage (session only, used if Supabase not configured) ---------------- */
@@ -1452,7 +1564,7 @@ function renderTablaPromesas(){
         <td><span class="badge ${cumplida ? 'cumplida' : 'pendiente'}">${cumplida ? 'Cumplida' : 'Pendiente'}</span></td>
         <td>
           <div class="row-actions">
-            ${cumplida ? '' : `<button class="icon-btn" onclick="abrirModalAbono('${r.id}', ${JSON.stringify(r.nombre_donante)})">Agregar abono</button>`}
+            ${cumplida ? '' : `<button class="icon-btn" onclick="abrirModalAbono('promesa', '${r.id}', ${JSON.stringify(r.nombre_donante)})">Agregar abono</button>`}
             <button class="icon-btn" onclick='iniciarEdicionPromesa(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Editar</button>
             <button class="icon-btn" onclick='compartirReciboPromesa(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Recibo</button>
             <button class="icon-btn del" onclick="borrarPromesa('${r.id}')">Borrar</button>
@@ -1501,22 +1613,36 @@ function exportarExcelPromesas(){
 }
 
 /* ---------------- Modal: agregar abono a una promesa ---------------- */
-function abrirModalAbono(promesaId, nombreDonante){
-  abonoPromesaId = promesaId;
-  document.getElementById('abonoDonanteLabel').textContent = 'Donante: ' + nombreDonante;
+function abrirModalAbono(tipo, itemId, nombre){
+  abonoTipo = tipo; // 'promesa' | 'graduando'
+  abonoPromesaId = itemId;
+  document.getElementById('abonoModalTitulo').textContent =
+    tipo==='graduando' ? 'Registrar pago' : 'Registrar abono';
+  document.getElementById('abonoDonanteLabel').textContent =
+    (tipo==='graduando' ? 'Estudiante: ' : 'Donante: ') + nombre;
   document.getElementById('aMonto').value = '';
   document.getElementById('aFecha').value = hoyISO();
-  document.getElementById('aCobra').value = (currentUser==='samuel' || currentUser==='betzaida') ? currentUser : 'jiral';
+  document.getElementById('aCobra').value =
+    (currentUser==='samuel' || currentUser==='betzaida' || currentUser==='mirian') ? currentUser : 'jiral';
   document.getElementById('formErrorAbono').textContent = '';
   document.getElementById('abonoOverlay').classList.add('show');
 }
 
 function cerrarModalAbono(){
+  abonoTipo = null;
   abonoPromesaId = null;
   document.getElementById('abonoOverlay').classList.remove('show');
 }
 
 async function guardarAbono(){
+  if (abonoTipo === 'graduando'){
+    await guardarAbonoGraduando();
+  } else {
+    await guardarAbonoPromesa();
+  }
+}
+
+async function guardarAbonoPromesa(){
   const monto = parseFloat(document.getElementById('aMonto').value);
   const fecha = document.getElementById('aFecha').value;
   const cobra = document.getElementById('aCobra').value;
@@ -1888,6 +2014,459 @@ function construirReciboAbonoPDF(abono, promesa, totalAbonado, saldo){
 
 function descargarReciboAbono(abono, promesa, totalAbonado, saldo){
   const { doc, filename } = construirReciboAbonoPDF(abono, promesa, totalAbonado, saldo);
+  doc.save(filename);
+}
+
+/* =========================================================
+   GRADUANDOS 2026 (pagos de graduacion, con abonos y WhatsApp)
+   ========================================================= */
+
+function prepararFormularioGraduando(){
+  if (!editingGradId){
+    document.getElementById('gFecha').value = hoyISO();
+    document.getElementById('gCobra').value =
+      (currentUser==='mirian' || currentUser==='samuel' || currentUser==='betzaida') ? currentUser : 'mirian';
+  }
+}
+
+function otraFraseGraduacion(){
+  gradFraseIdx = (gradFraseIdx + 1) % FRASES_GRADUACION.length;
+  return FRASES_GRADUACION[gradFraseIdx];
+}
+
+/* Abre WhatsApp con el numero del estudiante (Panama +507 por defecto) */
+function abrirWhatsapp(numero){
+  if (!numero){ toast('Este graduando no tiene numero de WhatsApp guardado.'); return; }
+  const digits = String(numero).replace(/\D/g,'');
+  const conCodigo = digits.length <= 8 ? '507' + digits : digits;
+  window.open(`https://wa.me/${conCodigo}`, '_blank');
+}
+
+/* ---------------- Corregir un graduando ya guardado ---------------- */
+function iniciarEdicionGraduando(r){
+  editingGradId = r.id;
+  document.getElementById('gNombre').value = r.nombre_estudiante;
+  document.getElementById('gWhatsapp').value = r.whatsapp || '';
+  document.getElementById('gMontoTotal').value = r.monto_total;
+  document.getElementById('gMontoPagado').value = '';
+  document.getElementById('gFecha').value = (r.fecha_pago || '').slice(0,10);
+  document.getElementById('gCobra').value = r.cobra || 'mirian';
+  document.getElementById('formErrorGrad').textContent = '';
+  document.getElementById('guardarGradBtnText').textContent = 'Actualizar datos';
+  document.getElementById('cancelEditGradBtn').style.display = 'inline-block';
+  switchTab('graduar');
+  window.scrollTo({ top:0, behavior:'smooth' });
+  toast('Corrigiendo los datos de ' + r.nombre_estudiante);
+}
+
+function cancelarEdicionGraduando(){
+  editingGradId = null;
+  document.getElementById('gNombre').value = '';
+  document.getElementById('gWhatsapp').value = '';
+  document.getElementById('gMontoTotal').value = '';
+  document.getElementById('gMontoPagado').value = '';
+  document.getElementById('formErrorGrad').textContent = '';
+  document.getElementById('guardarGradBtnText').textContent = 'Guardar pago';
+  document.getElementById('cancelEditGradBtn').style.display = 'none';
+  prepararFormularioGraduando();
+}
+
+/* ---------------- Guardar graduando (registro nuevo o correccion) ---------------- */
+let localFallbackGrad = [];
+let localFallbackAbonosGrad = [];
+
+async function guardarGraduando(){
+  const nombre = document.getElementById('gNombre').value.trim();
+  const whatsapp = document.getElementById('gWhatsapp').value.trim();
+  const montoTotal = parseFloat(document.getElementById('gMontoTotal').value);
+  const montoPagado = parseFloat(document.getElementById('gMontoPagado').value);
+  const fecha = document.getElementById('gFecha').value;
+  const cobra = document.getElementById('gCobra').value;
+  const errEl = document.getElementById('formErrorGrad');
+
+  if (!nombre){ errEl.textContent = 'Escribe el nombre del estudiante.'; return; }
+  if (isNaN(montoTotal) || montoTotal <= 0){ errEl.textContent = 'Escribe el monto total a pagar.'; return; }
+  if (!fecha){ errEl.textContent = 'Escribe la fecha de pago.'; return; }
+
+  if (editingGradId){
+    // Correccion de datos (nombre, whatsapp, monto total, fecha, cobra) - no crea un nuevo abono
+    errEl.textContent = '';
+    if (configuredOK){
+      const { error } = await supa.from('graduandos')
+        .update({ nombre_estudiante: nombre, whatsapp: whatsapp || null, monto_total: montoTotal, fecha_pago: fecha, cobra })
+        .eq('id', editingGradId);
+      if (error){ toast('Error al actualizar: ' + error.message); return; }
+    } else {
+      const idx = localFallbackGrad.findIndex(r=>r.id===editingGradId);
+      if (idx > -1){
+        localFallbackGrad[idx] = { ...localFallbackGrad[idx], nombre_estudiante: nombre, whatsapp: whatsapp || null, monto_total: montoTotal, fecha_pago: fecha, cobra };
+      }
+    }
+    toast('Datos corregidos correctamente');
+    cancelarEdicionGraduando();
+    cargarGraduandos();
+    return;
+  }
+
+  if (isNaN(montoPagado) || montoPagado <= 0){ errEl.textContent = 'Escribe cuanto paga hoy (abono o pago completo).'; return; }
+  if (montoPagado - montoTotal > 0.01){ errEl.textContent = 'El pago no puede ser mayor al monto total.'; return; }
+  errEl.textContent = '';
+
+  const registro = {
+    nombre_estudiante: nombre,
+    whatsapp: whatsapp || null,
+    monto_total: montoTotal,
+    fecha_pago: fecha,
+    cobra: cobra,
+    creado_en: new Date().toISOString()
+  };
+
+  let graduandoGuardado;
+  if (configuredOK){
+    const { data, error } = await supa.from('graduandos').insert(registro).select().single();
+    if (error){ toast('Error al guardar: ' + error.message); return; }
+    graduandoGuardado = data;
+  } else {
+    registro.id = 'local-grad-' + Date.now();
+    registro.numero_recibo = localFallbackGrad.length + 1;
+    localFallbackGrad.push(registro);
+    graduandoGuardado = registro;
+  }
+
+  // El primer pago se registra tambien como el primer abono
+  const abonoRegistro = {
+    graduando_id: graduandoGuardado.id,
+    monto: montoPagado,
+    fecha: fecha,
+    cobra: cobra,
+    creado_en: new Date().toISOString()
+  };
+
+  let abonoGuardado;
+  if (configuredOK){
+    const { data, error } = await supa.from('abonos_graduando').insert(abonoRegistro).select().single();
+    if (error){ toast('Se guardó el estudiante, pero no se pudo registrar el pago: ' + error.message); return; }
+    abonoGuardado = data;
+  } else {
+    abonoRegistro.id = 'local-abonograd-' + Date.now();
+    abonoRegistro.numero_abono = localFallbackAbonosGrad.length + 1;
+    localFallbackAbonosGrad.push(abonoRegistro);
+    abonoGuardado = abonoRegistro;
+  }
+
+  document.getElementById('gNombre').value = '';
+  document.getElementById('gWhatsapp').value = '';
+  document.getElementById('gMontoTotal').value = '';
+  document.getElementById('gMontoPagado').value = '';
+  prepararFormularioGraduando();
+  toast('Pago registrado correctamente');
+  await cargarGraduandos();
+
+  const saldo = Math.max(0, montoTotal - montoPagado);
+  descargarReciboGraduando(graduandoGuardado, abonoGuardado, montoPagado, saldo);
+}
+
+/* ---------------- Guardar un abono adicional (desde el modal generico) ---------------- */
+async function guardarAbonoGraduando(){
+  const monto = parseFloat(document.getElementById('aMonto').value);
+  const fecha = document.getElementById('aFecha').value;
+  const cobra = document.getElementById('aCobra').value;
+  const errEl = document.getElementById('formErrorAbono');
+
+  if (isNaN(monto) || monto <= 0){ errEl.textContent = 'Escribe el monto pagado.'; return; }
+  if (!fecha){ errEl.textContent = 'Escribe la fecha del pago.'; return; }
+  errEl.textContent = '';
+
+  const graduando = cacheGrad.find(g=>g.id===abonoPromesaId);
+  if (!graduando){ toast('No se encontro al graduando.'); return; }
+
+  const yaAbonado = abonadoDeGraduando(graduando.id);
+  const saldoAntes = Number(graduando.monto_total) - yaAbonado;
+  if (monto - saldoAntes > 0.01){
+    errEl.textContent = `El pago no puede ser mayor al saldo pendiente ($${saldoAntes.toFixed(2)}).`;
+    return;
+  }
+
+  const registro = {
+    graduando_id: graduando.id,
+    monto: monto,
+    fecha: fecha,
+    cobra: cobra,
+    creado_en: new Date().toISOString()
+  };
+
+  let abonoGuardado;
+  if (configuredOK){
+    const { data, error } = await supa.from('abonos_graduando').insert(registro).select().single();
+    if (error){ toast('Error al guardar el pago: ' + error.message); return; }
+    abonoGuardado = data;
+  } else {
+    registro.id = 'local-abonograd-' + Date.now();
+    registro.numero_abono = localFallbackAbonosGrad.length + 1;
+    localFallbackAbonosGrad.push(registro);
+    abonoGuardado = registro;
+  }
+
+  cerrarModalAbono();
+  toast('Pago registrado correctamente');
+  await cargarGraduandos();
+
+  const nuevoAbonado = yaAbonado + monto;
+  const nuevoSaldo = Math.max(0, Number(graduando.monto_total) - nuevoAbonado);
+  descargarReciboGraduando(graduando, abonoGuardado, monto, nuevoSaldo, nuevoAbonado);
+}
+
+/* ---------------- Cargar todos los graduandos y sus abonos ---------------- */
+async function cargarGraduandos(){
+  if (configuredOK){
+    const { data, error } = await supa.from('graduandos')
+      .select('*')
+      .order('creado_en', { ascending:false });
+    if (error){ toast('Error al cargar graduandos: ' + error.message); return; }
+    cacheGrad = data || [];
+
+    const { data: abonosData, error: errorAbonos } = await supa.from('abonos_graduando')
+      .select('*')
+      .order('creado_en', { ascending:true });
+    if (errorAbonos){ toast('Error al cargar pagos: ' + errorAbonos.message); return; }
+    cacheAbonosGrad = abonosData || [];
+  } else {
+    cacheGrad = localFallbackGrad.slice().reverse();
+    cacheAbonosGrad = localFallbackAbonosGrad.slice();
+  }
+  renderTablaGraduandos();
+}
+
+function abonadoDeGraduando(graduandoId){
+  return cacheAbonosGrad
+    .filter(a=>a.graduando_id===graduandoId)
+    .reduce((sum, a)=>sum + Number(a.monto), 0);
+}
+
+function renderTablaGraduandos(){
+  const body = document.getElementById('graduandosBody');
+  const empty = document.getElementById('emptyGradMsg');
+  body.innerHTML = '';
+  let totalGeneral = 0;
+
+  if (cacheGrad.length === 0){
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    cacheGrad.forEach((r, idx)=>{
+      totalGeneral += Number(r.monto_total);
+      const pagado = abonadoDeGraduando(r.id);
+      const saldo = Math.max(0, Number(r.monto_total) - pagado);
+      const cancelado = saldo <= 0.005;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="num">${r.numero_recibo ?? (cacheGrad.length-idx)}</td>
+        <td>${escapeHtml(r.nombre_estudiante)}</td>
+        <td class="mono-amt">$${Number(r.monto_total).toFixed(2)}</td>
+        <td class="num">$${pagado.toFixed(2)}</td>
+        <td class="num ${cancelado ? 'saldo-zero' : 'saldo-pos'}">$${saldo.toFixed(2)}</td>
+        <td><span class="badge ${cancelado ? 'cumplida' : 'pendiente'}">${cancelado ? 'Cancelado' : 'Pendiente'}</span></td>
+        <td>
+          <div class="row-actions">
+            ${cancelado ? '' : `<button class="icon-btn" onclick="abrirModalAbono('graduando', '${r.id}', ${JSON.stringify(r.nombre_estudiante)})">Agregar abono</button>`}
+            <button class="icon-btn" onclick='iniciarEdicionGraduando(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Editar</button>
+            ${r.whatsapp ? `<button class="icon-btn" onclick="abrirWhatsapp(${JSON.stringify(r.whatsapp)})">WhatsApp</button>` : ''}
+            <button class="icon-btn del" onclick="borrarGraduando('${r.id}')">Borrar</button>
+          </div>
+        </td>`;
+      body.appendChild(tr);
+    });
+  }
+  document.getElementById('gradTotal').textContent = '$' + totalGeneral.toFixed(2) + ' total';
+}
+
+/* ---------------- Borrar graduando ---------------- */
+async function borrarGraduando(id){
+  if (!confirm('Borrar este graduando y todos sus pagos?')) return;
+  if (configuredOK){
+    const { error } = await supa.from('graduandos').delete().eq('id', id);
+    if (error){ toast('Error al borrar: ' + error.message); return; }
+  } else {
+    localFallbackGrad = localFallbackGrad.filter(r=>r.id!==id);
+    localFallbackAbonosGrad = localFallbackAbonosGrad.filter(a=>a.graduando_id!==id);
+  }
+  toast('Graduando eliminado');
+  cargarGraduandos();
+}
+
+/* ---------------- Exportar Excel de graduandos ---------------- */
+function exportarExcelGraduandos(){
+  if (cacheGrad.length === 0){ toast('No hay graduandos para exportar.'); return; }
+  const rows = cacheGrad.map(r=>{
+    const pagado = abonadoDeGraduando(r.id);
+    return {
+      'No. Recibo': r.numero_recibo,
+      'Estudiante': r.nombre_estudiante,
+      'WhatsApp': r.whatsapp || '',
+      'Monto total': Number(r.monto_total),
+      'Pagado': pagado,
+      'Saldo': Math.max(0, Number(r.monto_total) - pagado),
+      'Fecha de pago': r.fecha_pago,
+      'Recibido por': COBRA_DONACION[r.cobra] || r.cobra
+    };
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Graduandos 2026');
+  XLSX.writeFile(wb, `graduandos_promocion_2026.xlsx`);
+}
+
+/* ---------------- Recibo de pago de GRADUANDO en PDF ---------------- */
+function construirReciboGraduandoPDF(graduando, abono, montoPagadoHoy, saldo, totalAbonado){
+  const { jsPDF } = window.jspdf;
+  const navy = [18,41,59];
+  const gold = [227,169,59];
+  const green = [62,122,87];
+  const cream = [251,244,228];
+  const cancelado = saldo <= 0.005;
+  const abonadoTotal = totalAbonado != null ? totalAbonado : montoPagadoHoy;
+  const lema = FRASES_GRADUACION[Math.floor(Math.random() * FRASES_GRADUACION.length)];
+
+  const doc = new jsPDF({ unit:'mm', format:[100, 150] });
+
+  // Imagen de fondo (camiseta de la Banda) como marca de agua suave
+  try {
+    doc.saveGraphicsState();
+    doc.setGState(new doc.GState({ opacity: 0.12 }));
+    doc.addImage(BANDA_BG_IMG, 'JPEG', 0, 45, 100, 100);
+    doc.restoreGraphicsState();
+  } catch(e){}
+
+  doc.setFillColor(...navy);
+  doc.rect(0,0,100,30,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(13);
+  doc.text('C.E.B.G EL JIRAL', 50, 11, { align:'center' });
+  doc.setFontSize(9.5);
+  doc.setTextColor(...gold);
+  doc.text('PROMOCIÓN 2026', 50, 18, { align:'center' });
+  doc.setFontSize(8.5);
+  doc.setTextColor(255,255,255);
+  doc.text('RECIBO DE PAGO - GRADUANDOS', 50, 24.5, { align:'center' });
+
+  let y = 38;
+
+  if (cancelado){
+    doc.setFillColor(...green);
+    doc.rect(0, 30, 100, 9, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(9);
+    doc.text('★ CANCELADO ★', 50, 36, { align:'center' });
+    y = 46;
+  }
+
+  doc.setTextColor(30,30,30);
+  doc.setFont('helvetica','normal');
+
+  const numero = abono.numero_abono ?? '---';
+  const fecha = new Date((abono.fecha || '') + 'T00:00:00');
+
+  const line = (label, value)=>{
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(9);
+    doc.text(label, 8, y);
+    doc.setFont('helvetica','normal');
+    doc.text(String(value), 42, y);
+    y += 7.5;
+  };
+
+  line('No. Recibo:', numero);
+  line('Estudiante:', graduando.nombre_estudiante);
+  line('Fecha de pago:', fecha.toLocaleDateString());
+  line('Recibió:', COBRA_DONACION[abono.cobra] || abono.cobra);
+  if (graduando.whatsapp){
+    line('WhatsApp:', graduando.whatsapp);
+  }
+
+  y += 3;
+
+  // Caja destacada con el monto pagado hoy
+  doc.setFillColor(...cream);
+  doc.setDrawColor(...gold);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(8, y, 84, 14, 2.5, 2.5, 'FD');
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...navy);
+  doc.text(cancelado && abonadoTotal === montoPagadoHoy ? 'PAGO COMPLETO' : 'ABONO / PAGO DE HOY', 50, y + 5.5, { align:'center' });
+  doc.setFontSize(13);
+  doc.setTextColor(...green);
+  doc.text('$' + Number(montoPagadoHoy).toFixed(2), 50, y + 11.5, { align:'center' });
+  y += 21;
+
+  const total = Number(graduando.monto_total);
+  const pct = Math.max(0, Math.min(1, abonadoTotal / total));
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...navy);
+  doc.text('PROGRESO DEL PAGO', 8, y);
+  y += 5;
+  doc.setFillColor(230,225,210);
+  doc.roundedRect(8, y, 84, 5, 2.5, 2.5, 'F');
+  doc.setFillColor(...(cancelado ? green : gold));
+  doc.roundedRect(8, y, Math.max(6, 84 * pct), 5, 2.5, 2.5, 'F');
+  y += 9;
+
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(8);
+  doc.setTextColor(70,70,70);
+  doc.text(`Monto total: $${total.toFixed(2)}`, 8, y);
+  doc.text(`Pagado: $${abonadoTotal.toFixed(2)}`, 8, y + 5);
+  doc.setFont('helvetica','bold');
+  doc.setTextColor(...(cancelado ? green : [180,60,40]));
+  doc.text(`Saldo pendiente: $${saldo.toFixed(2)}`, 8, y + 10);
+  y += 20;
+
+  doc.setDrawColor(...gold);
+  doc.setLineWidth(0.5);
+  doc.line(8, y, 92, y);
+  y += 8;
+
+  doc.setFont('helvetica','italic');
+  doc.setFontSize(9);
+  doc.setTextColor(...navy);
+  const doc2 = new jsPDF({ unit:'mm', format:[100,50] }); // helper para medir texto
+  const lemaLines = doc2.splitTextToSize('"' + lema + '"', 84);
+  doc.text(lemaLines, 50, y, { align:'center' });
+  y += lemaLines.length * 5 + 8;
+
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(120,120,120);
+  doc.text('Contacto: 6883-6634 - C.E.B.G El Jiral', 50, y, { align:'center' });
+
+  const filename = `graduando_${numero}_${(graduando.nombre_estudiante||'').replace(/\s+/g,'_')}.pdf`;
+  return { doc, filename };
+}
+
+function descargarReciboGraduando(graduando, abono, montoPagadoHoy, saldo, totalAbonado){
+  const { doc, filename } = construirReciboGraduandoPDF(graduando, abono, montoPagadoHoy, saldo, totalAbonado);
+  doc.save(filename);
+}
+
+async function compartirReciboGraduando(graduando, abono, montoPagadoHoy, saldo, totalAbonado){
+  const { doc, filename } = construirReciboGraduandoPDF(graduando, abono, montoPagadoHoy, saldo, totalAbonado);
+  try {
+    const blob = doc.output('blob');
+    const file = new File([blob], filename, { type: 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: 'Recibo de Pago - Graduandos 2026',
+        text: `Recibo de pago - ${graduando.nombre_estudiante}`
+      });
+      return;
+    }
+  } catch(e){
+    if (e && e.name === 'AbortError') return;
+  }
   doc.save(filename);
 }
 
