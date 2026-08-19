@@ -58,8 +58,15 @@ create table if not exists public.donaciones (
   agradecimiento text,
   frase text,
   numero_recibo integer generated always as identity,
-  creado_en timestamptz not null default now()
+  creado_en timestamptz not null default now(),
+  telefono text,
+  integrante_banda text
 );
+
+-- Si la tabla "donaciones" ya existia de antes (sin estas columnas),
+-- esto las agrega sin borrar nada de lo que ya tenias guardado.
+alter table public.donaciones add column if not exists telefono text;
+alter table public.donaciones add column if not exists integrante_banda text;
 
 alter table public.donaciones enable row level security;
 
@@ -90,8 +97,15 @@ create table if not exists public.promesas_donacion (
   cobra text not null check (cobra in ('samuel','betzaida','jiral')),
   notas text,
   numero_recibo integer generated always as identity,
-  creado_en timestamptz not null default now()
+  creado_en timestamptz not null default now(),
+  telefono text,
+  integrante_banda text
 );
+
+-- Si la tabla "promesas_donacion" ya existia de antes (sin estas columnas),
+-- esto las agrega sin borrar nada de lo que ya tenias guardado.
+alter table public.promesas_donacion add column if not exists telefono text;
+alter table public.promesas_donacion add column if not exists integrante_banda text;
 
 alter table public.promesas_donacion enable row level security;
 
