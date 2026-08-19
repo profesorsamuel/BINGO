@@ -11,6 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
   :root{
     --navy:#12293B;
@@ -514,6 +515,7 @@
       <div class="tabs">
         <button class="tab active" data-tab="graduar" onclick="switchTab('graduar')">Registrar pago</button>
         <button class="tab" data-tab="graduandos" onclick="switchTab('graduandos')">Historial de graduandos</button>
+        <button class="tab" data-tab="resumenGrad" onclick="switchTab('resumenGrad')">Resumen de pagos</button>
         <button class="tab" data-tab="recibosGrad" onclick="switchTab('recibosGrad')">Descargar recibos</button>
       </div>
 
@@ -609,36 +611,37 @@
           <button class="btn-outline" onclick="importarAbonos9C()">Importar abonos (salón 9C)</button>
         </div>
         <p class="section-sub" style="margin-top:-6px;">El botón "Importar abonos (salón 9C)" carga de una sola vez los abonos y pagos completos del salón 9C que ya me pasaste, todos con la fecha de hoy, y descarga el recibo en PDF de cada estudiante para que se los envíes. Si ya lo usaste antes, lo puedes volver a presionar sin miedo: a los estudiantes que ya estén cargados simplemente los salta.</p>
+      </section>
 
-        <div style="margin-top:26px;border-top:1px solid var(--line);padding-top:18px;">
-          <h3 class="section-title">Resumen de pagos</h3>
-          <p class="section-sub">Porcentaje de estudiantes que ya pagaron completo, que están abonando, y que no han pagado nada — en total o por salón.</p>
+      <!-- --- Resumen de pagos, grafica e informe PDF --- -->
+      <section id="tab-resumenGrad" class="card" style="display:none;">
+        <h3 class="section-title">Resumen de pagos</h3>
+        <p class="section-sub">Porcentaje de estudiantes que ya pagaron completo, que están abonando, y que no han pagado nada — en total o por salón.</p>
 
-          <div class="grid2">
-            <div>
-              <label for="resumenGrupoSelect">Grupo</label>
-              <select id="resumenGrupoSelect" onchange="actualizarResumenGraduandos()">
-                <option value="TODOS">Todos los salones</option>
-                <option value="9A">9°A</option>
-                <option value="9B">9°B</option>
-                <option value="9C">9°C</option>
-              </select>
-            </div>
+        <div class="grid2">
+          <div>
+            <label for="resumenGrupoSelect">Grupo</label>
+            <select id="resumenGrupoSelect" onchange="actualizarResumenGraduandos()">
+              <option value="TODOS">Todos los salones</option>
+              <option value="9A">9°A</option>
+              <option value="9B">9°B</option>
+              <option value="9C">9°C</option>
+            </select>
           </div>
+        </div>
 
-          <div style="display:flex;gap:26px;flex-wrap:wrap;align-items:center;margin-top:16px;">
-            <canvas id="graficoGraduandos" width="220" height="220" style="max-width:220px;flex:none;"></canvas>
-            <div id="resumenStats" style="flex:1;min-width:230px;font-size:14px;line-height:1.8;"></div>
-          </div>
+        <div style="display:flex;gap:26px;flex-wrap:wrap;align-items:center;margin-top:16px;">
+          <canvas id="graficoGraduandos" width="220" height="220" style="max-width:220px;flex:none;"></canvas>
+          <div id="resumenStats" style="flex:1;min-width:230px;font-size:14px;line-height:1.8;"></div>
+        </div>
 
-          <div class="actions-bar">
-            <button class="btn-outline" onclick="toggleDetalleGraduandos()"><span id="detalleToggleText">Ver detalle en pantalla</span></button>
-            <button class="btn-secondary" onclick="generarInformePDFGraduandos()">Descargar informe PDF</button>
-          </div>
+        <div class="actions-bar">
+          <button class="btn-outline" onclick="toggleDetalleGraduandos()"><span id="detalleToggleText">Ver detalle en pantalla</span></button>
+          <button class="btn-secondary" onclick="generarInformePDFGraduandos()">Descargar informe PDF</button>
+        </div>
 
-          <div id="detalleGraduandosWrap" style="display:none;margin-top:22px;">
-            <div id="detalleGraduandosBody"></div>
-          </div>
+        <div id="detalleGraduandosWrap" style="display:none;margin-top:22px;">
+          <div id="detalleGraduandosBody"></div>
         </div>
       </section>
 
@@ -961,7 +964,8 @@ function switchTab(name){
     registrar:'tab-registrar', historial:'tab-historial',
     donar:'tab-donar', donaciones:'tab-donaciones',
     prometer:'tab-prometer', promesas:'tab-promesas',
-    graduar:'tab-graduar', graduandos:'tab-graduandos', recibosGrad:'tab-recibosGrad'
+    graduar:'tab-graduar', graduandos:'tab-graduandos',
+    resumenGrad:'tab-resumenGrad', recibosGrad:'tab-recibosGrad'
   };
   Object.entries(map).forEach(([key, id])=>{
     const el = document.getElementById(id);
@@ -971,6 +975,7 @@ function switchTab(name){
   if (name==='donaciones') cargarDonaciones();
   if (name==='promesas') cargarPromesas();
   if (name==='graduandos') cargarGraduandos();
+  if (name==='resumenGrad') cargarGraduandos();
   if (name==='recibosGrad') cargarGraduandos();
 }
 
@@ -2662,6 +2667,35 @@ function renderTablaRecibosGrad(){
 }
 
 /* Descarga el recibo (con el ultimo abono registrado) de cada graduando marcado */
+/* Descarga varios PDFs juntos como UN SOLO archivo .zip.
+   Esto evita que el navegador bloquee en silencio las descargas
+   multiples seguidas (Chrome/Edge suelen descartar la 2da, 3ra, etc.
+   descarga automatica sin avisar nada en la consola). */
+async function descargarComoZip(items, nombreZip){
+  if (typeof JSZip === 'undefined'){
+    toast('Falta la librería para armar el ZIP (revisa tu conexión). Descargando uno por uno en su lugar...');
+    for (const it of items){
+      it.doc.save(it.filename);
+      await new Promise(res=>setTimeout(res, 600));
+    }
+    return;
+  }
+  const zip = new JSZip();
+  items.forEach(it=>{
+    const blob = it.doc.output('blob');
+    zip.file(it.filename, blob);
+  });
+  const zipBlob = await zip.generateAsync({ type:'blob' });
+  const url = URL.createObjectURL(zipBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nombreZip;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+}
+
 async function descargarRecibosSeleccionados(){
   const errEl = document.getElementById('formErrorRecibosGrad');
   errEl.textContent = '';
@@ -2672,20 +2706,44 @@ async function descargarRecibosSeleccionados(){
     return;
   }
 
-  for (const graduando of seleccionados){
-    const abonosDeEste = cacheAbonosGrad
-      .filter(a=>a.graduando_id===graduando.id)
-      .sort((a,b)=> new Date(a.creado_en || a.fecha) - new Date(b.creado_en || b.fecha));
-    const ultimoAbono = abonosDeEste[abonosDeEste.length - 1];
-    if (!ultimoAbono){ continue; } // no deberia pasar, pero por si acaso
+  const btn = document.querySelector('#tab-recibosGrad .btn-primary');
+  if (btn) btn.disabled = true;
+  toast(`Armando ${seleccionados.length} recibo(s) en un ZIP...`);
 
-    const totalAbonado = abonadoDeGraduando(graduando.id);
-    const saldo = Math.max(0, Number(graduando.monto_total) - totalAbonado);
-    descargarReciboGraduando(graduando, ultimoAbono, ultimoAbono.monto, saldo, totalAbonado);
-    await new Promise(res=>setTimeout(res, 400)); // pausa breve entre descargas
+  try {
+    const items = [];
+    let saltados = 0;
+
+    for (const graduando of seleccionados){
+      const abonosDeEste = cacheAbonosGrad
+        .filter(a=>a.graduando_id===graduando.id)
+        .sort((a,b)=> new Date(a.creado_en || a.fecha) - new Date(b.creado_en || b.fecha));
+      const ultimoAbono = abonosDeEste[abonosDeEste.length - 1];
+      if (!ultimoAbono){
+        console.warn('Sin abonos registrados, se salta:', graduando.nombre_estudiante);
+        saltados++;
+        continue;
+      }
+
+      const totalAbonado = abonadoDeGraduando(graduando.id);
+      const saldo = Math.max(0, Number(graduando.monto_total) - totalAbonado);
+      const { doc, filename } = construirReciboGraduandoPDF(graduando, ultimoAbono, ultimoAbono.monto, saldo, totalAbonado);
+      items.push({ doc, filename });
+    }
+
+    if (items.length === 0){
+      errEl.textContent = 'Ninguno de los seleccionados tiene abonos registrados todavía.';
+      return;
+    }
+
+    await descargarComoZip(items, `recibos_graduandos_${hoyISO()}.zip`);
+    toast(`Listo: ${items.length} recibo(s) descargados en un ZIP${saltados ? ` (${saltados} sin abonos, se saltaron)` : ''}.`);
+  } catch(e){
+    console.error('Error descargando recibos seleccionados:', e);
+    errEl.textContent = 'Algo falló armando el ZIP: ' + (e && e.message ? e.message : 'error desconocido');
+  } finally {
+    if (btn) btn.disabled = false;
   }
-
-  toast(`Se descargaron ${seleccionados.length} recibo(s).`);
 }
 
 /* =========================================================
