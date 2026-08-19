@@ -727,6 +727,7 @@
             <label for="gradFiltroEstado">Filtrar por estado</label>
             <select id="gradFiltroEstado" onchange="renderTablaGraduandos()">
               <option value="PENDIENTES">Pendientes y abonando (por defecto)</option>
+              <option value="NOPAGO">No han pagado nada</option>
               <option value="PAGADO">Pagado completo</option>
               <option value="TODOS">Todos (para corregir cualquiera)</option>
             </select>
@@ -3197,6 +3198,7 @@ function renderTablaGraduandos(){
     const saldo = Number(r.monto_total) - pagado;
     const cancelado = saldo <= 0.005;
     if (filtroEstado === 'PENDIENTES') return !cancelado;
+    if (filtroEstado === 'NOPAGO') return !cancelado && pagado <= 0.005;
     if (filtroEstado === 'PAGADO') return cancelado;
     return true; // TODOS
   });
