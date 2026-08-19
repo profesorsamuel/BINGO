@@ -227,7 +227,7 @@
     <div class="ball">75</div>
     <div class="brand">
       <h1>C.E.B.G El Jiral</h1>
-      <p>Control de venta y cobro — Bingo &amp; Donaciones</p>
+      <p id="brandSubtitle">Control de venta y cobro — Bingo &amp; Donaciones</p>
     </div>
   </header>
 
@@ -293,7 +293,7 @@
     <div class="userbar">
       <div class="who">Sesion de <b id="whoName"></b></div>
       <div style="display:flex;gap:8px;">
-        <button class="mode-switch" onclick="volverASeleccion()">Cambiar tipo de recibo</button>
+        <button class="mode-switch" id="modeSwitchBtn" onclick="volverASeleccion()">Cambiar tipo de recibo</button>
         <button class="logout" onclick="doLogout()">Cerrar sesion</button>
       </div>
     </div>
@@ -631,7 +631,12 @@
           </div>
 
           <div class="actions-bar">
+            <button class="btn-outline" onclick="toggleDetalleGraduandos()"><span id="detalleToggleText">Ver detalle en pantalla</span></button>
             <button class="btn-secondary" onclick="generarInformePDFGraduandos()">Descargar informe PDF</button>
+          </div>
+
+          <div id="detalleGraduandosWrap" style="display:none;margin-top:22px;">
+            <div id="detalleGraduandosBody"></div>
           </div>
         </div>
       </section>
@@ -878,6 +883,14 @@ function enterApp(){
   document.getElementById('whoName').textContent = USERS[currentUser].label + etiquetaModo;
   document.getElementById('histWho').textContent = USERS[currentUser].label;
   showConfigNoteIfNeeded();
+
+  // Mirian solo maneja Graduandos 2026: encabezado simplificado y sin boton
+  // para cambiar de tipo de recibo (no le hace falta).
+  const esSoloMirian = currentUser === 'mirian';
+  document.getElementById('brandSubtitle').textContent = esSoloMirian
+    ? 'Cobro de Graduación'
+    : 'Control de venta y cobro — Bingo & Donaciones';
+  document.getElementById('modeSwitchBtn').style.display = esSoloMirian ? 'none' : 'inline-block';
 
   document.getElementById('modoBingo').style.display = currentMode==='bingo' ? 'block' : 'none';
   document.getElementById('modoDonacion').style.display = currentMode==='donacion' ? 'block' : 'none';
@@ -2706,6 +2719,64 @@ function actualizarResumenGraduandos(){
   }
 
   dibujarGraficoGraduandos(r);
+  renderDetalleGraduandos(r);
+}
+
+/* ---------------- Detalle en pantalla (listas con nombres, sin descargar nada) ---------------- */
+function toggleDetalleGraduandos(){
+  const wrap = document.getElementById('detalleGraduandosWrap');
+  const txt = document.getElementById('detalleToggleText');
+  if (!wrap || !txt) return;
+  const visible = wrap.style.display !== 'none';
+  wrap.style.display = visible ? 'none' : 'block';
+  txt.textContent = visible ? 'Ver detalle en pantalla' : 'Ocultar detalle';
+}
+
+function renderDetalleGraduandos(r){
+  const wrap = document.getElementById('detalleGraduandosBody');
+  if (!wrap) return;
+
+  const filaVacia = (cols)=>`<tr><td colspan="${cols}" style="text-align:center;color:#8b98a3;padding:16px;">(ninguno)</td></tr>`;
+
+  const tablaPagados = `
+    <h4 style="font-family:'Baloo 2',sans-serif;color:var(--green);margin:0 0 6px;font-size:15px;">Pagado completo (${r.pagados.length})</h4>
+    <table>
+      <thead><tr><th>Salón</th><th>Estudiante</th><th>Total</th><th>Fecha</th></tr></thead>
+      <tbody>${r.pagados.length ? r.pagados.map(p=>`
+        <tr>
+          <td>${SALON_LABEL[p.salon] || p.salon}</td>
+          <td>${escapeHtml(p.nombre)}</td>
+          <td class="mono-amt">$${p.total.toFixed(2)}</td>
+          <td class="num">${p.fecha || '—'}</td>
+        </tr>`).join('') : filaVacia(4)}</tbody>
+    </table>`;
+
+  const tablaAbonando = `
+    <h4 style="font-family:'Baloo 2',sans-serif;color:#8a5a12;margin:22px 0 6px;font-size:15px;">Abonando (${r.abonando.length})</h4>
+    <table>
+      <thead><tr><th>Salón</th><th>Estudiante</th><th>Total</th><th>Pagado</th><th>Saldo</th></tr></thead>
+      <tbody>${r.abonando.length ? r.abonando.map(p=>`
+        <tr>
+          <td>${SALON_LABEL[p.salon] || p.salon}</td>
+          <td>${escapeHtml(p.nombre)}</td>
+          <td class="mono-amt">$${p.total.toFixed(2)}</td>
+          <td class="num">$${p.pagado.toFixed(2)}</td>
+          <td class="num saldo-pos">$${p.saldo.toFixed(2)}</td>
+        </tr>`).join('') : filaVacia(5)}</tbody>
+    </table>`;
+
+  const tablaNoPagado = `
+    <h4 style="font-family:'Baloo 2',sans-serif;color:var(--red);margin:22px 0 6px;font-size:15px;">No han pagado nada (${r.noPagado.length})</h4>
+    <table>
+      <thead><tr><th>Salón</th><th>Estudiante</th></tr></thead>
+      <tbody>${r.noPagado.length ? r.noPagado.map(p=>`
+        <tr>
+          <td>${SALON_LABEL[p.salon] || p.salon}</td>
+          <td>${escapeHtml(p.nombre)}</td>
+        </tr>`).join('') : filaVacia(2)}</tbody>
+    </table>`;
+
+  wrap.innerHTML = tablaPagados + tablaAbonando + tablaNoPagado;
 }
 
 function dibujarGraficoGraduandos(r){
@@ -2746,91 +2817,105 @@ function dibujarGraficoGraduandos(r){
 
 /* ---------------- Informe PDF (total o por salon) ---------------- */
 function generarInformePDFGraduandos(){
-  const selEl = document.getElementById('resumenGrupoSelect');
-  const grupo = selEl ? (selEl.value || 'TODOS') : 'TODOS';
-  const r = construirResumenGraduandos(grupo);
-  const grupoLabel = grupo === 'TODOS' ? 'Todos los salones (9°A, 9°B, 9°C)' : ('Salón ' + (SALON_LABEL[grupo] || grupo));
+  try {
+    if (typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF){
+      toast('No se pudo cargar la librería de PDF. Revisa tu conexión y recarga la página.');
+      return;
+    }
+    const { jsPDF } = window.jspdf;
+    if (typeof jsPDF.API === 'undefined' || typeof new jsPDF().autoTable !== 'function'){
+      toast('Falta un componente para armar las tablas del PDF. Recarga la página con Ctrl+Shift+R e intenta de nuevo.');
+      return;
+    }
 
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit:'mm', format:'letter' });
-  const navy = [18,41,59];
-  const gold = [227,169,59];
+    const selEl = document.getElementById('resumenGrupoSelect');
+    const grupo = selEl ? (selEl.value || 'TODOS') : 'TODOS';
+    const r = construirResumenGraduandos(grupo);
+    const grupoLabel = grupo === 'TODOS' ? 'Todos los salones (9°A, 9°B, 9°C)' : ('Salón ' + (SALON_LABEL[grupo] || grupo));
 
-  doc.setFillColor(...navy);
-  doc.rect(0,0,216,22,'F');
-  doc.setTextColor(255,255,255);
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(14);
-  doc.text('C.E.B.G El Jiral — Promoción 2026', 12, 10);
-  doc.setFontSize(10);
-  doc.setTextColor(...gold);
-  doc.text('Informe de pagos de graduandos', 12, 17);
+    const doc = new jsPDF({ unit:'mm', format:'letter' });
+    const navy = [18,41,59];
+    const gold = [227,169,59];
 
-  doc.setTextColor(60,60,60);
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(9);
-  doc.text(`Grupo: ${grupoLabel}`, 12, 29);
-  doc.text(`Generado: ${new Date().toLocaleDateString()}`, 150, 29);
+    doc.setFillColor(...navy);
+    doc.rect(0,0,216,22,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(14);
+    doc.text('C.E.B.G El Jiral — Promoción 2026', 12, 10);
+    doc.setFontSize(10);
+    doc.setTextColor(...gold);
+    doc.text('Informe de pagos de graduandos', 12, 17);
 
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(10);
-  doc.setTextColor(...navy);
-  doc.text(`Total de estudiantes: ${r.totalEstudiantes}   |   Pagado completo: ${r.pagados.length}   |   Abonando: ${r.abonando.length}   |   Sin pagar: ${r.noPagado.length}`, 12, 36);
-  doc.text(`Recaudado: $${r.montoRecaudado.toFixed(2)}   |   Pendiente (de lo registrado): $${r.montoPendiente.toFixed(2)}`, 12, 42);
+    doc.setTextColor(60,60,60);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.text(`Grupo: ${grupoLabel}`, 12, 29);
+    doc.text(`Generado: ${new Date().toLocaleDateString()}`, 150, 29);
 
-  let y = 50;
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(10);
+    doc.setTextColor(...navy);
+    doc.text(`Total de estudiantes: ${r.totalEstudiantes}   |   Pagado completo: ${r.pagados.length}   |   Abonando: ${r.abonando.length}   |   Sin pagar: ${r.noPagado.length}`, 12, 36);
+    doc.text(`Recaudado: $${r.montoRecaudado.toFixed(2)}   |   Pendiente (de lo registrado): $${r.montoPendiente.toFixed(2)}`, 12, 42);
 
-  doc.setFontSize(11);
-  doc.setTextColor(...navy);
-  doc.text('Pagado completo', 12, y);
-  doc.autoTable({
-    startY: y + 3,
-    head: [['Salón','Estudiante','Total','Fecha de pago']],
-    body: r.pagados.length
-      ? r.pagados.map(p=>[SALON_LABEL[p.salon] || p.salon, p.nombre, '$'+p.total.toFixed(2), p.fecha || '—'])
-      : [['—','(ninguno)','—','—']],
-    theme: 'striped',
-    headStyles: { fillColor: [62,122,87] },
-    styles: { fontSize: 8.5 },
-    margin: { left: 12, right: 12 }
-  });
-  y = doc.lastAutoTable.finalY + 10;
+    let y = 50;
 
-  if (y > 250){ doc.addPage(); y = 18; }
-  doc.setFontSize(11);
-  doc.setTextColor(...navy);
-  doc.text('Abonando (pago parcial)', 12, y);
-  doc.autoTable({
-    startY: y + 3,
-    head: [['Salón','Estudiante','Total','Pagado','Saldo']],
-    body: r.abonando.length
-      ? r.abonando.map(p=>[SALON_LABEL[p.salon] || p.salon, p.nombre, '$'+p.total.toFixed(2), '$'+p.pagado.toFixed(2), '$'+p.saldo.toFixed(2)])
-      : [['—','(ninguno)','—','—','—']],
-    theme: 'striped',
-    headStyles: { fillColor: [227,169,59], textColor: [30,30,30] },
-    styles: { fontSize: 8.5 },
-    margin: { left: 12, right: 12 }
-  });
-  y = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(11);
+    doc.setTextColor(...navy);
+    doc.text('Pagado completo', 12, y);
+    doc.autoTable({
+      startY: y + 3,
+      head: [['Salón','Estudiante','Total','Fecha de pago']],
+      body: r.pagados.length
+        ? r.pagados.map(p=>[SALON_LABEL[p.salon] || p.salon, p.nombre, '$'+p.total.toFixed(2), p.fecha || '—'])
+        : [['—','(ninguno)','—','—']],
+      theme: 'striped',
+      headStyles: { fillColor: [62,122,87] },
+      styles: { fontSize: 8.5 },
+      margin: { left: 12, right: 12 }
+    });
+    y = doc.lastAutoTable.finalY + 10;
 
-  if (y > 250){ doc.addPage(); y = 18; }
-  doc.setFontSize(11);
-  doc.setTextColor(...navy);
-  doc.text('No han pagado nada', 12, y);
-  doc.autoTable({
-    startY: y + 3,
-    head: [['Salón','Estudiante']],
-    body: r.noPagado.length
-      ? r.noPagado.map(p=>[SALON_LABEL[p.salon] || p.salon, p.nombre])
-      : [['—','(ninguno)']],
-    theme: 'striped',
-    headStyles: { fillColor: [193,63,53] },
-    styles: { fontSize: 8.5 },
-    margin: { left: 12, right: 12 }
-  });
+    if (y > 250){ doc.addPage(); y = 18; }
+    doc.setFontSize(11);
+    doc.setTextColor(...navy);
+    doc.text('Abonando (pago parcial)', 12, y);
+    doc.autoTable({
+      startY: y + 3,
+      head: [['Salón','Estudiante','Total','Pagado','Saldo']],
+      body: r.abonando.length
+        ? r.abonando.map(p=>[SALON_LABEL[p.salon] || p.salon, p.nombre, '$'+p.total.toFixed(2), '$'+p.pagado.toFixed(2), '$'+p.saldo.toFixed(2)])
+        : [['—','(ninguno)','—','—','—']],
+      theme: 'striped',
+      headStyles: { fillColor: [227,169,59], textColor: [30,30,30] },
+      styles: { fontSize: 8.5 },
+      margin: { left: 12, right: 12 }
+    });
+    y = doc.lastAutoTable.finalY + 10;
 
-  const nombreArchivo = `informe_graduandos_${grupo}_${hoyISO()}.pdf`;
-  doc.save(nombreArchivo);
+    if (y > 250){ doc.addPage(); y = 18; }
+    doc.setFontSize(11);
+    doc.setTextColor(...navy);
+    doc.text('No han pagado nada', 12, y);
+    doc.autoTable({
+      startY: y + 3,
+      head: [['Salón','Estudiante']],
+      body: r.noPagado.length
+        ? r.noPagado.map(p=>[SALON_LABEL[p.salon] || p.salon, p.nombre])
+        : [['—','(ninguno)']],
+      theme: 'striped',
+      headStyles: { fillColor: [193,63,53] },
+      styles: { fontSize: 8.5 },
+      margin: { left: 12, right: 12 }
+    });
+
+    const nombreArchivo = `informe_graduandos_${grupo}_${hoyISO()}.pdf`;
+    doc.save(nombreArchivo);
+  } catch(e){
+    console.error('Error generando el informe PDF:', e);
+    toast('No se pudo generar el PDF: ' + (e && e.message ? e.message : 'error desconocido'));
+  }
 }
 
 /* ---------------- Recibo de pago de GRADUANDO en PDF ---------------- */
