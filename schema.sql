@@ -151,8 +151,14 @@ create table if not exists public.graduandos (
   fecha_pago date not null,
   cobra text not null check (cobra in ('samuel','betzaida','jiral','mirian')),
   numero_recibo integer generated always as identity,
-  creado_en timestamptz not null default now()
+  creado_en timestamptz not null default now(),
+  salon text
 );
+
+-- Si la tabla "graduandos" ya existia de antes (sin la columna "salon"),
+-- esto la agrega sin borrar nada de lo que ya tenias guardado.
+alter table public.graduandos add column if not exists salon text;
+create index if not exists graduandos_salon_idx on public.graduandos (salon);
 
 alter table public.graduandos enable row level security;
 
