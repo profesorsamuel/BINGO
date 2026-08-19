@@ -3303,12 +3303,30 @@ async function descargarRecibosSeleccionados(){
 }
 
 /* =========================================================
-   IMPORTACION DE ABONOS YA RECIBIDOS - SALON 9C
-   (datos pasados por el cliente en tabla_nombres_completos.xlsx)
+   IMPORTACION DE ABONOS YA RECIBIDOS (SALONES 9A / 9B / 9C)
+   (datos pasados por el cliente)
+
    Cada estudiante puede tener uno o varios pagos ya hechos; se cargan
-   todos con la fecha de hoy y al final se descarga el recibo en PDF
-   de cada estudiante para poder enviarselo.
+   con la fecha de hoy y al final se descarga el recibo en PDF de
+   cada estudiante que recibió dinero nuevo, para poder enviárselo.
+
+   Si el estudiante YA existe en el salón (se vuelve a presionar el
+   boton despues de actualizar la lista de arriba con un pago nuevo),
+   ya NO se salta por completo: se compara cuanto lleva pagado contra
+   la lista y, si la lista trae mas, se le agrega SOLO la diferencia
+   como abono de hoy. Asi el boton siempre deja la tabla al dia,
+   tantas veces como se necesite.
    ========================================================= */
+
+/* Compara nombres sin importar tildes, mayusculas ni espacios de mas,
+   para no crear un estudiante duplicado por una tilde distinta. */
+function normalizarNombreGrad(str){
+  return String(str || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .trim().replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
 const IMPORT_MONTO_TOTAL_9C = 29;
 const IMPORT_ABONOS_9C = [
   { nombre: 'Adams, Alberto',        pagos: [15] },
@@ -3326,74 +3344,6 @@ const IMPORT_ABONOS_9C = [
   { nombre: 'Zambrano, Brithney',    pagos: [7, 22] }
 ];
 
-async function importarAbonos9C(){
-  if (!configuredOK){
-    toast('Conecta primero la base de datos (Supabase) para poder importar los abonos.');
-    return;
-  }
-  if (!confirm('Se van a cargar los abonos y pagos del salón 9C que ya me pasaste (todos con la fecha de hoy) y se va a descargar un ZIP con el recibo en PDF de cada estudiante. ¿Continuar?')) return;
-
-  const cobra = (currentUser==='mirian' || currentUser==='samuel' || currentUser==='betzaida') ? currentUser : 'mirian';
-  const fecha = hoyISO();
-  let creados = 0, saltados = 0, conError = 0;
-  const itemsRecibos = [];
-
-  for (const item of IMPORT_ABONOS_9C){
-    const yaExiste = cacheGrad.some(g=>g.salon==='9C' && g.nombre_estudiante===item.nombre);
-    if (yaExiste){ saltados++; continue; }
-
-    const registro = {
-      salon: '9C',
-      nombre_estudiante: item.nombre,
-      whatsapp: null,
-      monto_total: IMPORT_MONTO_TOTAL_9C,
-      fecha_pago: fecha,
-      cobra,
-      creado_en: new Date().toISOString()
-    };
-    const { data: gData, error: gErr } = await supa.from('graduandos').insert(registro).select().single();
-    if (gErr){ toast('Error creando a ' + item.nombre + ': ' + gErr.message); conError++; continue; }
-
-    let ultimoAbono = null;
-    let acumulado = 0;
-    for (const monto of item.pagos){
-      acumulado += monto;
-      const abonoRegistro = { graduando_id: gData.id, monto, fecha, cobra, creado_en: new Date().toISOString() };
-      const { data: aData, error: aErr } = await supa.from('abonos_graduando').insert(abonoRegistro).select().single();
-      if (aErr){ toast('Error registrando abono de ' + item.nombre + ': ' + aErr.message); continue; }
-      ultimoAbono = aData;
-    }
-
-    creados++;
-    if (ultimoAbono){
-      const saldo = Math.max(0, IMPORT_MONTO_TOTAL_9C - acumulado);
-      const { doc, filename } = construirReciboGraduandoPDF(gData, ultimoAbono, acumulado, saldo, acumulado);
-      itemsRecibos.push({ doc, filename });
-    }
-  }
-
-  await cargarGraduandos();
-
-  if (itemsRecibos.length > 0){
-    toast(`Armando ${itemsRecibos.length} recibo(s) en un ZIP...`);
-    try {
-      await descargarComoZip(itemsRecibos, `recibos_graduandos_9C_${fecha}.zip`);
-    } catch(e){
-      console.error('Error armando el ZIP de la importación 9C:', e);
-      toast('Se cargaron los pagos, pero no se pudo armar el ZIP de recibos: ' + (e && e.message ? e.message : 'error desconocido'));
-    }
-  }
-
-  toast(`Importación de 9C lista: ${creados} agregados, ${saltados} ya existían${conError ? ', ' + conError + ' con error' : ''}.`);
-}
-
-/* =========================================================
-   IMPORTACION DE ABONOS YA RECIBIDOS - SALON 9B
-   (datos pasados por el cliente, lista de quien ya canceló o abonó)
-   Cada estudiante puede tener uno o varios pagos ya hechos; se cargan
-   todos con la fecha de hoy y al final se descarga el recibo en PDF
-   de cada estudiante para poder enviarselo.
-   ========================================================= */
 const IMPORT_MONTO_TOTAL_9B = 29;
 const IMPORT_ABONOS_9B = [
   { nombre: 'Cruz, Moisés',        pagos: [29] },
@@ -3416,22 +3366,52 @@ const IMPORT_ABONOS_9B = [
   { nombre: 'Vergara, Odalis',     pagos: [29] }
 ];
 
+const IMPORT_MONTO_TOTAL_9A = 29;
+const IMPORT_ABONOS_9A = [
+  { nombre: 'Arauz, Naomi',       pagos: [10, 19] },
+  { nombre: 'Ayarza, Marielis',   pagos: [25, 4] },
+  { nombre: 'González, Gisselle', pagos: [25, 4] },
+  { nombre: 'Guerra, Keyli',      pagos: [9, 20] },
+  { nombre: 'Jaén, Gloria',       pagos: [25] },
+  { nombre: 'Magallón, Aaron',    pagos: [10, 19] },
+  { nombre: 'Vergara, José',      pagos: [4, 25] }
+];
+
 async function importarAbonosSalon(salon, montoTotal, lista){
   if (!configuredOK){
     toast('Conecta primero la base de datos (Supabase) para poder importar los abonos.');
     return;
   }
-  if (!confirm(`Se van a cargar los abonos y pagos del salón ${salon} que ya me pasaste (todos con la fecha de hoy) y se va a descargar un ZIP con el recibo en PDF de cada estudiante. ¿Continuar?`)) return;
+  if (!confirm(`Se van a cargar/actualizar los abonos y pagos del salón ${salon} que ya me pasaste (todos con la fecha de hoy). Si un estudiante ya estaba cargado, solo se le suma lo que le falte según la lista. Al final se descarga un ZIP con el recibo en PDF de cada estudiante que recibió pago nuevo. ¿Continuar?`)) return;
 
   const cobra = (currentUser==='mirian' || currentUser==='samuel' || currentUser==='betzaida') ? currentUser : 'mirian';
   const fecha = hoyISO();
-  let creados = 0, saltados = 0, conError = 0;
+  let creados = 0, actualizados = 0, alDia = 0, conError = 0;
   const itemsRecibos = [];
 
   for (const item of lista){
-    const yaExiste = cacheGrad.some(g=>g.salon===salon && g.nombre_estudiante===item.nombre);
-    if (yaExiste){ saltados++; continue; }
+    const totalLista = item.pagos.reduce((s, m) => s + Number(m), 0);
+    const existente = cacheGrad.find(g => g.salon === salon && normalizarNombreGrad(g.nombre_estudiante) === normalizarNombreGrad(item.nombre));
 
+    if (existente){
+      // Ya está cargado: solo le agregamos la diferencia, si la lista trae más de lo ya registrado.
+      const yaAbonado = abonadoDeGraduando(existente.id);
+      const diferencia = Math.round((totalLista - yaAbonado) * 100) / 100;
+      if (diferencia <= 0.005){ alDia++; continue; }
+
+      const abonoRegistro = { graduando_id: existente.id, monto: diferencia, fecha, cobra, creado_en: new Date().toISOString() };
+      const { data: aData, error: aErr } = await supa.from('abonos_graduando').insert(abonoRegistro).select().single();
+      if (aErr){ toast('Error actualizando el abono de ' + item.nombre + ': ' + aErr.message); conError++; continue; }
+
+      actualizados++;
+      const nuevoAcumulado = yaAbonado + diferencia;
+      const saldo = Math.max(0, Number(existente.monto_total) - nuevoAcumulado);
+      const { doc, filename } = construirReciboGraduandoPDF(existente, aData, diferencia, saldo, nuevoAcumulado);
+      itemsRecibos.push({ doc, filename });
+      continue;
+    }
+
+    // Estudiante nuevo: se crea y se cargan todos sus pagos.
     const registro = {
       salon,
       nombre_estudiante: item.nombre,
@@ -3462,39 +3442,33 @@ async function importarAbonosSalon(salon, montoTotal, lista){
     }
   }
 
+  // Recarga los datos y deja el filtro puesto en este salón para que
+  // la actualización se vea de inmediato, sin tener que tocar nada más.
   await cargarGraduandos();
+  const filtroSel = document.getElementById('gradFiltroSalon');
+  if (filtroSel){ filtroSel.value = salon; }
+  renderTablaGraduandos();
 
   if (itemsRecibos.length > 0){
-    toast(`Armando ${itemsRecibos.length} recibo(s) en un ZIP...`);
+    toast(`Tabla de ${salon} actualizada. Armando ${itemsRecibos.length} recibo(s) en un ZIP...`);
     try {
       await descargarComoZip(itemsRecibos, `recibos_graduandos_${salon}_${fecha}.zip`);
     } catch(e){
       console.error(`Error armando el ZIP de la importación ${salon}:`, e);
-      toast('Se cargaron los pagos, pero no se pudo armar el ZIP de recibos: ' + (e && e.message ? e.message : 'error desconocido'));
+      toast('La tabla ya quedó actualizada, pero no se pudo armar el ZIP de recibos: ' + (e && e.message ? e.message : 'error desconocido'));
     }
   }
 
-  toast(`Importación de ${salon} lista: ${creados} agregados, ${saltados} ya existían${conError ? ', ' + conError + ' con error' : ''}.`);
+  toast(`Salón ${salon} al día: ${creados} nuevo(s), ${actualizados} actualizado(s), ${alDia} ya estaban al día${conError ? ', ' + conError + ' con error' : ''}.`);
+}
+
+async function importarAbonos9C(){
+  await importarAbonosSalon('9C', IMPORT_MONTO_TOTAL_9C, IMPORT_ABONOS_9C);
 }
 
 async function importarAbonos9B(){
   await importarAbonosSalon('9B', IMPORT_MONTO_TOTAL_9B, IMPORT_ABONOS_9B);
 }
-
-/* =========================================================
-   IMPORTACION DE ABONOS YA RECIBIDOS - SALON 9A
-   (datos pasados por el cliente, lista de quien ya canceló o abonó)
-   ========================================================= */
-const IMPORT_MONTO_TOTAL_9A = 29;
-const IMPORT_ABONOS_9A = [
-  { nombre: 'Arauz, Naomi',       pagos: [10, 19] },
-  { nombre: 'Ayarza, Marielis',   pagos: [25, 4] },
-  { nombre: 'González, Gisselle', pagos: [25, 4] },
-  { nombre: 'Guerra, Keyli',      pagos: [9, 20] },
-  { nombre: 'Jaén, Gloria',       pagos: [25] },
-  { nombre: 'Magallón, Aaron',    pagos: [10, 19] },
-  { nombre: 'Vergara, José',      pagos: [4, 25] }
-];
 
 async function importarAbonos9A(){
   await importarAbonosSalon('9A', IMPORT_MONTO_TOTAL_9A, IMPORT_ABONOS_9A);
@@ -3952,6 +3926,14 @@ window.addEventListener('DOMContentLoaded', ()=>{
   if (saved && USERS[saved]){
     currentUser = saved;
     irAPantallaInicial();
+  }
+
+  // Refuerzo: además del onchange en el <select>, este listener asegura
+  // que la tabla de graduandos se redibuje sí o sí al cambiar el filtro
+  // de salón, sin necesidad de recargar la página.
+  const filtroSel = document.getElementById('gradFiltroSalon');
+  if (filtroSel){
+    filtroSel.addEventListener('change', renderTablaGraduandos);
   }
 });
 </script>
