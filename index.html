@@ -37,7 +37,7 @@
     color:var(--ink);
     min-height:100vh;
   }
-  .wrap{max-width:920px;margin:0 auto;padding:28px 18px 80px;}
+  .wrap{max-width:1060px;margin:0 auto;padding:28px 18px 80px;}
 
   /* ---- Header / signature element: bingo ball marquee ---- */
   header.top{
@@ -120,21 +120,56 @@
     padding:6px 12px;border-radius:20px;margin-left:8px;
   }
 
-  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13.5px;}
+  .table-scroll{overflow-x:auto;margin-top:8px;-webkit-overflow-scrolling:touch;}
+  .table-scroll::-webkit-scrollbar{height:8px;}
+  .table-scroll::-webkit-scrollbar-thumb{background:rgba(18,41,59,0.18);border-radius:20px;}
+  table{width:100%;min-width:760px;border-collapse:collapse;font-size:13.5px;}
   thead th{
-    text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;
-    color:#7c8a95;padding:8px 10px;border-bottom:2px solid var(--line);font-weight:700;
+    text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:0.7px;
+    color:#7c8a95;padding:10px 12px;border-bottom:2px solid var(--line);font-weight:800;
+    background:rgba(18,41,59,0.035);white-space:nowrap;
   }
-  tbody td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:middle;}
-  tbody tr:hover{background:rgba(227,169,59,0.06);}
+  thead th:first-child{border-top-left-radius:10px;}
+  thead th:last-child{border-top-right-radius:10px;}
+  tbody td{padding:13px 12px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tbody tr:nth-child(even){background:rgba(18,41,59,0.018);}
+  tbody tr:hover{background:rgba(227,169,59,0.08);}
   .num{font-family:'JetBrains Mono',monospace;}
   .mono-amt{font-family:'JetBrains Mono',monospace;color:var(--green);font-weight:700;}
-  .row-actions{display:flex;gap:6px;}
+
+  .row-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:nowrap;}
   .icon-btn{
     background:rgba(18,41,59,0.06);color:var(--navy);padding:6px 9px;font-size:12px;font-weight:700;
+    white-space:nowrap;
   }
   .icon-btn.del{color:var(--red);background:rgba(193,63,53,0.08);}
   .icon-btn:hover{background:rgba(227,169,59,0.18);}
+
+  /* compact "primary + kebab menu" action pattern */
+  .btn-abono{
+    background:var(--green);color:#fff;padding:7px 12px;font-size:12px;font-weight:700;
+    border-radius:8px;white-space:nowrap;box-shadow:0 3px 8px rgba(62,122,87,0.28);
+  }
+  .btn-abono:hover{background:#356b4b;}
+  .actions-menu{position:relative;}
+  .actions-trigger{
+    background:rgba(18,41,59,0.06);color:var(--navy);width:30px;height:30px;padding:0;
+    border-radius:8px;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;
+  }
+  .actions-trigger:hover{background:rgba(227,169,59,0.2);}
+  .actions-dropdown{
+    display:none;position:absolute;right:0;top:calc(100% + 6px);background:#fff;
+    border:1px solid var(--line);border-radius:10px;box-shadow:0 14px 30px rgba(11,29,42,0.2);
+    min-width:180px;padding:6px;z-index:60;
+  }
+  .actions-dropdown.show{display:block;}
+  .actions-dropdown button{
+    display:block;width:100%;text-align:left;background:transparent;color:var(--navy);
+    padding:9px 10px;border-radius:7px;font-size:13px;font-weight:600;
+  }
+  .actions-dropdown button:hover{background:rgba(227,169,59,0.16);}
+  .actions-dropdown button.del{color:var(--red);}
+  .actions-dropdown button.del:hover{background:rgba(193,63,53,0.1);}
 
   .tel-link{display:inline-flex;align-items:center;color:var(--navy);font-family:'JetBrains Mono',monospace;
     font-size:12.5px;text-decoration:none;font-weight:600;border-bottom:1px dashed rgba(18,41,59,0.35);}
@@ -150,9 +185,10 @@
   .btn-outline:hover{border-color:var(--gold);}
 
   .badge{
-    font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;
-    letter-spacing:0.4px;
+    font-size:11px;font-weight:800;padding:5px 11px 5px 9px;border-radius:20px;text-transform:uppercase;
+    letter-spacing:0.4px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
   }
+  .badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex:none;}
   .badge.samuel{background:rgba(62,122,87,0.14);color:var(--green);}
   .badge.betzaida{background:rgba(193,63,53,0.12);color:var(--red);}
 
@@ -178,8 +214,8 @@
     color:#8a5a12;border-radius:10px;padding:10px 14px;font-size:12.5px;font-weight:700;
     margin-bottom:16px;
   }
-  .badge.pendiente{background:rgba(227,169,59,0.18);color:#8a5a12;}
-  .badge.cumplida{background:rgba(62,122,87,0.14);color:var(--green);}
+  .badge.pendiente{background:#FFF3D6;color:#8a5a12;border:1px solid rgba(227,169,59,0.45);}
+  .badge.cumplida{background:#E4F3EA;color:var(--green);border:1px solid rgba(62,122,87,0.3);}
   .saldo-pos{color:var(--red);font-weight:700;}
   .saldo-zero{color:var(--green);font-weight:700;}
 
@@ -551,14 +587,16 @@
         <p class="section-sub">Puedes registrar abonos poco a poco hasta completar cada promesa, corregirla o borrarla.</p>
 
         <div id="tableWrapProm">
-          <table id="promesasTable">
-            <thead>
-              <tr>
-                <th>#</th><th>Donante</th><th>Teléfono</th><th>Prometido</th><th>Abonado</th><th>Saldo</th><th>Estado</th><th></th>
-              </tr>
-            </thead>
-            <tbody id="promesasBody"></tbody>
-          </table>
+          <div class="table-scroll">
+            <table id="promesasTable">
+              <thead>
+                <tr>
+                  <th>#</th><th>Donante</th><th>Teléfono</th><th>Prometido</th><th>Abonado</th><th>Saldo</th><th>Estado</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="promesasBody"></tbody>
+            </table>
+          </div>
           <div class="empty" id="emptyPromMsg" style="display:none;">Aun no se han registrado promesas.</div>
         </div>
 
@@ -1910,6 +1948,18 @@ async function guardarPromesa(){
   cargarPromesas();
 }
 
+/* ---------------- Menu de acciones (boton "..." en las tablas) ---------------- */
+function toggleActionsMenu(id, ev){
+  if (ev) ev.stopPropagation();
+  const menu = document.getElementById('menu-' + id);
+  const wasOpen = menu && menu.classList.contains('show');
+  document.querySelectorAll('.actions-dropdown.show').forEach(el => el.classList.remove('show'));
+  if (menu && !wasOpen) menu.classList.add('show');
+}
+document.addEventListener('click', () => {
+  document.querySelectorAll('.actions-dropdown.show').forEach(el => el.classList.remove('show'));
+});
+
 /* ---------------- Cargar todas las promesas y sus abonos ---------------- */
 async function cargarPromesas(){
   if (configuredOK){
@@ -1964,12 +2014,17 @@ function renderTablaPromesas(){
         <td><span class="badge ${cumplida ? 'cumplida' : 'pendiente'}">${cumplida ? 'Cumplida' : 'Pendiente'}</span></td>
         <td>
           <div class="row-actions">
-            ${cumplida ? '' : `<button class="icon-btn" onclick="abrirModalAbono('promesa', '${r.id}', ${JSON.stringify(r.nombre_donante)})">Agregar abono</button>`}
-            <button class="icon-btn" onclick='iniciarEdicionPromesa(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Editar</button>
-            <button class="icon-btn" onclick='descargarReciboPromesa(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Descargar PDF</button>
-            <button class="icon-btn" onclick='compartirReciboPromesa(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Recibo</button>
-            ${r.telefono ? `<button class="icon-btn" onclick="abrirWhatsapp(${JSON.stringify(r.telefono)}, ${JSON.stringify(mensajeWA)})">WhatsApp</button>` : ''}
-            <button class="icon-btn del" onclick="borrarPromesa('${r.id}')">Borrar</button>
+            ${cumplida ? '' : `<button class="btn-abono" onclick="abrirModalAbono('promesa', '${r.id}', ${JSON.stringify(r.nombre_donante)})">+ Abono</button>`}
+            <div class="actions-menu">
+              <button class="actions-trigger" onclick="toggleActionsMenu('prom-${r.id}', event)" aria-label="Más acciones">⋮</button>
+              <div class="actions-dropdown" id="menu-prom-${r.id}">
+                <button onclick='iniciarEdicionPromesa(${JSON.stringify(r).replace(/'/g,"&#39;")})'>✏️ Editar</button>
+                <button onclick='descargarReciboPromesa(${JSON.stringify(r).replace(/'/g,"&#39;")})'>⬇️ Descargar PDF</button>
+                <button onclick='compartirReciboPromesa(${JSON.stringify(r).replace(/'/g,"&#39;")})'>🧾 Recibo</button>
+                ${r.telefono ? `<button onclick="abrirWhatsapp(${JSON.stringify(r.telefono)}, ${JSON.stringify(mensajeWA)})">💬 WhatsApp</button>` : ''}
+                <button class="del" onclick="borrarPromesa('${r.id}')">🗑️ Borrar</button>
+              </div>
+            </div>
           </div>
         </td>`;
       body.appendChild(tr);
