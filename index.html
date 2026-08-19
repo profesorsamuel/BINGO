@@ -234,7 +234,8 @@
       </div>
 
       <div class="actions-bar">
-        <button class="btn-primary" style="width:auto;margin-top:0;" onclick="guardarPago()">Guardar pago</button>
+        <button class="btn-primary" style="width:auto;margin-top:0;" onclick="guardarPago()"><span id="guardarBtnText">Guardar pago</span></button>
+        <button class="btn-outline" id="cancelEditBtn" style="display:none;" onclick="cancelarEdicion()">Cancelar correccion</button>
       </div>
       <p class="error" id="formError"></p>
     </section>
@@ -293,6 +294,7 @@ const PRECIO_BOLETO = 5; // cada boleto vale $5 (balboas)
 
 let currentUser = null; // 'samuel' | 'betzaida'
 let cache = [];
+let editingId = null; // id del registro que se esta corrigiendo (null = registro nuevo)
 
 function toast(msg){
   const t = document.getElementById('toast');
@@ -328,6 +330,7 @@ function doLogin(){
 
 function doLogout(){
   currentUser = null;
+  editingId = null;
   sessionStorage.removeItem('jiral_user');
   document.getElementById('appView').style.display = 'none';
   document.getElementById('loginView').style.display = 'block';
@@ -363,6 +366,32 @@ function actualizarMonto(){
   document.getElementById('fMonto').value = monto > 0 ? monto.toFixed(2) : '';
 }
 
+/* ---------------- Corregir un pago ya guardado ---------------- */
+function iniciarEdicion(r){
+  editingId = r.id;
+  document.getElementById('fNombre').value = r.nombre_comprador;
+  document.getElementById('fTelefono').value = r.telefono || '';
+  document.getElementById('fBoletos').value = r.boletos;
+  actualizarMonto();
+  document.getElementById('formError').textContent = '';
+  document.getElementById('guardarBtnText').textContent = 'Actualizar pago';
+  document.getElementById('cancelEditBtn').style.display = 'inline-block';
+  switchTab('registrar');
+  window.scrollTo({ top:0, behavior:'smooth' });
+  toast('Corrigiendo el registro de ' + r.nombre_comprador);
+}
+
+function cancelarEdicion(){
+  editingId = null;
+  document.getElementById('fNombre').value = '';
+  document.getElementById('fTelefono').value = '';
+  document.getElementById('fBoletos').value = '1';
+  actualizarMonto();
+  document.getElementById('formError').textContent = '';
+  document.getElementById('guardarBtnText').textContent = 'Guardar pago';
+  document.getElementById('cancelEditBtn').style.display = 'none';
+}
+
 /* ---------------- Guardar pago ---------------- */
 async function guardarPago(){
   const nombre = document.getElementById('fNombre').value.trim();
@@ -375,6 +404,25 @@ async function guardarPago(){
   if (!boletos || boletos < 1){ errEl.textContent = 'La cantidad de boletos debe ser al menos 1.'; return; }
   if (isNaN(monto) || monto < 0){ errEl.textContent = 'Escribe el monto pagado.'; return; }
   errEl.textContent = '';
+
+  if (editingId){
+    // Estamos corrigiendo un registro que ya existe (no se genera recibo nuevo)
+    if (configuredOK){
+      const { error } = await supa.from('pagos')
+        .update({ nombre_comprador: nombre, telefono: telefono || null, boletos, monto })
+        .eq('id', editingId);
+      if (error){ toast('Error al actualizar: ' + error.message); return; }
+    } else {
+      const idx = localFallback.findIndex(r=>r.id===editingId);
+      if (idx > -1){
+        localFallback[idx] = { ...localFallback[idx], nombre_comprador: nombre, telefono: telefono || null, boletos, monto };
+      }
+    }
+    toast('Pago corregido correctamente');
+    cancelarEdicion();
+    cargarPagos();
+    return;
+  }
 
   const registro = {
     cobrador: currentUser,
@@ -443,6 +491,7 @@ function renderTabla(){
         <td><span class="badge ${r.cobrador}">${USERS[r.cobrador] ? USERS[r.cobrador].label : r.cobrador}</span></td>
         <td>
           <div class="row-actions">
+            <button class="icon-btn" onclick='iniciarEdicion(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Editar</button>
             <button class="icon-btn" onclick='imprimirRecibo(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Compartir recibo</button>
             <button class="icon-btn del" onclick="borrarPago('${r.id}')">Borrar</button>
           </div>
