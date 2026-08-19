@@ -713,9 +713,20 @@ function doLogin(){
     currentUser = user;
     err.textContent = '';
     sessionStorage.setItem('jiral_user', user);
-    mostrarSeleccionModo();
+    irAPantallaInicial();
   } else {
     err.textContent = 'Clave incorrecta. Intenta de nuevo.';
+  }
+}
+
+/* Mirian solo hace recibos de Graduandos 2026, asi que entra directo ahi.
+   Los demas cobradores ven la pantalla para elegir el tipo de recibo. */
+function irAPantallaInicial(){
+  if (currentUser === 'mirian'){
+    currentMode = 'graduandos';
+    enterApp();
+  } else {
+    mostrarSeleccionModo();
   }
 }
 
@@ -2475,7 +2486,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
   const saved = sessionStorage.getItem('jiral_user');
   if (saved && USERS[saved]){
     currentUser = saved;
-    mostrarSeleccionModo();
+    irAPantallaInicial();
   }
 });
 </script>
