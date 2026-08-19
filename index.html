@@ -378,8 +378,18 @@
 
         <div class="grid2">
           <div>
+            <label for="dIntegrante">Integrante de la banda (opcional)</label>
+            <select id="dIntegrante" onchange="onCambioIntegranteBanda('d')">
+              <option value="">-- Ninguno / no aplica --</option>
+            </select>
+          </div>
+          <div>
             <label for="dNombre">Nombre del donante</label>
             <input id="dNombre" type="text" placeholder="Ej. Maria Gonzalez" />
+          </div>
+          <div>
+            <label for="dTelefono">Teléfono del donante</label>
+            <input id="dTelefono" type="tel" placeholder="Ej. 6xxx-xxxx" />
           </div>
           <div>
             <label for="dMonto">Cuánto dona ($)</label>
@@ -454,8 +464,18 @@
 
         <div class="grid2">
           <div>
+            <label for="pIntegrante">Integrante de la banda (opcional)</label>
+            <select id="pIntegrante" onchange="onCambioIntegranteBanda('p')">
+              <option value="">-- Ninguno / no aplica --</option>
+            </select>
+          </div>
+          <div>
             <label for="pNombre">Nombre del donante</label>
             <input id="pNombre" type="text" placeholder="Ej. Maria Gonzalez" />
+          </div>
+          <div>
+            <label for="pTelefono">Teléfono del donante</label>
+            <input id="pTelefono" type="tel" placeholder="Ej. 6xxx-xxxx" />
           </div>
           <div>
             <label for="pMonto">Monto que promete donar ($)</label>
@@ -816,6 +836,121 @@ const ROSTER_GRAD = {
   '9C': ROSTER_GRAD_RAW['9C'].map(limpiarNombreGrad)
 };
 const SALON_LABEL = { '9A':'9°A', '9B':'9°B', '9C':'9°C' };
+
+/* ---------------- Lista de integrantes de la Banda C.E.B.G El Jiral ---------------- */
+/* [nombre tal como me lo pasaron, telefono tal como me lo pasaron] */
+const ROSTER_BANDA_RAW = [
+  ['YANKI MORENO', '60211228'],
+  ['ANGELINA GUERRA', '60621881'],
+  ['ROSALIN GUERRA', '60621881'],
+  ['AMETH Ortega', '60975531'],
+  ['GLORIELIS RUIZ', '61657045'],
+  ['DANNA GUERRA', '61828302'],
+  ['ABDIAS GUEVARA', '61887991'],
+  ['ISAC SANCHES', '62136138'],
+  ['B5', '62202766'],
+  ['MARITZELIS LOPES', '62267353'],
+  ['ITZEL LOPES', '62267353'],
+  ['Abdel Edwin chiru', '62267353'],
+  ['JOSMAR LOPES', '62614610'],
+  ['OSMAR LOPES', '62614610'],
+  ['NOELYS ARCIA', '62614610'],
+  ['JESUANIS SOLIS', '63128377'],
+  ['MAILY SOLIS', '63128377'],
+  ['JOEL RODRIGUES', '63183799'],
+  ['MARCOS CUBILLA', '63674840'],
+  ['MOISES CORALES', '64422534'],
+  ['EMMANUEL CHARRIS', '64558426'],
+  ['ASHLEY AUSTIN', '64814365'],
+  ['MIA SANCHEZ', '64814365'],
+  ['DILAN SANCHES', '65137065'],
+  ['Daryanis diaz', '65157541'],
+  ['YENIFER CRUZ', '65495262'],
+  ['jose mitre', '65495262'],
+  ['KAIRIANYS VIQUEZ', '65511428'],
+  ['MAGDIEL GUEVARA', '65588943'],
+  ['OTONIEL RODRIGUES', '65791302'],
+  ['TOMAS Gutierr3z', '65998979'],
+  ['alvin urieta', '66025251'],
+  ['MIA JIMENEZ', '66053426'],
+  ['ERICK HINISTROSA', '66471163'],
+  ['ERICK WRIGTH', '66925646'],
+  ['ROSA MARTINES', '66963963'],
+  ['VICTORIA RAMOS', '66963963'],
+  ['ALBERTO ADAMS', '66963963'],
+  ['KENNETH RAMOS', '66963963'],
+  ['MOISES ORTEGA', '66963963'],
+  ['VICTOR RAMOS', '66963963'],
+  ['NOEMY VALDEZ', '67326455'],
+  ['EYMELETH WRIGTH', '67604083'],
+  ['isabel toribio', '67641002'],
+  ['kathlyn victoria', '67641002'],
+  ['MILAGROS HERNANDES', '67737601'],
+  ['NATHALY DIAZ', '67737740'],
+  ['YAHIDELIS RODRIGUES', '67737740'],
+  ['YAHIRIANIS RODRIGUES', '67737740'],
+  ['LUIS HERRERA', '67877891'],
+  ['YAN CARLOS', '67905839'],
+  ['DANETH ACEVEDO', '68106102'],
+  ['BRITTANY GUEVARA', '68213046'],
+  ['SOFIA MORENO', '68638810'],
+  ['ZAIR URRIETA', '68685247'],
+  ['FRANCISCO', '68905212'],
+  ['AMY BETANCUR', '68905212'],
+  ['ERUBIEL LEONES', '69029894'],
+  ['lineth Guerra', '69274294'],
+  ['ALDAIR LOPEZ', '69559486'],
+  ['CESAR JORDAN', '69614921'],
+  ['YEILY LOPES', '6205-9234'],
+  ['FRANCISCO MACIAS', '6217-3638'],
+  ['EHIMAR MACÍAS', '6217-3638'],
+  ['JENNIFER MENESE', '62652920 / 67321514'],
+  ['YAMILKA GONZALES', '63178903 / 64558426'],
+  ['DANIEL URIETA', '6409-9685 / 6868-5247'],
+  ['JOHELYS JAEN', '67321514 / 62652920'],
+  ['JOSE CELADA', '67629470 / 69177413'],
+  ['david morales', '']
+];
+
+/* Pone Mayuscula Inicial en cada palabra del nombre, sin tocar numeros/simbolos */
+function limpiarNombreBanda(s){
+  return String(s || '').trim().replace(/\s+/g, ' ').split(' ').map(w=>{
+    if (!w) return w;
+    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  }).join(' ');
+}
+
+const ROSTER_BANDA = ROSTER_BANDA_RAW
+  .map(([nombre, telefono])=>({ nombre: limpiarNombreBanda(nombre), telefono: telefono.trim() }))
+  .sort((a,b)=>a.nombre.localeCompare(b.nombre, 'es'));
+
+function poblarSelectIntegrantesBanda(selectId){
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.innerHTML = '<option value="">-- Ninguno / no aplica --</option>';
+  ROSTER_BANDA.forEach(({ nombre })=>{
+    const o = document.createElement('option');
+    o.value = nombre;
+    o.textContent = nombre;
+    sel.appendChild(o);
+  });
+}
+
+/* prefijo: 'd' (donacion) o 'p' (promesa). Al elegir un integrante, siempre
+   llena el telefono con el suyo, y llena el nombre del donante solo si
+   estaba vacio (por si el que dona es un familiar y no el integrante mismo). */
+function onCambioIntegranteBanda(prefijo){
+  const sel = document.getElementById(prefijo + 'Integrante');
+  const nombreEl = document.getElementById(prefijo + 'Nombre');
+  const telEl = document.getElementById(prefijo + 'Telefono');
+  if (!sel || !nombreEl || !telEl) return;
+
+  const elegido = ROSTER_BANDA.find(r=>r.nombre === sel.value);
+  if (!elegido) return;
+
+  telEl.value = elegido.telefono;
+  if (!nombreEl.value.trim()) nombreEl.value = elegido.nombre;
+}
 
 let currentUser = null; // 'samuel' | 'betzaida' | 'mirian'
 let currentMode = null; // 'bingo' | 'donacion' | 'promesa' | 'graduandos'
@@ -1258,9 +1393,12 @@ function hoyISO(){
 }
 
 function prepararFormularioDonacion(){
+  poblarSelectIntegrantesBanda('dIntegrante');
   if (!editingDonId){
     document.getElementById('dFecha').value = hoyISO();
     document.getElementById('dCobra').value = (currentUser==='samuel' || currentUser==='betzaida') ? currentUser : 'jiral';
+    document.getElementById('dTelefono').value = '';
+    document.getElementById('dIntegrante').value = '';
     document.getElementById('dAgradecimiento').value =
       'En nombre de la Banda de Música del C.E.B.G El Jiral, agradecemos profundamente su generosa donación. ' +
       'Su aporte contribuye directamente al desarrollo musical y educativo de nuestros estudiantes.';
@@ -1277,7 +1415,10 @@ function otraFrase(){
 /* ---------------- Corregir una donacion ya guardada ---------------- */
 function iniciarEdicionDonacion(r){
   editingDonId = r.id;
+  poblarSelectIntegrantesBanda('dIntegrante');
+  document.getElementById('dIntegrante').value = r.integrante_banda || '';
   document.getElementById('dNombre').value = r.nombre_donante;
+  document.getElementById('dTelefono').value = r.telefono || '';
   document.getElementById('dMonto').value = r.monto;
   document.getElementById('dFecha').value = (r.fecha_donacion || '').slice(0,10);
   document.getElementById('dCobra').value = r.cobra || 'jiral';
@@ -1294,6 +1435,8 @@ function iniciarEdicionDonacion(r){
 function cancelarEdicionDonacion(){
   editingDonId = null;
   document.getElementById('dNombre').value = '';
+  document.getElementById('dTelefono').value = '';
+  document.getElementById('dIntegrante').value = '';
   document.getElementById('dMonto').value = '';
   document.getElementById('formErrorDon').textContent = '';
   document.getElementById('guardarDonBtnText').textContent = 'Guardar donación';
@@ -1306,6 +1449,8 @@ let localFallbackDon = [];
 
 async function guardarDonacion(){
   const nombre = document.getElementById('dNombre').value.trim();
+  const telefono = document.getElementById('dTelefono').value.trim();
+  const integranteBanda = document.getElementById('dIntegrante').value;
   const monto = parseFloat(document.getElementById('dMonto').value);
   const fecha = document.getElementById('dFecha').value;
   const cobra = document.getElementById('dCobra').value;
@@ -1321,13 +1466,13 @@ async function guardarDonacion(){
   if (editingDonId){
     if (configuredOK){
       const { error } = await supa.from('donaciones')
-        .update({ nombre_donante: nombre, monto, fecha_donacion: fecha, cobra, agradecimiento, frase })
+        .update({ nombre_donante: nombre, telefono: telefono || null, integrante_banda: integranteBanda || null, monto, fecha_donacion: fecha, cobra, agradecimiento, frase })
         .eq('id', editingDonId);
       if (error){ toast('Error al actualizar: ' + error.message); return; }
     } else {
       const idx = localFallbackDon.findIndex(r=>r.id===editingDonId);
       if (idx > -1){
-        localFallbackDon[idx] = { ...localFallbackDon[idx], nombre_donante: nombre, monto, fecha_donacion: fecha, cobra, agradecimiento, frase };
+        localFallbackDon[idx] = { ...localFallbackDon[idx], nombre_donante: nombre, telefono: telefono || null, integrante_banda: integranteBanda || null, monto, fecha_donacion: fecha, cobra, agradecimiento, frase };
       }
     }
     toast('Donación corregida correctamente');
@@ -1338,6 +1483,8 @@ async function guardarDonacion(){
 
   const registro = {
     nombre_donante: nombre,
+    telefono: telefono || null,
+    integrante_banda: integranteBanda || null,
     monto: monto,
     fecha_donacion: fecha,
     cobra: cobra,
@@ -1358,6 +1505,8 @@ async function guardarDonacion(){
   }
 
   document.getElementById('dNombre').value = '';
+  document.getElementById('dTelefono').value = '';
+  document.getElementById('dIntegrante').value = '';
   document.getElementById('dMonto').value = '';
   prepararFormularioDonacion();
   toast('Donación registrada correctamente');
@@ -1402,6 +1551,7 @@ function renderTablaDonaciones(){
           <div class="row-actions">
             <button class="icon-btn" onclick='iniciarEdicionDonacion(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Editar</button>
             <button class="icon-btn" onclick='compartirReciboDonacion(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Descargar recibo</button>
+            ${r.telefono ? `<button class="icon-btn" onclick="abrirWhatsapp(${JSON.stringify(r.telefono)})">WhatsApp</button>` : ''}
             <button class="icon-btn del" onclick="borrarDonacion('${r.id}')">Borrar</button>
           </div>
         </td>`;
@@ -1430,6 +1580,8 @@ function exportarExcelDonaciones(){
   const rows = cacheDon.map(r=>({
     'No. Recibo': r.numero_recibo,
     'Donante': r.nombre_donante,
+    'Teléfono': r.telefono || '',
+    'Integrante de la banda': r.integrante_banda || '',
     'Monto donado': Number(r.monto),
     'Fecha donación': r.fecha_donacion,
     'Recibido por': COBRA_DONACION[r.cobra] || r.cobra
@@ -1589,16 +1741,22 @@ async function compartirReciboDonacion(r){
    ========================================================= */
 
 function prepararFormularioPromesa(){
+  poblarSelectIntegrantesBanda('pIntegrante');
   if (!editingPromId){
     document.getElementById('pFecha').value = hoyISO();
     document.getElementById('pCobra').value = (currentUser==='samuel' || currentUser==='betzaida') ? currentUser : 'jiral';
+    document.getElementById('pTelefono').value = '';
+    document.getElementById('pIntegrante').value = '';
   }
 }
 
 /* ---------------- Corregir una promesa ya guardada ---------------- */
 function iniciarEdicionPromesa(r){
   editingPromId = r.id;
+  poblarSelectIntegrantesBanda('pIntegrante');
+  document.getElementById('pIntegrante').value = r.integrante_banda || '';
   document.getElementById('pNombre').value = r.nombre_donante;
+  document.getElementById('pTelefono').value = r.telefono || '';
   document.getElementById('pMonto').value = r.monto_prometido;
   document.getElementById('pFecha').value = (r.fecha_promesa || '').slice(0,10);
   document.getElementById('pCobra').value = r.cobra || 'jiral';
@@ -1614,6 +1772,8 @@ function iniciarEdicionPromesa(r){
 function cancelarEdicionPromesa(){
   editingPromId = null;
   document.getElementById('pNombre').value = '';
+  document.getElementById('pTelefono').value = '';
+  document.getElementById('pIntegrante').value = '';
   document.getElementById('pMonto').value = '';
   document.getElementById('pNotas').value = '';
   document.getElementById('formErrorProm').textContent = '';
@@ -1632,6 +1792,8 @@ async function guardarPromesa(){
   const fecha = document.getElementById('pFecha').value;
   const cobra = document.getElementById('pCobra').value;
   const notas = document.getElementById('pNotas').value.trim();
+  const telefono = document.getElementById('pTelefono').value.trim();
+  const integranteBanda = document.getElementById('pIntegrante').value;
   const errEl = document.getElementById('formErrorProm');
 
   if (!nombre){ errEl.textContent = 'Escribe el nombre del donante.'; return; }
@@ -1642,13 +1804,13 @@ async function guardarPromesa(){
   if (editingPromId){
     if (configuredOK){
       const { error } = await supa.from('promesas_donacion')
-        .update({ nombre_donante: nombre, monto_prometido: monto, fecha_promesa: fecha, cobra, notas })
+        .update({ nombre_donante: nombre, telefono: telefono || null, integrante_banda: integranteBanda || null, monto_prometido: monto, fecha_promesa: fecha, cobra, notas })
         .eq('id', editingPromId);
       if (error){ toast('Error al actualizar: ' + error.message); return; }
     } else {
       const idx = localFallbackProm.findIndex(r=>r.id===editingPromId);
       if (idx > -1){
-        localFallbackProm[idx] = { ...localFallbackProm[idx], nombre_donante: nombre, monto_prometido: monto, fecha_promesa: fecha, cobra, notas };
+        localFallbackProm[idx] = { ...localFallbackProm[idx], nombre_donante: nombre, telefono: telefono || null, integrante_banda: integranteBanda || null, monto_prometido: monto, fecha_promesa: fecha, cobra, notas };
       }
     }
     toast('Promesa corregida correctamente');
@@ -1659,6 +1821,8 @@ async function guardarPromesa(){
 
   const registro = {
     nombre_donante: nombre,
+    telefono: telefono || null,
+    integrante_banda: integranteBanda || null,
     monto_prometido: monto,
     fecha_promesa: fecha,
     cobra: cobra,
@@ -1678,6 +1842,8 @@ async function guardarPromesa(){
   }
 
   document.getElementById('pNombre').value = '';
+  document.getElementById('pTelefono').value = '';
+  document.getElementById('pIntegrante').value = '';
   document.getElementById('pMonto').value = '';
   document.getElementById('pNotas').value = '';
   prepararFormularioPromesa();
@@ -1740,6 +1906,7 @@ function renderTablaPromesas(){
             ${cumplida ? '' : `<button class="icon-btn" onclick="abrirModalAbono('promesa', '${r.id}', ${JSON.stringify(r.nombre_donante)})">Agregar abono</button>`}
             <button class="icon-btn" onclick='iniciarEdicionPromesa(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Editar</button>
             <button class="icon-btn" onclick='compartirReciboPromesa(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Recibo</button>
+            ${r.telefono ? `<button class="icon-btn" onclick="abrirWhatsapp(${JSON.stringify(r.telefono)})">WhatsApp</button>` : ''}
             <button class="icon-btn del" onclick="borrarPromesa('${r.id}')">Borrar</button>
           </div>
         </td>`;
@@ -1771,6 +1938,8 @@ function exportarExcelPromesas(){
     return {
       'No. Recibo': r.numero_recibo,
       'Donante': r.nombre_donante,
+      'Teléfono': r.telefono || '',
+      'Integrante de la banda': r.integrante_banda || '',
       'Monto prometido': Number(r.monto_prometido),
       'Abonado': abonado,
       'Saldo': Math.max(0, Number(r.monto_prometido) - abonado),
@@ -1882,6 +2051,8 @@ async function convertirPromesaEnDonacion(promesa, ultimoCobra, fechaUltimoAbono
 
   const registroDonacion = {
     nombre_donante: promesa.nombre_donante,
+    telefono: promesa.telefono || null,
+    integrante_banda: promesa.integrante_banda || null,
     monto: Number(promesa.monto_prometido),
     fecha_donacion: fechaUltimoAbono,
     cobra: ultimoCobra,
@@ -2775,11 +2946,12 @@ async function importarAbonos9C(){
     toast('Conecta primero la base de datos (Supabase) para poder importar los abonos.');
     return;
   }
-  if (!confirm('Se van a cargar los abonos y pagos del salón 9C que ya me pasaste (todos con la fecha de hoy) y se va a descargar el recibo en PDF de cada estudiante. ¿Continuar?')) return;
+  if (!confirm('Se van a cargar los abonos y pagos del salón 9C que ya me pasaste (todos con la fecha de hoy) y se va a descargar un ZIP con el recibo en PDF de cada estudiante. ¿Continuar?')) return;
 
   const cobra = (currentUser==='mirian' || currentUser==='samuel' || currentUser==='betzaida') ? currentUser : 'mirian';
   const fecha = hoyISO();
   let creados = 0, saltados = 0, conError = 0;
+  const itemsRecibos = [];
 
   for (const item of IMPORT_ABONOS_9C){
     const yaExiste = cacheGrad.some(g=>g.salon==='9C' && g.nombre_estudiante===item.nombre);
@@ -2810,12 +2982,23 @@ async function importarAbonos9C(){
     creados++;
     if (ultimoAbono){
       const saldo = Math.max(0, IMPORT_MONTO_TOTAL_9C - acumulado);
-      descargarReciboGraduando(gData, ultimoAbono, acumulado, saldo, acumulado);
-      await new Promise(res=>setTimeout(res, 450)); // pausa breve entre descargas
+      const { doc, filename } = construirReciboGraduandoPDF(gData, ultimoAbono, acumulado, saldo, acumulado);
+      itemsRecibos.push({ doc, filename });
     }
   }
 
   await cargarGraduandos();
+
+  if (itemsRecibos.length > 0){
+    toast(`Armando ${itemsRecibos.length} recibo(s) en un ZIP...`);
+    try {
+      await descargarComoZip(itemsRecibos, `recibos_graduandos_9C_${fecha}.zip`);
+    } catch(e){
+      console.error('Error armando el ZIP de la importación 9C:', e);
+      toast('Se cargaron los pagos, pero no se pudo armar el ZIP de recibos: ' + (e && e.message ? e.message : 'error desconocido'));
+    }
+  }
+
   toast(`Importación de 9C lista: ${creados} agregados, ${saltados} ya existían${conError ? ', ' + conError + ' con error' : ''}.`);
 }
 
