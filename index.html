@@ -3622,6 +3622,8 @@ function construirResumenGraduandos(grupo){
         montoRecaudado += pagado;
         if (total - pagado <= 0.005){
           pagados.push({ id: r.id, nombre, salon, total, pagado, fecha: r.fecha_pago });
+        } else if (pagado <= 0.005){
+          noPagado.push({ id: r.id, nombre, salon });
         } else {
           abonando.push({ id: r.id, nombre, salon, total, pagado, saldo: total - pagado });
         }
@@ -3639,6 +3641,8 @@ function construirResumenGraduandos(grupo){
       montoRecaudado += pagado;
       if (total - pagado <= 0.005){
         pagados.push({ id: r.id, nombre: r.nombre_estudiante, salon, total, pagado, fecha: r.fecha_pago });
+      } else if (pagado <= 0.005){
+        noPagado.push({ id: r.id, nombre: r.nombre_estudiante, salon });
       } else {
         abonando.push({ id: r.id, nombre: r.nombre_estudiante, salon, total, pagado, saldo: total - pagado });
       }
@@ -3655,6 +3659,8 @@ function construirResumenGraduandos(grupo){
       montoRecaudado += pagado;
       if (total - pagado <= 0.005){
         pagados.push({ id: r.id, nombre: r.nombre_estudiante, salon: '—', total, pagado, fecha: r.fecha_pago });
+      } else if (pagado <= 0.005){
+        noPagado.push({ id: r.id, nombre: r.nombre_estudiante, salon: '—' });
       } else {
         abonando.push({ id: r.id, nombre: r.nombre_estudiante, salon: '—', total, pagado, saldo: total - pagado });
       }
@@ -3713,9 +3719,10 @@ function irAEditarGraduandoDesdeResumen(id){
   iniciarEdicionGraduando(r);
 }
 
-/* Boton "Editar" de los que "No han pagado nada" en el Resumen: como todavia
-   no tienen ningun registro guardado, no hay nada que corregir - lo que hace
-   es abrir el formulario de "Registrar pago" con el salon y el estudiante ya
+/* Boton "Editar" de los que "No han pagado nada" en el Resumen y que TODAVIA
+   no tienen ningun registro guardado (no aplica a los que ya tienen un
+   registro con $0.00 abonado, esos usan irAEditarGraduandoDesdeResumen) -
+   abre el formulario de "Registrar pago" con el salon y el estudiante ya
    seleccionados, listo para escribir cuanto pago. */
 function irARegistrarPagoDesdeResumen(nombre, salon){
   editingGradId = null;
@@ -3778,7 +3785,9 @@ function renderDetalleGraduandos(r){
         <tr>
           <td>${SALON_LABEL[p.salon] || p.salon}</td>
           <td>${escapeHtml(p.nombre)}</td>
-          <td><button class="icon-btn" onclick='irARegistrarPagoDesdeResumen(${JSON.stringify(p.nombre).replace(/'/g,"&#39;")}, ${JSON.stringify(p.salon).replace(/'/g,"&#39;")})'>Editar</button></td>
+          <td>${p.id
+            ? `<button class="icon-btn" onclick="irAEditarGraduandoDesdeResumen('${p.id}')">Editar</button>`
+            : `<button class="icon-btn" onclick='irARegistrarPagoDesdeResumen(${JSON.stringify(p.nombre).replace(/'/g,"&#39;")}, ${JSON.stringify(p.salon).replace(/'/g,"&#39;")})'>Editar</button>`}</td>
         </tr>`).join('') : filaVacia(3)}</tbody>
     </table>`;
 
