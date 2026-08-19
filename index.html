@@ -3517,9 +3517,9 @@ function construirResumenGraduandos(grupo){
         montoEsperado += total;
         montoRecaudado += pagado;
         if (total - pagado <= 0.005){
-          pagados.push({ nombre, salon, total, pagado, fecha: r.fecha_pago });
+          pagados.push({ id: r.id, nombre, salon, total, pagado, fecha: r.fecha_pago });
         } else {
-          abonando.push({ nombre, salon, total, pagado, saldo: total - pagado });
+          abonando.push({ id: r.id, nombre, salon, total, pagado, saldo: total - pagado });
         }
       } else {
         noPagado.push({ nombre, salon });
@@ -3534,9 +3534,9 @@ function construirResumenGraduandos(grupo){
       montoEsperado += total;
       montoRecaudado += pagado;
       if (total - pagado <= 0.005){
-        pagados.push({ nombre: r.nombre_estudiante, salon, total, pagado, fecha: r.fecha_pago });
+        pagados.push({ id: r.id, nombre: r.nombre_estudiante, salon, total, pagado, fecha: r.fecha_pago });
       } else {
-        abonando.push({ nombre: r.nombre_estudiante, salon, total, pagado, saldo: total - pagado });
+        abonando.push({ id: r.id, nombre: r.nombre_estudiante, salon, total, pagado, saldo: total - pagado });
       }
     });
   });
@@ -3550,9 +3550,9 @@ function construirResumenGraduandos(grupo){
       montoEsperado += total;
       montoRecaudado += pagado;
       if (total - pagado <= 0.005){
-        pagados.push({ nombre: r.nombre_estudiante, salon: '—', total, pagado, fecha: r.fecha_pago });
+        pagados.push({ id: r.id, nombre: r.nombre_estudiante, salon: '—', total, pagado, fecha: r.fecha_pago });
       } else {
-        abonando.push({ nombre: r.nombre_estudiante, salon: '—', total, pagado, saldo: total - pagado });
+        abonando.push({ id: r.id, nombre: r.nombre_estudiante, salon: '—', total, pagado, saldo: total - pagado });
       }
     });
   }
@@ -3600,6 +3600,15 @@ function toggleDetalleGraduandos(){
   txt.textContent = visible ? 'Ver detalle en pantalla' : 'Ocultar detalle';
 }
 
+/* Boton "Editar" de la tabla de Resumen: busca el registro completo en
+   cacheGrad y abre directamente el formulario de correccion, sin tener
+   que ir primero a la pestaña "Historial de graduandos". */
+function irAEditarGraduandoDesdeResumen(id){
+  const r = cacheGrad.find(g=>g.id===id);
+  if (!r){ toast('No se encontro ese registro (intenta recargar).'); return; }
+  iniciarEdicionGraduando(r);
+}
+
 function renderDetalleGraduandos(r){
   const wrap = document.getElementById('detalleGraduandosBody');
   if (!wrap) return;
@@ -3609,20 +3618,21 @@ function renderDetalleGraduandos(r){
   const tablaPagados = `
     <h4 style="font-family:'Baloo 2',sans-serif;color:var(--green);margin:0 0 6px;font-size:15px;">Pagado completo (${r.pagados.length})</h4>
     <table>
-      <thead><tr><th>Salón</th><th>Estudiante</th><th>Total</th><th>Fecha</th></tr></thead>
+      <thead><tr><th>Salón</th><th>Estudiante</th><th>Total</th><th>Fecha</th><th></th></tr></thead>
       <tbody>${r.pagados.length ? r.pagados.map(p=>`
         <tr>
           <td>${SALON_LABEL[p.salon] || p.salon}</td>
           <td>${escapeHtml(p.nombre)}</td>
           <td class="mono-amt">$${p.total.toFixed(2)}</td>
           <td class="num">${p.fecha || '—'}</td>
-        </tr>`).join('') : filaVacia(4)}</tbody>
+          <td>${p.id ? `<button class="icon-btn" onclick="irAEditarGraduandoDesdeResumen('${p.id}')">Editar</button>` : ''}</td>
+        </tr>`).join('') : filaVacia(5)}</tbody>
     </table>`;
 
   const tablaAbonando = `
     <h4 style="font-family:'Baloo 2',sans-serif;color:#8a5a12;margin:22px 0 6px;font-size:15px;">Abonando (${r.abonando.length})</h4>
     <table>
-      <thead><tr><th>Salón</th><th>Estudiante</th><th>Total</th><th>Pagado</th><th>Saldo</th></tr></thead>
+      <thead><tr><th>Salón</th><th>Estudiante</th><th>Total</th><th>Pagado</th><th>Saldo</th><th></th></tr></thead>
       <tbody>${r.abonando.length ? r.abonando.map(p=>`
         <tr>
           <td>${SALON_LABEL[p.salon] || p.salon}</td>
@@ -3630,7 +3640,8 @@ function renderDetalleGraduandos(r){
           <td class="mono-amt">$${p.total.toFixed(2)}</td>
           <td class="num">$${p.pagado.toFixed(2)}</td>
           <td class="num saldo-pos">$${p.saldo.toFixed(2)}</td>
-        </tr>`).join('') : filaVacia(5)}</tbody>
+          <td>${p.id ? `<button class="icon-btn" onclick="irAEditarGraduandoDesdeResumen('${p.id}')">Editar</button>` : ''}</td>
+        </tr>`).join('') : filaVacia(6)}</tbody>
     </table>`;
 
   const tablaNoPagado = `
