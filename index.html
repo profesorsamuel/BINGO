@@ -672,7 +672,7 @@
           </div>
           <div>
             <label for="gMontoTotal">Monto total a pagar ($)</label>
-            <input id="gMontoTotal" type="number" min="0" step="0.01" placeholder="0.00" />
+            <input id="gMontoTotal" type="number" min="0" step="0.01" placeholder="0.00" value="29.00" />
           </div>
           <div>
             <label for="gMontoPagado">Cuánto paga hoy — abono o pago completo ($)</label>
@@ -2752,6 +2752,7 @@ function prepararFormularioGraduando(){
     document.getElementById('gCobra').value =
       (currentUser==='mirian' || currentUser==='samuel' || currentUser==='betzaida') ? currentUser : 'mirian';
     document.getElementById('gSalon').value = '';
+    document.getElementById('gMontoTotal').value = '29.00';
     poblarSelectEstudiantesGrad('', { excluirPagados:true });
   }
 }
@@ -2888,7 +2889,7 @@ function cancelarEdicionGraduando(){
   document.getElementById('gSalon').value = '';
   poblarSelectEstudiantesGrad('', { excluirPagados:true });
   document.getElementById('gWhatsapp').value = '';
-  document.getElementById('gMontoTotal').value = '';
+  document.getElementById('gMontoTotal').value = '29.00';
   document.getElementById('gMontoPagado').value = '';
   document.getElementById('formErrorGrad').textContent = '';
   document.getElementById('guardarGradBtnText').textContent = 'Guardar pago';
@@ -2984,7 +2985,7 @@ async function guardarGraduando(){
 
   document.getElementById('gSalon').value = '';
   document.getElementById('gWhatsapp').value = '';
-  document.getElementById('gMontoTotal').value = '';
+  document.getElementById('gMontoTotal').value = '29.00';
   document.getElementById('gMontoPagado').value = '';
   await cargarGraduandos();
   prepararFormularioGraduando();
@@ -3609,6 +3610,28 @@ function irAEditarGraduandoDesdeResumen(id){
   iniciarEdicionGraduando(r);
 }
 
+/* Boton "Editar" de los que "No han pagado nada" en el Resumen: como todavia
+   no tienen ningun registro guardado, no hay nada que corregir - lo que hace
+   es abrir el formulario de "Registrar pago" con el salon y el estudiante ya
+   seleccionados, listo para escribir cuanto pago. */
+function irARegistrarPagoDesdeResumen(nombre, salon){
+  editingGradId = null;
+  document.getElementById('gSalon').value = salon || '';
+  poblarSelectEstudiantesGrad(salon || '', { excluirPagados:true, forzarNombre: nombre });
+  document.getElementById('gWhatsapp').value = '';
+  document.getElementById('gMontoTotal').value = '29.00';
+  document.getElementById('gMontoPagado').value = '';
+  document.getElementById('gFecha').value = hoyISO();
+  document.getElementById('gCobra').value =
+    (currentUser==='mirian' || currentUser==='samuel' || currentUser==='betzaida') ? currentUser : 'mirian';
+  document.getElementById('formErrorGrad').textContent = '';
+  document.getElementById('guardarGradBtnText').textContent = 'Guardar pago';
+  document.getElementById('cancelEditGradBtn').style.display = 'none';
+  switchTab('graduar');
+  window.scrollTo({ top:0, behavior:'smooth' });
+  toast('Registrando el pago de ' + nombre);
+}
+
 function renderDetalleGraduandos(r){
   const wrap = document.getElementById('detalleGraduandosBody');
   if (!wrap) return;
@@ -3647,12 +3670,13 @@ function renderDetalleGraduandos(r){
   const tablaNoPagado = `
     <h4 style="font-family:'Baloo 2',sans-serif;color:var(--red);margin:22px 0 6px;font-size:15px;">No han pagado nada (${r.noPagado.length})</h4>
     <table>
-      <thead><tr><th>Salón</th><th>Estudiante</th></tr></thead>
+      <thead><tr><th>Salón</th><th>Estudiante</th><th></th></tr></thead>
       <tbody>${r.noPagado.length ? r.noPagado.map(p=>`
         <tr>
           <td>${SALON_LABEL[p.salon] || p.salon}</td>
           <td>${escapeHtml(p.nombre)}</td>
-        </tr>`).join('') : filaVacia(2)}</tbody>
+          <td><button class="icon-btn" onclick='irARegistrarPagoDesdeResumen(${JSON.stringify(p.nombre).replace(/'/g,"&#39;")}, ${JSON.stringify(p.salon).replace(/'/g,"&#39;")})'>Editar</button></td>
+        </tr>`).join('') : filaVacia(3)}</tbody>
     </table>`;
 
   wrap.innerHTML = tablaPagados + tablaAbonando + tablaNoPagado;
