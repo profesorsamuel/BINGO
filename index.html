@@ -136,6 +136,12 @@
   tbody tr:hover{background:rgba(227,169,59,0.08);}
   .num{font-family:'JetBrains Mono',monospace;}
   .mono-amt{font-family:'JetBrains Mono',monospace;color:var(--green);font-weight:700;}
+  .editable-pagado{cursor:pointer;border-bottom:1px dashed var(--gold);}
+  .editable-pagado:hover{background:rgba(227,169,59,0.18);}
+  .editable-pagado input{
+    width:78px;padding:3px 5px;border:1px solid var(--gold);border-radius:4px;
+    font-family:'JetBrains Mono',monospace;font-size:inherit;
+  }
 
   .row-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:nowrap;}
   .icon-btn{
@@ -231,26 +237,6 @@
   }
   #abonoModal h3{font-family:'Baloo 2',sans-serif;margin:0 0 4px;font-size:18px;color:var(--navy-deep);}
   #abonoModal .sub{font-size:12.5px;color:#6b7a86;margin:0 0 16px;}
-
-  /* ---- Modal de historial de abonos (corregir monto de un abono) ---- */
-  #historialAbonosOverlay{
-    display:none;position:fixed;inset:0;background:rgba(11,29,42,0.55);z-index:80;
-    align-items:center;justify-content:center;padding:16px;
-  }
-  #historialAbonosOverlay.show{display:flex;}
-  #historialAbonosModal{
-    background:#fff;border-radius:14px;max-width:420px;width:100%;padding:22px;
-    box-shadow:0 20px 50px rgba(0,0,0,0.3);max-height:82vh;overflow-y:auto;
-  }
-  #historialAbonosModal h3{font-family:'Baloo 2',sans-serif;margin:0 0 4px;font-size:18px;color:var(--navy-deep);}
-  #historialAbonosModal .sub{font-size:12.5px;color:#6b7a86;margin:0 0 16px;line-height:1.4;}
-  .abono-item{
-    display:flex;align-items:center;justify-content:space-between;gap:10px;
-    padding:10px 0;border-bottom:1px solid var(--line);
-  }
-  .abono-item:last-child{border-bottom:none;}
-  .abono-item-monto{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--navy-deep);font-size:14px;}
-  .abono-item-meta{font-size:11.5px;color:#8b98a3;margin-top:2px;}
 
   /* ---- Mode selection (elegir tipo de recibo) ---- */
   #modeView{max-width:440px;margin:50px auto 0;}
@@ -866,18 +852,6 @@
       <button class="btn-outline" onclick="cerrarModalAbono()">Cancelar</button>
     </div>
     <p class="error" id="formErrorAbono"></p>
-  </div>
-</div>
-
-<!-- ---------- MODAL: historial de abonos de un graduando (corregir monto) ---------- -->
-<div id="historialAbonosOverlay" onclick="if(event.target===this) cerrarHistorialAbonos()">
-  <div id="historialAbonosModal">
-    <h3 id="historialAbonosTitulo">Abonos registrados</h3>
-    <p class="sub" id="historialAbonosSub">Si algún abono se registró con el monto equivocado, corrígelo aquí. El total pagado y el saldo se recalculan solos.</p>
-    <div id="historialAbonosLista"></div>
-    <div class="actions-bar">
-      <button class="btn-outline" onclick="cerrarHistorialAbonos()">Cerrar</button>
-    </div>
   </div>
 </div>
 
@@ -3077,77 +3051,6 @@ async function guardarAbonoGraduando(){
   descargarReciboGraduando(graduando, abonoGuardado, monto, nuevoSaldo, nuevoAbonado);
 }
 
-/* ---------------- Historial de abonos de un graduando (corregir monto) ---------------- */
-let historialAbonosGradId = null;
-
-function abrirHistorialAbonos(graduandoId, nombre){
-  historialAbonosGradId = graduandoId;
-  document.getElementById('historialAbonosTitulo').textContent = 'Abonos de ' + nombre;
-  renderHistorialAbonos();
-  document.getElementById('historialAbonosOverlay').classList.add('show');
-}
-
-function cerrarHistorialAbonos(){
-  historialAbonosGradId = null;
-  document.getElementById('historialAbonosOverlay').classList.remove('show');
-}
-
-function renderHistorialAbonos(){
-  const cont = document.getElementById('historialAbonosLista');
-  const abonos = cacheAbonosGrad
-    .filter(a=>a.graduando_id===historialAbonosGradId)
-    .sort((a,b)=> new Date(a.creado_en || a.fecha) - new Date(b.creado_en || b.fecha));
-
-  if (abonos.length === 0){
-    cont.innerHTML = '<p class="tel-vacio">Este estudiante todavía no tiene abonos registrados.</p>';
-    return;
-  }
-
-  cont.innerHTML = abonos.map((a, i)=>{
-    const fecha = new Date((a.fecha || '') + 'T00:00:00').toLocaleDateString();
-    return `
-    <div class="abono-item">
-      <div>
-        <div class="abono-item-monto">$${Number(a.monto).toFixed(2)}</div>
-        <div class="abono-item-meta">Abono #${a.numero_abono ?? (i+1)} · ${fecha} · ${COBRA_DONACION[a.cobra] || a.cobra || '—'}</div>
-      </div>
-      <button class="icon-btn" onclick="editarMontoAbono('${a.id}')">Editar monto</button>
-    </div>`;
-  }).join('');
-}
-
-async function editarMontoAbono(abonoId){
-  const abono = cacheAbonosGrad.find(a=>a.id===abonoId);
-  if (!abono){ toast('No se encontró ese abono.'); return; }
-  const graduando = cacheGrad.find(g=>g.id===abono.graduando_id);
-  if (!graduando){ toast('No se encontró al graduando.'); return; }
-
-  const nuevoTexto = prompt('Nuevo monto para este abono ($):', Number(abono.monto).toFixed(2));
-  if (nuevoTexto === null) return; // cancelado
-  const nuevoMonto = parseFloat(nuevoTexto);
-  if (isNaN(nuevoMonto) || nuevoMonto <= 0){ toast('Escribe un monto válido, mayor a $0.'); return; }
-
-  const otrosAbonados = cacheAbonosGrad
-    .filter(a=>a.graduando_id===graduando.id && a.id!==abonoId)
-    .reduce((sum, a)=>sum + Number(a.monto), 0);
-  if (otrosAbonados + nuevoMonto - Number(graduando.monto_total) > 0.01){
-    toast(`Ese monto deja lo pagado por encima del total a pagar ($${Number(graduando.monto_total).toFixed(2)}).`);
-    return;
-  }
-
-  if (configuredOK){
-    const { error } = await supa.from('abonos_graduando').update({ monto: nuevoMonto }).eq('id', abonoId);
-    if (error){ toast('Error al corregir el abono: ' + error.message); return; }
-  } else {
-    const idx = localFallbackAbonosGrad.findIndex(a=>a.id===abonoId);
-    if (idx > -1) localFallbackAbonosGrad[idx].monto = nuevoMonto;
-  }
-
-  toast('Monto corregido correctamente');
-  await cargarGraduandos();
-  if (historialAbonosGradId === graduando.id) renderHistorialAbonos();
-}
-
 /* ---------------- Cargar todos los graduandos y sus abonos ---------------- */
 async function cargarGraduandos(){
   if (configuredOK){
@@ -3175,6 +3078,93 @@ function abonadoDeGraduando(graduandoId){
   return cacheAbonosGrad
     .filter(a=>a.graduando_id===graduandoId)
     .reduce((sum, a)=>sum + Number(a.monto), 0);
+}
+
+/* ---------------- Corregir el "Pagado" directamente en la tabla (clic para editar) ----------------
+   Convierte la celda en un campo de texto, sin tener que ir a otra pestaña. Al confirmar,
+   ajusta el abono mas reciente de ese estudiante (o crea uno nuevo si no tenia ninguno) para
+   que el total pagado quede en el monto corregido. */
+function activarEdicionPagado(td, graduandoId, valorActual){
+  if (td.querySelector('input')) return; // ya esta en edicion
+  const original = td.innerHTML;
+  td.innerHTML = `<input type="number" step="0.01" min="0" inputmode="decimal" value="${Number(valorActual).toFixed(2)}" />`;
+  const input = td.querySelector('input');
+  input.focus();
+  input.select();
+  let resuelto = false;
+
+  const cancelar = ()=>{ if (resuelto) return; resuelto = true; td.innerHTML = original; };
+
+  const confirmar = async ()=>{
+    if (resuelto) return;
+    resuelto = true;
+    const nuevo = parseFloat(input.value);
+    if (isNaN(nuevo) || nuevo < 0){ toast('Escribe un monto válido.'); td.innerHTML = original; return; }
+    if (Math.abs(nuevo - Number(valorActual)) < 0.005){ td.innerHTML = original; return; }
+    td.textContent = '…';
+    const ok = await corregirMontoPagadoGraduando(graduandoId, nuevo);
+    if (!ok) td.innerHTML = original;
+  };
+
+  input.addEventListener('keydown', (e)=>{
+    if (e.key === 'Enter'){ e.preventDefault(); confirmar(); }
+    else if (e.key === 'Escape'){ e.preventDefault(); cancelar(); }
+  });
+  input.addEventListener('blur', confirmar);
+  input.addEventListener('click', (e)=> e.stopPropagation());
+}
+
+async function corregirMontoPagadoGraduando(graduandoId, nuevoPagado){
+  const graduando = cacheGrad.find(g=>g.id===graduandoId);
+  if (!graduando){ toast('No se encontró al estudiante (intenta recargar).'); return false; }
+
+  if (nuevoPagado - Number(graduando.monto_total) > 0.01){
+    toast(`El pagado no puede ser mayor al total ($${Number(graduando.monto_total).toFixed(2)}).`);
+    return false;
+  }
+
+  const abonosDeEste = cacheAbonosGrad
+    .filter(a=>a.graduando_id===graduandoId)
+    .sort((a,b)=> new Date(a.creado_en) - new Date(b.creado_en));
+
+  if (abonosDeEste.length === 0){
+    if (nuevoPagado <= 0){ toast('No hay ningún pago que corregir.'); return false; }
+    const registro = {
+      graduando_id: graduandoId,
+      monto: nuevoPagado,
+      fecha: hoyISO(),
+      cobra: (currentUser==='mirian' || currentUser==='samuel' || currentUser==='betzaida') ? currentUser : 'mirian',
+      creado_en: new Date().toISOString()
+    };
+    if (configuredOK){
+      const { error } = await supa.from('abonos_graduando').insert(registro);
+      if (error){ toast('Error al corregir: ' + error.message); return false; }
+    } else {
+      registro.id = 'local-abonograd-' + Date.now();
+      registro.numero_abono = localFallbackAbonosGrad.length + 1;
+      localFallbackAbonosGrad.push(registro);
+    }
+  } else {
+    const ultimo = abonosDeEste[abonosDeEste.length - 1];
+    const otrosAbonados = abonosDeEste.slice(0, -1).reduce((s,a)=>s + Number(a.monto), 0);
+    const nuevoMontoUltimo = nuevoPagado - otrosAbonados;
+    if (nuevoMontoUltimo < -0.005){
+      toast('Ese monto es menor que los otros abonos ya registrados de este estudiante; corrígelo agregando o borrando un abono.');
+      return false;
+    }
+    const montoFinal = Math.max(0, nuevoMontoUltimo);
+    if (configuredOK){
+      const { error } = await supa.from('abonos_graduando').update({ monto: montoFinal }).eq('id', ultimo.id);
+      if (error){ toast('Error al corregir: ' + error.message); return false; }
+    } else {
+      const idx = localFallbackAbonosGrad.findIndex(a=>a.id===ultimo.id);
+      if (idx > -1) localFallbackAbonosGrad[idx].monto = montoFinal;
+    }
+  }
+
+  toast('Monto pagado corregido correctamente');
+  await cargarGraduandos();
+  return true;
 }
 
 /* Por defecto muestra solo a los que TODAVIA deben (pendientes o abonando),
@@ -3223,13 +3213,12 @@ function renderTablaGraduandos(){
         <td>${escapeHtml(r.nombre_estudiante)}</td>
         <td>${telefonoWhatsappCell(r.whatsapp, mensajeWA)}</td>
         <td class="mono-amt">$${Number(r.monto_total).toFixed(2)}</td>
-        <td class="num">$${pagado.toFixed(2)}</td>
+        <td class="num editable-pagado" title="Clic para corregir el monto pagado" onclick="activarEdicionPagado(this,'${r.id}',${pagado})">$${pagado.toFixed(2)}</td>
         <td class="num saldo-pos">$${saldo.toFixed(2)}</td>
         <td>${badge}</td>
         <td>
           <div class="row-actions">
             ${cancelado ? '' : `<button class="icon-btn" onclick='abrirModalAbono("graduando", "${r.id}", ${JSON.stringify(r.nombre_estudiante).replace(/'/g,"&#39;")})'>Agregar abono</button>`}
-            ${pagado > 0.005 ? `<button class="icon-btn" onclick='abrirHistorialAbonos("${r.id}", ${JSON.stringify(r.nombre_estudiante).replace(/'/g,"&#39;")})'>Ver abonos</button>` : ''}
             <button class="icon-btn" onclick='iniciarEdicionGraduando(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Editar</button>
             ${r.whatsapp ? `<button class="icon-btn" onclick='abrirWhatsapp(${JSON.stringify(r.whatsapp).replace(/'/g,"&#39;")}, ${JSON.stringify(mensajeWA).replace(/'/g,"&#39;")})'>WhatsApp</button>` : ''}
             <button class="icon-btn del" onclick="borrarGraduando('${r.id}')">Borrar</button>
@@ -3765,7 +3754,7 @@ function renderDetalleGraduandos(r){
           <td>${SALON_LABEL[p.salon] || p.salon}</td>
           <td>${escapeHtml(p.nombre)}</td>
           <td class="mono-amt">$${p.total.toFixed(2)}</td>
-          <td class="num">$${p.pagado.toFixed(2)}</td>
+          <td class="num editable-pagado" title="Clic para corregir el monto pagado" onclick="activarEdicionPagado(this,'${p.id}',${p.pagado})">$${p.pagado.toFixed(2)}</td>
           <td class="num saldo-pos">$${p.saldo.toFixed(2)}</td>
           <td>${p.id ? `<button class="icon-btn" onclick="irAEditarGraduandoDesdeResumen('${p.id}')">Editar</button>` : ''}</td>
         </tr>`).join('') : filaVacia(6)}</tbody>
