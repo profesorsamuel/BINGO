@@ -705,7 +705,7 @@
         <h3 class="section-title">Graduandos — Promoción 2026
           <span class="total-pill" id="gradTotal">$0.00 total</span>
         </h3>
-        <p class="section-sub">Solo se muestran los estudiantes que aún deben o están abonando. Los que ya completaron su pago desaparecen de esta lista automáticamente (pero siguen contados en el informe y la gráfica de abajo).</p>
+        <p class="section-sub">Por defecto solo se muestran los que aún deben o están abonando. Cambia el filtro de estado a "Pagado completo" o "Todos" si necesitas corregir el registro de alguien que ya pagó.</p>
 
         <div class="grid2" style="margin-bottom:10px;">
           <div>
@@ -715,6 +715,14 @@
               <option value="9A">9°A</option>
               <option value="9B">9°B</option>
               <option value="9C">9°C</option>
+            </select>
+          </div>
+          <div>
+            <label for="gradFiltroEstado">Filtrar por estado</label>
+            <select id="gradFiltroEstado" onchange="renderTablaGraduandos()">
+              <option value="PENDIENTES">Pendientes y abonando (por defecto)</option>
+              <option value="PAGADO">Pagado completo</option>
+              <option value="TODOS">Todos (para corregir cualquiera)</option>
             </select>
           </div>
         </div>
@@ -3065,46 +3073,58 @@ function abonadoDeGraduando(graduandoId){
     .reduce((sum, a)=>sum + Number(a.monto), 0);
 }
 
-/* Solo muestra en la tabla a los que TODAVIA deben (pendientes o abonando).
-   Los que ya cancelaron su pago no aparecen aqui, pero se cuentan igual
-   en el resumen/informe de abajo. */
+/* Por defecto muestra solo a los que TODAVIA deben (pendientes o abonando),
+   igual que antes. El filtro de estado ("gradFiltroEstado") permite tambien
+   ver "Pagado completo" o "Todos", para poder encontrar y corregir a un
+   estudiante que ya completo su pago. */
 function renderTablaGraduandos(){
   const body = document.getElementById('graduandosBody');
   const empty = document.getElementById('emptyGradMsg');
   const filtroSel = document.getElementById('gradFiltroSalon');
   const filtro = filtroSel ? filtroSel.value : 'TODOS';
+  const filtroEstadoSel = document.getElementById('gradFiltroEstado');
+  const filtroEstado = filtroEstadoSel ? filtroEstadoSel.value : 'PENDIENTES';
   body.innerHTML = '';
   let totalGeneral = 0;
 
-  const pendientes = cacheGrad.filter(r=>{
+  const filas = cacheGrad.filter(r=>{
     if (filtro !== 'TODOS' && r.salon !== filtro) return false;
     const pagado = abonadoDeGraduando(r.id);
     const saldo = Number(r.monto_total) - pagado;
-    return saldo > 0.005;
+    const cancelado = saldo <= 0.005;
+    if (filtroEstado === 'PENDIENTES') return !cancelado;
+    if (filtroEstado === 'PAGADO') return cancelado;
+    return true; // TODOS
   });
 
-  if (pendientes.length === 0){
+  if (filas.length === 0){
     empty.style.display = 'block';
   } else {
     empty.style.display = 'none';
-    pendientes.forEach((r, idx)=>{
+    filas.forEach((r, idx)=>{
       const pagado = abonadoDeGraduando(r.id);
       const saldo = Math.max(0, Number(r.monto_total) - pagado);
+      const cancelado = saldo <= 0.005;
       totalGeneral += saldo;
       const tr = document.createElement('tr');
-      const mensajeWA = `Hola ${r.nombre_estudiante}, le comparto su recibo de pago de graduación (No. ${r.numero_recibo ?? ''}). Saldo pendiente: $${saldo.toFixed(2)}. ¡Gracias!`;
+      const mensajeWA = cancelado
+        ? `Hola ${r.nombre_estudiante}, le comparto su recibo de pago de graduación (No. ${r.numero_recibo ?? ''}). ¡Gracias por su pago completo!`
+        : `Hola ${r.nombre_estudiante}, le comparto su recibo de pago de graduación (No. ${r.numero_recibo ?? ''}). Saldo pendiente: $${saldo.toFixed(2)}. ¡Gracias!`;
+      const badge = cancelado
+        ? `<span class="badge cumplida">Pagado completo</span>`
+        : `<span class="badge pendiente">${pagado > 0.005 ? 'Abonando' : 'Pendiente'}</span>`;
       tr.innerHTML = `
-        <td class="num">${r.numero_recibo ?? (pendientes.length-idx)}</td>
+        <td class="num">${r.numero_recibo ?? (filas.length-idx)}</td>
         <td>${SALON_LABEL[r.salon] || r.salon || '—'}</td>
         <td>${escapeHtml(r.nombre_estudiante)}</td>
         <td>${telefonoWhatsappCell(r.whatsapp, mensajeWA)}</td>
         <td class="mono-amt">$${Number(r.monto_total).toFixed(2)}</td>
         <td class="num">$${pagado.toFixed(2)}</td>
         <td class="num saldo-pos">$${saldo.toFixed(2)}</td>
-        <td><span class="badge pendiente">${pagado > 0.005 ? 'Abonando' : 'Pendiente'}</span></td>
+        <td>${badge}</td>
         <td>
           <div class="row-actions">
-            <button class="icon-btn" onclick='abrirModalAbono("graduando", "${r.id}", ${JSON.stringify(r.nombre_estudiante).replace(/'/g,"&#39;")})'>Agregar abono</button>
+            ${cancelado ? '' : `<button class="icon-btn" onclick='abrirModalAbono("graduando", "${r.id}", ${JSON.stringify(r.nombre_estudiante).replace(/'/g,"&#39;")})'>Agregar abono</button>`}
             <button class="icon-btn" onclick='iniciarEdicionGraduando(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Editar</button>
             ${r.whatsapp ? `<button class="icon-btn" onclick='abrirWhatsapp(${JSON.stringify(r.whatsapp).replace(/'/g,"&#39;")}, ${JSON.stringify(mensajeWA).replace(/'/g,"&#39;")})'>WhatsApp</button>` : ''}
             <button class="icon-btn del" onclick="borrarGraduando('${r.id}')">Borrar</button>
