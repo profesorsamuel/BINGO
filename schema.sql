@@ -139,3 +139,64 @@ create policy "abonos_delete" on public.abonos_promesa for delete using (true);
 create index if not exists abonos_promesa_idx on public.abonos_promesa (promesa_id);
 
 grant select, insert, update, delete on public.abonos_promesa to anon;
+
+-- ---------------------------------------------------------
+-- Tabla NUEVA: graduandos (Promocion 2026)
+-- ---------------------------------------------------------
+create table if not exists public.graduandos (
+  id uuid primary key default gen_random_uuid(),
+  nombre_estudiante text not null,
+  whatsapp text,
+  monto_total numeric(10,2) not null check (monto_total > 0),
+  fecha_pago date not null,
+  cobra text not null check (cobra in ('samuel','betzaida','jiral','mirian')),
+  numero_recibo integer generated always as identity,
+  creado_en timestamptz not null default now()
+);
+
+alter table public.graduandos enable row level security;
+
+drop policy if exists "graduandos_select" on public.graduandos;
+create policy "graduandos_select" on public.graduandos for select using (true);
+
+drop policy if exists "graduandos_insert" on public.graduandos;
+create policy "graduandos_insert" on public.graduandos for insert with check (true);
+
+drop policy if exists "graduandos_update" on public.graduandos;
+create policy "graduandos_update" on public.graduandos for update using (true) with check (true);
+
+drop policy if exists "graduandos_delete" on public.graduandos;
+create policy "graduandos_delete" on public.graduandos for delete using (true);
+
+grant select, insert, update, delete on public.graduandos to anon;
+
+-- ---------------------------------------------------------
+-- Tabla NUEVA: abonos (pagos parciales) de un graduando
+-- ---------------------------------------------------------
+create table if not exists public.abonos_graduando (
+  id uuid primary key default gen_random_uuid(),
+  graduando_id uuid not null references public.graduandos(id) on delete cascade,
+  monto numeric(10,2) not null check (monto > 0),
+  fecha date not null,
+  cobra text not null check (cobra in ('samuel','betzaida','jiral','mirian')),
+  numero_abono integer generated always as identity,
+  creado_en timestamptz not null default now()
+);
+
+alter table public.abonos_graduando enable row level security;
+
+drop policy if exists "abonos_grad_select" on public.abonos_graduando;
+create policy "abonos_grad_select" on public.abonos_graduando for select using (true);
+
+drop policy if exists "abonos_grad_insert" on public.abonos_graduando;
+create policy "abonos_grad_insert" on public.abonos_graduando for insert with check (true);
+
+drop policy if exists "abonos_grad_update" on public.abonos_graduando;
+create policy "abonos_grad_update" on public.abonos_graduando for update using (true) with check (true);
+
+drop policy if exists "abonos_grad_delete" on public.abonos_graduando;
+create policy "abonos_grad_delete" on public.abonos_graduando for delete using (true);
+
+create index if not exists abonos_graduando_idx on public.abonos_graduando (graduando_id);
+
+grant select, insert, update, delete on public.abonos_graduando to anon;
