@@ -164,6 +164,30 @@
   }
   .config-note code{background:rgba(18,41,59,0.08);padding:1px 5px;border-radius:4px;font-size:12px;}
 
+  /* ---- Promesa de donacion: banner de advertencia ---- */
+  .promesa-banner{
+    display:flex;align-items:center;gap:8px;background:#fff3e0;border:1.5px solid #f0a03c;
+    color:#8a5a12;border-radius:10px;padding:10px 14px;font-size:12.5px;font-weight:700;
+    margin-bottom:16px;
+  }
+  .badge.pendiente{background:rgba(227,169,59,0.18);color:#8a5a12;}
+  .badge.cumplida{background:rgba(62,122,87,0.14);color:var(--green);}
+  .saldo-pos{color:var(--red);font-weight:700;}
+  .saldo-zero{color:var(--green);font-weight:700;}
+
+  /* ---- Modal de abono ---- */
+  #abonoOverlay{
+    display:none;position:fixed;inset:0;background:rgba(11,29,42,0.55);z-index:80;
+    align-items:center;justify-content:center;padding:16px;
+  }
+  #abonoOverlay.show{display:flex;}
+  #abonoModal{
+    background:#fff;border-radius:14px;max-width:380px;width:100%;padding:22px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.3);
+  }
+  #abonoModal h3{font-family:'Baloo 2',sans-serif;margin:0 0 4px;font-size:18px;color:var(--navy-deep);}
+  #abonoModal .sub{font-size:12.5px;color:#6b7a86;margin:0 0 16px;}
+
   /* ---- Mode selection (elegir tipo de recibo) ---- */
   #modeView{max-width:440px;margin:50px auto 0;}
   #modeView h2{font-family:'Baloo 2',sans-serif;text-align:center;margin:0 0 4px;font-size:22px;color:var(--navy-deep);}
@@ -242,6 +266,13 @@
         <span class="mode-text">
           <span class="mode-title">Recibo de Donación</span>
           <span class="mode-desc">Apoyo a la Banda C.E.B.G El Jiral</span>
+        </span>
+      </button>
+      <button class="mode-card" onclick="selectMode('promesa')">
+        <span class="mode-icon">🤝</span>
+        <span class="mode-text">
+          <span class="mode-title">Promesa de Donación</span>
+          <span class="mode-desc">Aún no ha donado, pero desea apoyar</span>
         </span>
       </button>
     </div>
@@ -397,9 +428,106 @@
         </div>
       </section>
     </div>
+
+    <!-- ---------- MODO PROMESA DE DONACION ---------- -->
+    <div id="modoPromesa" style="display:none;">
+      <div class="tabs">
+        <button class="tab active" data-tab="prometer" onclick="switchTab('prometer')">Registrar promesa</button>
+        <button class="tab" data-tab="promesas" onclick="switchTab('promesas')">Historial de promesas</button>
+      </div>
+
+      <!-- --- Registrar promesa --- -->
+      <section id="tab-prometer" class="card">
+        <h3 class="section-title">Nueva promesa de donación</h3>
+        <p class="section-sub">Para quien todavía no ha donado, pero desea apoyar a la Banda C.E.B.G El Jiral</p>
+
+        <div class="grid2">
+          <div>
+            <label for="pNombre">Nombre del donante</label>
+            <input id="pNombre" type="text" placeholder="Ej. Maria Gonzalez" />
+          </div>
+          <div>
+            <label for="pMonto">Monto que promete donar ($)</label>
+            <input id="pMonto" type="number" min="0" step="0.01" placeholder="0.00" />
+          </div>
+          <div>
+            <label for="pFecha">Fecha de la promesa</label>
+            <input id="pFecha" type="date" />
+          </div>
+          <div>
+            <label for="pCobra">Quién registra la promesa</label>
+            <select id="pCobra">
+              <option value="samuel">Samuel</option>
+              <option value="betzaida">Betzaida</option>
+              <option value="jiral">C.E.B.G El Jiral</option>
+            </select>
+          </div>
+        </div>
+
+        <label for="pNotas">Notas (opcional)</label>
+        <textarea id="pNotas" placeholder="Ej. Dijo que abonaria poco a poco a partir de fin de mes"></textarea>
+
+        <div class="actions-bar">
+          <button class="btn-primary" style="width:auto;margin-top:0;" onclick="guardarPromesa()"><span id="guardarPromBtnText">Guardar promesa</span></button>
+          <button class="btn-outline" id="cancelEditPromBtn" style="display:none;" onclick="cancelarEdicionPromesa()">Cancelar correccion</button>
+        </div>
+        <p class="error" id="formErrorProm"></p>
+      </section>
+
+      <!-- --- Historial de promesas --- -->
+      <section id="tab-promesas" class="card" style="display:none;">
+        <h3 class="section-title">Promesas de donación
+          <span class="total-pill" id="promTotal">$0.00 prometido</span>
+        </h3>
+        <p class="section-sub">Puedes registrar abonos poco a poco hasta completar cada promesa, corregirla o borrarla.</p>
+
+        <div id="tableWrapProm">
+          <table id="promesasTable">
+            <thead>
+              <tr>
+                <th>#</th><th>Donante</th><th>Prometido</th><th>Abonado</th><th>Saldo</th><th>Estado</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="promesasBody"></tbody>
+          </table>
+          <div class="empty" id="emptyPromMsg" style="display:none;">Aun no se han registrado promesas.</div>
+        </div>
+
+        <div class="actions-bar">
+          <button class="btn-secondary" onclick="exportarExcelPromesas()">Descargar Excel de promesas</button>
+        </div>
+      </section>
+    </div>
   </div>
 
   <footer>C.E.B.G El Jiral · Bingo &amp; Donaciones a la Banda · Control interno de cobros</footer>
+</div>
+
+<!-- ---------- MODAL: registrar abono a una promesa ---------- -->
+<div id="abonoOverlay" onclick="if(event.target===this) cerrarModalAbono()">
+  <div id="abonoModal">
+    <h3>Registrar abono</h3>
+    <p class="sub" id="abonoDonanteLabel"></p>
+
+    <label for="aMonto">Monto abonado ($)</label>
+    <input id="aMonto" type="number" min="0" step="0.01" placeholder="0.00" />
+
+    <label for="aFecha">Fecha del abono</label>
+    <input id="aFecha" type="date" />
+
+    <label for="aCobra">Quién recibe el abono</label>
+    <select id="aCobra">
+      <option value="samuel">Samuel</option>
+      <option value="betzaida">Betzaida</option>
+      <option value="jiral">C.E.B.G El Jiral</option>
+    </select>
+
+    <div class="actions-bar">
+      <button class="btn-primary" style="width:auto;margin-top:0;" onclick="guardarAbono()">Guardar abono</button>
+      <button class="btn-outline" onclick="cerrarModalAbono()">Cancelar</button>
+    </div>
+    <p class="error" id="formErrorAbono"></p>
+  </div>
 </div>
 
 <div id="toast"></div>
@@ -451,6 +579,11 @@ let cacheDon = [];
 let editingDonId = null; // id de la donacion que se esta corrigiendo (null = registro nuevo)
 let fraseIdx = 0;
 
+let cacheProm = [];      // promesas de donacion
+let cacheAbonos = [];    // todos los abonos (de todas las promesas)
+let editingPromId = null; // id de la promesa que se esta corrigiendo (null = registro nuevo)
+let abonoPromesaId = null; // promesa a la que se le esta agregando un abono en el modal
+
 function toast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -488,6 +621,7 @@ function doLogout(){
   currentMode = null;
   editingId = null;
   editingDonId = null;
+  editingPromId = null;
   sessionStorage.removeItem('jiral_user');
   document.getElementById('appView').style.display = 'none';
   document.getElementById('modeView').style.display = 'none';
@@ -517,22 +651,29 @@ function enterApp(){
   document.getElementById('loginView').style.display = 'none';
   document.getElementById('modeView').style.display = 'none';
   document.getElementById('appView').style.display = 'block';
-  document.getElementById('whoName').textContent = USERS[currentUser].label +
-    (currentMode==='bingo' ? ' · Recibos de Bingo' : ' · Recibos de Donación');
+  const etiquetaModo = currentMode==='bingo' ? ' · Recibos de Bingo'
+    : currentMode==='donacion' ? ' · Recibos de Donación'
+    : ' · Promesas de Donación';
+  document.getElementById('whoName').textContent = USERS[currentUser].label + etiquetaModo;
   document.getElementById('histWho').textContent = USERS[currentUser].label;
   showConfigNoteIfNeeded();
 
   document.getElementById('modoBingo').style.display = currentMode==='bingo' ? 'block' : 'none';
   document.getElementById('modoDonacion').style.display = currentMode==='donacion' ? 'block' : 'none';
+  document.getElementById('modoPromesa').style.display = currentMode==='promesa' ? 'block' : 'none';
 
   if (currentMode==='bingo'){
     switchTab('registrar');
     cargarPagos();
     actualizarMonto();
-  } else {
+  } else if (currentMode==='donacion'){
     switchTab('donar');
     prepararFormularioDonacion();
     cargarDonaciones();
+  } else {
+    switchTab('prometer');
+    prepararFormularioPromesa();
+    cargarPromesas();
   }
 }
 
@@ -541,7 +682,8 @@ function switchTab(name){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
   const map = {
     registrar:'tab-registrar', historial:'tab-historial',
-    donar:'tab-donar', donaciones:'tab-donaciones'
+    donar:'tab-donar', donaciones:'tab-donaciones',
+    prometer:'tab-prometer', promesas:'tab-promesas'
   };
   Object.entries(map).forEach(([key, id])=>{
     const el = document.getElementById(id);
@@ -549,6 +691,7 @@ function switchTab(name){
   });
   if (name==='historial') cargarPagos();
   if (name==='donaciones') cargarDonaciones();
+  if (name==='promesas') cargarPromesas();
 }
 
 /* ---------------- Local fallback storage (session only, used if Supabase not configured) ---------------- */
@@ -1140,6 +1283,506 @@ async function compartirReciboDonacion(r){
   } catch(e){
     if (e && e.name === 'AbortError') return;
   }
+  doc.save(filename);
+}
+
+/* =========================================================
+   PROMESAS DE DONACION (aun no donado) Y SUS ABONOS
+   ========================================================= */
+
+function prepararFormularioPromesa(){
+  if (!editingPromId){
+    document.getElementById('pFecha').value = hoyISO();
+    document.getElementById('pCobra').value = (currentUser==='samuel' || currentUser==='betzaida') ? currentUser : 'jiral';
+  }
+}
+
+/* ---------------- Corregir una promesa ya guardada ---------------- */
+function iniciarEdicionPromesa(r){
+  editingPromId = r.id;
+  document.getElementById('pNombre').value = r.nombre_donante;
+  document.getElementById('pMonto').value = r.monto_prometido;
+  document.getElementById('pFecha').value = (r.fecha_promesa || '').slice(0,10);
+  document.getElementById('pCobra').value = r.cobra || 'jiral';
+  document.getElementById('pNotas').value = r.notas || '';
+  document.getElementById('formErrorProm').textContent = '';
+  document.getElementById('guardarPromBtnText').textContent = 'Actualizar promesa';
+  document.getElementById('cancelEditPromBtn').style.display = 'inline-block';
+  switchTab('prometer');
+  window.scrollTo({ top:0, behavior:'smooth' });
+  toast('Corrigiendo la promesa de ' + r.nombre_donante);
+}
+
+function cancelarEdicionPromesa(){
+  editingPromId = null;
+  document.getElementById('pNombre').value = '';
+  document.getElementById('pMonto').value = '';
+  document.getElementById('pNotas').value = '';
+  document.getElementById('formErrorProm').textContent = '';
+  document.getElementById('guardarPromBtnText').textContent = 'Guardar promesa';
+  document.getElementById('cancelEditPromBtn').style.display = 'none';
+  prepararFormularioPromesa();
+}
+
+/* ---------------- Guardar promesa ---------------- */
+let localFallbackProm = [];
+let localFallbackAbonos = [];
+
+async function guardarPromesa(){
+  const nombre = document.getElementById('pNombre').value.trim();
+  const monto = parseFloat(document.getElementById('pMonto').value);
+  const fecha = document.getElementById('pFecha').value;
+  const cobra = document.getElementById('pCobra').value;
+  const notas = document.getElementById('pNotas').value.trim();
+  const errEl = document.getElementById('formErrorProm');
+
+  if (!nombre){ errEl.textContent = 'Escribe el nombre del donante.'; return; }
+  if (isNaN(monto) || monto <= 0){ errEl.textContent = 'Escribe el monto que promete donar.'; return; }
+  if (!fecha){ errEl.textContent = 'Escribe la fecha de la promesa.'; return; }
+  errEl.textContent = '';
+
+  if (editingPromId){
+    if (configuredOK){
+      const { error } = await supa.from('promesas_donacion')
+        .update({ nombre_donante: nombre, monto_prometido: monto, fecha_promesa: fecha, cobra, notas })
+        .eq('id', editingPromId);
+      if (error){ toast('Error al actualizar: ' + error.message); return; }
+    } else {
+      const idx = localFallbackProm.findIndex(r=>r.id===editingPromId);
+      if (idx > -1){
+        localFallbackProm[idx] = { ...localFallbackProm[idx], nombre_donante: nombre, monto_prometido: monto, fecha_promesa: fecha, cobra, notas };
+      }
+    }
+    toast('Promesa corregida correctamente');
+    cancelarEdicionPromesa();
+    cargarPromesas();
+    return;
+  }
+
+  const registro = {
+    nombre_donante: nombre,
+    monto_prometido: monto,
+    fecha_promesa: fecha,
+    cobra: cobra,
+    notas: notas,
+    creado_en: new Date().toISOString()
+  };
+
+  if (configuredOK){
+    const { data, error } = await supa.from('promesas_donacion').insert(registro).select().single();
+    if (error){ toast('Error al guardar: ' + error.message); return; }
+    descargarReciboPromesa(data);
+  } else {
+    registro.id = 'local-prom-' + Date.now();
+    registro.numero_recibo = localFallbackProm.length + 1;
+    localFallbackProm.push(registro);
+    descargarReciboPromesa(registro);
+  }
+
+  document.getElementById('pNombre').value = '';
+  document.getElementById('pMonto').value = '';
+  document.getElementById('pNotas').value = '';
+  prepararFormularioPromesa();
+  toast('Promesa registrada correctamente');
+  cargarPromesas();
+}
+
+/* ---------------- Cargar todas las promesas y sus abonos ---------------- */
+async function cargarPromesas(){
+  if (configuredOK){
+    const { data, error } = await supa.from('promesas_donacion')
+      .select('*')
+      .order('creado_en', { ascending:false });
+    if (error){ toast('Error al cargar promesas: ' + error.message); return; }
+    cacheProm = data || [];
+
+    const { data: abonosData, error: errorAbonos } = await supa.from('abonos_promesa')
+      .select('*')
+      .order('creado_en', { ascending:true });
+    if (errorAbonos){ toast('Error al cargar abonos: ' + errorAbonos.message); return; }
+    cacheAbonos = abonosData || [];
+  } else {
+    cacheProm = localFallbackProm.slice().reverse();
+    cacheAbonos = localFallbackAbonos.slice();
+  }
+  renderTablaPromesas();
+}
+
+function abonadoDePromesa(promesaId){
+  return cacheAbonos
+    .filter(a=>a.promesa_id===promesaId)
+    .reduce((sum, a)=>sum + Number(a.monto), 0);
+}
+
+function renderTablaPromesas(){
+  const body = document.getElementById('promesasBody');
+  const empty = document.getElementById('emptyPromMsg');
+  body.innerHTML = '';
+  let totalPrometido = 0;
+
+  if (cacheProm.length === 0){
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    cacheProm.forEach((r, idx)=>{
+      totalPrometido += Number(r.monto_prometido);
+      const abonado = abonadoDePromesa(r.id);
+      const saldo = Math.max(0, Number(r.monto_prometido) - abonado);
+      const cumplida = saldo <= 0.005;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="num">${r.numero_recibo ?? (cacheProm.length-idx)}</td>
+        <td>${escapeHtml(r.nombre_donante)}</td>
+        <td class="mono-amt">$${Number(r.monto_prometido).toFixed(2)}</td>
+        <td class="num">$${abonado.toFixed(2)}</td>
+        <td class="num ${cumplida ? 'saldo-zero' : 'saldo-pos'}">$${saldo.toFixed(2)}</td>
+        <td><span class="badge ${cumplida ? 'cumplida' : 'pendiente'}">${cumplida ? 'Cumplida' : 'Pendiente'}</span></td>
+        <td>
+          <div class="row-actions">
+            ${cumplida ? '' : `<button class="icon-btn" onclick="abrirModalAbono('${r.id}', ${JSON.stringify(r.nombre_donante)})">Agregar abono</button>`}
+            <button class="icon-btn" onclick='iniciarEdicionPromesa(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Editar</button>
+            <button class="icon-btn" onclick='compartirReciboPromesa(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Recibo</button>
+            <button class="icon-btn del" onclick="borrarPromesa('${r.id}')">Borrar</button>
+          </div>
+        </td>`;
+      body.appendChild(tr);
+    });
+  }
+  document.getElementById('promTotal').textContent = '$' + totalPrometido.toFixed(2) + ' prometido';
+}
+
+/* ---------------- Borrar promesa ---------------- */
+async function borrarPromesa(id){
+  if (!confirm('Borrar esta promesa y todos sus abonos?')) return;
+  if (configuredOK){
+    const { error } = await supa.from('promesas_donacion').delete().eq('id', id);
+    if (error){ toast('Error al borrar: ' + error.message); return; }
+  } else {
+    localFallbackProm = localFallbackProm.filter(r=>r.id!==id);
+    localFallbackAbonos = localFallbackAbonos.filter(a=>a.promesa_id!==id);
+  }
+  toast('Promesa eliminada');
+  cargarPromesas();
+}
+
+/* ---------------- Exportar Excel de promesas ---------------- */
+function exportarExcelPromesas(){
+  if (cacheProm.length === 0){ toast('No hay promesas para exportar.'); return; }
+  const rows = cacheProm.map(r=>{
+    const abonado = abonadoDePromesa(r.id);
+    return {
+      'No. Recibo': r.numero_recibo,
+      'Donante': r.nombre_donante,
+      'Monto prometido': Number(r.monto_prometido),
+      'Abonado': abonado,
+      'Saldo': Math.max(0, Number(r.monto_prometido) - abonado),
+      'Fecha promesa': r.fecha_promesa,
+      'Registrado por': COBRA_DONACION[r.cobra] || r.cobra,
+      'Notas': r.notas || ''
+    };
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Promesas');
+  XLSX.writeFile(wb, `promesas_donacion_banda_jiral.xlsx`);
+}
+
+/* ---------------- Modal: agregar abono a una promesa ---------------- */
+function abrirModalAbono(promesaId, nombreDonante){
+  abonoPromesaId = promesaId;
+  document.getElementById('abonoDonanteLabel').textContent = 'Donante: ' + nombreDonante;
+  document.getElementById('aMonto').value = '';
+  document.getElementById('aFecha').value = hoyISO();
+  document.getElementById('aCobra').value = (currentUser==='samuel' || currentUser==='betzaida') ? currentUser : 'jiral';
+  document.getElementById('formErrorAbono').textContent = '';
+  document.getElementById('abonoOverlay').classList.add('show');
+}
+
+function cerrarModalAbono(){
+  abonoPromesaId = null;
+  document.getElementById('abonoOverlay').classList.remove('show');
+}
+
+async function guardarAbono(){
+  const monto = parseFloat(document.getElementById('aMonto').value);
+  const fecha = document.getElementById('aFecha').value;
+  const cobra = document.getElementById('aCobra').value;
+  const errEl = document.getElementById('formErrorAbono');
+
+  if (isNaN(monto) || monto <= 0){ errEl.textContent = 'Escribe el monto abonado.'; return; }
+  if (!fecha){ errEl.textContent = 'Escribe la fecha del abono.'; return; }
+  errEl.textContent = '';
+
+  const promesa = cacheProm.find(p=>p.id===abonoPromesaId);
+  if (!promesa){ toast('No se encontro la promesa.'); return; }
+
+  const yaAbonado = abonadoDePromesa(promesa.id);
+  const saldoAntes = Number(promesa.monto_prometido) - yaAbonado;
+  if (monto - saldoAntes > 0.01){
+    errEl.textContent = `El abono no puede ser mayor al saldo pendiente ($${saldoAntes.toFixed(2)}).`;
+    return;
+  }
+
+  const registro = {
+    promesa_id: promesa.id,
+    monto: monto,
+    fecha: fecha,
+    cobra: cobra,
+    creado_en: new Date().toISOString()
+  };
+
+  let abonoGuardado;
+  if (configuredOK){
+    const { data, error } = await supa.from('abonos_promesa').insert(registro).select().single();
+    if (error){ toast('Error al guardar el abono: ' + error.message); return; }
+    abonoGuardado = data;
+  } else {
+    registro.id = 'local-abono-' + Date.now();
+    registro.numero_abono = localFallbackAbonos.length + 1;
+    localFallbackAbonos.push(registro);
+    abonoGuardado = registro;
+  }
+
+  cerrarModalAbono();
+  toast('Abono registrado correctamente');
+  await cargarPromesas();
+
+  const nuevoAbonado = yaAbonado + monto;
+  const nuevoSaldo = Math.max(0, Number(promesa.monto_prometido) - nuevoAbonado);
+  descargarReciboAbono(abonoGuardado, promesa, nuevoAbonado, nuevoSaldo);
+}
+
+/* ---------------- Recibo de PROMESA (aun no ha donado) en PDF ---------------- */
+function construirReciboPromesaPDF(r){
+  const { jsPDF } = window.jspdf;
+  const navy = [18,41,59];
+  const gold = [227,169,59];
+  const naranja = [200,110,20];
+
+  const measureDoc = new jsPDF({ unit:'mm', format:[100,150] });
+  measureDoc.setFontSize(9);
+  const notasLines = r.notas ? measureDoc.splitTextToSize(r.notas, 84) : [];
+
+  const altoBase = 108;
+  const altoTexto = (notasLines.length * 5) + 10;
+  const alto = altoBase + altoTexto;
+
+  const doc = new jsPDF({ unit:'mm', format:[100, alto] });
+
+  try {
+    doc.saveGraphicsState();
+    doc.setGState(new doc.GState({ opacity: 0.14 }));
+    doc.addImage(BANDA_BG_IMG, 'JPEG', 0, Math.max((alto - 100) / 2, 30), 100, 100);
+    doc.restoreGraphicsState();
+  } catch(e){}
+
+  doc.setFillColor(...navy);
+  doc.rect(0,0,100,30,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(13);
+  doc.text('C.E.B.G EL JIRAL', 50, 11, { align:'center' });
+  doc.setFontSize(8.5);
+  doc.setTextColor(...gold);
+  doc.text('APOYO A LA BANDA C.E.B.G EL JIRAL', 50, 17, { align:'center' });
+  doc.setFontSize(9);
+  doc.setTextColor(255,255,255);
+  doc.text('PROMESA DE DONACIÓN', 50, 24, { align:'center' });
+
+  // Banner de advertencia: aun no se ha recibido la donacion
+  doc.setFillColor(...naranja);
+  doc.rect(0, 30, 100, 9, 'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(8);
+  doc.text('AÚN NO SE HA RECIBIDO ESTA DONACIÓN', 50, 36, { align:'center' });
+
+  doc.setTextColor(30,30,30);
+  doc.setFont('helvetica','normal');
+
+  let y = 46;
+  const numero = r.numero_recibo ?? '---';
+  const fecha = new Date((r.fecha_promesa || '') + 'T00:00:00');
+
+  const line = (label, value)=>{
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(9);
+    doc.text(label, 8, y);
+    doc.setFont('helvetica','normal');
+    doc.text(String(value), 38, y);
+    y += 8;
+  };
+
+  line('No. Recibo:', numero);
+  line('Fecha promesa:', fecha.toLocaleDateString());
+  line('Donante:', r.nombre_donante);
+  line('Monto prometido:', '$' + Number(r.monto_prometido).toFixed(2));
+  line('Registrado por:', COBRA_DONACION[r.cobra] || r.cobra);
+
+  y += 2;
+  doc.setDrawColor(...gold);
+  doc.setLineWidth(0.5);
+  doc.line(8, y, 92, y);
+  y += 7;
+
+  doc.setFont('helvetica','italic');
+  doc.setFontSize(9);
+  doc.setTextColor(...navy);
+  const gracias = doc.splitTextToSize(
+    'Gracias por su deseo de apoyar a la Banda C.E.B.G El Jiral. Esperamos pronto hacer realidad esta donación.',
+    84
+  );
+  doc.text(gracias, 8, y);
+  y += gracias.length * 5 + 6;
+
+  if (notasLines.length){
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...navy);
+    doc.text('NOTAS', 8, y);
+    y += 5;
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(30,30,30);
+    doc.text(notasLines, 8, y);
+    y += notasLines.length * 5 + 5;
+  }
+
+  doc.setDrawColor(...gold);
+  doc.setLineWidth(0.6);
+  doc.line(8, y, 92, y);
+  y += 6;
+
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...naranja);
+  const abonoTxt = doc.splitTextToSize(
+    'Puede abonar poco a poco: cada vez que aporte una parte, se le entregara un recibo de abono hasta completar el monto prometido.',
+    84
+  );
+  doc.text(abonoTxt, 8, y);
+  y += abonoTxt.length * 4.5 + 6;
+
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(120,120,120);
+  doc.text('Contacto: 6883-6634 - C.E.B.G El Jiral', 50, y, { align:'center' });
+
+  const filename = `promesa_${numero}_${(r.nombre_donante||'').replace(/\s+/g,'_')}.pdf`;
+  return { doc, filename };
+}
+
+function descargarReciboPromesa(r){
+  const { doc, filename } = construirReciboPromesaPDF(r);
+  doc.save(filename);
+}
+
+async function compartirReciboPromesa(r){
+  const { doc, filename } = construirReciboPromesaPDF(r);
+  try {
+    const blob = doc.output('blob');
+    const file = new File([blob], filename, { type: 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: 'Promesa de Donación - Banda El Jiral',
+        text: `Promesa de donación - ${r.nombre_donante}`
+      });
+      return;
+    }
+  } catch(e){
+    if (e && e.name === 'AbortError') return;
+  }
+  doc.save(filename);
+}
+
+/* ---------------- Recibo de ABONO (pago parcial de una promesa) en PDF ---------------- */
+function construirReciboAbonoPDF(abono, promesa, totalAbonado, saldo){
+  const { jsPDF } = window.jspdf;
+  const navy = [18,41,59];
+  const gold = [227,169,59];
+  const green = [62,122,87];
+  const cumplida = saldo <= 0.005;
+
+  const doc = new jsPDF({ unit:'mm', format:[100, 128] });
+
+  doc.setFillColor(...navy);
+  doc.rect(0,0,100,30,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(13);
+  doc.text('C.E.B.G EL JIRAL', 50, 11, { align:'center' });
+  doc.setFontSize(8.5);
+  doc.setTextColor(...gold);
+  doc.text('APOYO A LA BANDA C.E.B.G EL JIRAL', 50, 17, { align:'center' });
+  doc.setFontSize(9);
+  doc.setTextColor(255,255,255);
+  doc.text('RECIBO DE ABONO', 50, 24, { align:'center' });
+
+  doc.setTextColor(30,30,30);
+  doc.setFont('helvetica','normal');
+
+  let y = 38;
+  const numero = abono.numero_abono ?? '---';
+  const fecha = new Date((abono.fecha || '') + 'T00:00:00');
+
+  const line = (label, value)=>{
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(9);
+    doc.text(label, 8, y);
+    doc.setFont('helvetica','normal');
+    doc.text(String(value), 40, y);
+    y += 8;
+  };
+
+  line('No. Abono:', numero);
+  line('Fecha:', fecha.toLocaleDateString());
+  line('Donante:', promesa.nombre_donante);
+  line('Monto abonado:', '$' + Number(abono.monto).toFixed(2));
+  line('Recibido por:', COBRA_DONACION[abono.cobra] || abono.cobra);
+
+  y += 2;
+  doc.setDrawColor(...gold);
+  doc.setLineWidth(0.5);
+  doc.line(8, y, 92, y);
+  y += 7;
+
+  line('Total prometido:', '$' + Number(promesa.monto_prometido).toFixed(2));
+  line('Total abonado:', '$' + totalAbonado.toFixed(2));
+  line('Saldo pendiente:', '$' + saldo.toFixed(2));
+
+  y += 4;
+  doc.setDrawColor(...gold);
+  doc.setLineWidth(0.6);
+  doc.line(8, y, 92, y);
+  y += 8;
+
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(9.5);
+  if (cumplida){
+    doc.setTextColor(...green);
+    doc.text('¡PROMESA CUMPLIDA!', 50, y, { align:'center' });
+    y += 6;
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(8.5);
+    doc.text('Gracias por completar su donación.', 50, y, { align:'center' });
+  } else {
+    doc.setTextColor(...navy);
+    doc.text('Gracias por su abono.', 50, y, { align:'center' });
+  }
+
+  y += 10;
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(120,120,120);
+  doc.text('Contacto: 6883-6634 - C.E.B.G El Jiral', 50, y, { align:'center' });
+
+  const filename = `abono_${numero}_${(promesa.nombre_donante||'').replace(/\s+/g,'_')}.pdf`;
+  return { doc, filename };
+}
+
+function descargarReciboAbono(abono, promesa, totalAbonado, saldo){
+  const { doc, filename } = construirReciboAbonoPDF(abono, promesa, totalAbonado, saldo);
   doc.save(filename);
 }
 
