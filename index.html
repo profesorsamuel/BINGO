@@ -2820,12 +2820,13 @@ function poblarSelectEstudiantesGrad(salon, { excluirPagados = true, forzarNombr
 
   (ROSTER_GRAD[salon] || []).forEach(nombre=>{
     if (excluirPagados && nombre !== forzarNombre){
-      const yaPagado = cacheGrad.some(g=>{
-        if (g.salon !== salon || g.nombre_estudiante !== nombre) return false;
-        const saldo = Number(g.monto_total) - abonadoDeGraduando(g.id);
-        return saldo <= 0.005;
-      });
-      if (yaPagado) return;
+      // Antes solo se ocultaba a quien ya habia pagado completo, lo que permitia
+      // volver a "registrar" a alguien que estaba abonando (pago parcial) y crear
+      // por error una segunda cuenta duplicada para el mismo estudiante. Ahora se
+      // oculta a cualquiera que YA tenga una cuenta abierta en este salon, pague o
+      // no; para agregarle un pago se debe usar el boton "Agregar abono" de su fila.
+      const yaTieneCuenta = cacheGrad.some(g=> g.salon === salon && g.nombre_estudiante === nombre);
+      if (yaTieneCuenta) return;
     }
     const o = document.createElement('option');
     o.value = nombre;
@@ -2945,6 +2946,11 @@ async function guardarGraduando(){
 
   if (isNaN(montoPagado) || montoPagado <= 0){ errEl.textContent = 'Escribe cuanto paga hoy (abono o pago completo).'; return; }
   if (montoPagado - montoTotal > 0.01){ errEl.textContent = 'El pago no puede ser mayor al monto total.'; return; }
+  const yaExiste = cacheGrad.some(g=> g.salon === salon && g.nombre_estudiante === nombre);
+  if (yaExiste){
+    errEl.textContent = `${nombre} ya tiene una cuenta registrada en ${salon}. Busca su fila en la tabla y usa "Agregar abono" para sumarle este pago.`;
+    return;
+  }
   errEl.textContent = '';
 
   const registro = {
