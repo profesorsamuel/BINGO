@@ -668,10 +668,9 @@
           </div>
           <div>
             <label for="gNombre">Nombre del estudiante</label>
-            <select id="gNombre" onchange="onCambioEstudianteGrad()">
+            <select id="gNombre">
               <option value="">-- Primero selecciona el salón --</option>
             </select>
-            <input id="gNombreManual" type="text" placeholder="Escribe el nombre del estudiante" style="display:none;margin-top:8px;" />
           </div>
           <div>
             <label for="gWhatsapp">WhatsApp (para enviar el recibo)</label>
@@ -2828,22 +2827,10 @@ function telefonoWhatsappCell(numero, mensaje){
    registro ya guardado se pasa excluirPagados=false para no ocultar a nadie. */
 function poblarSelectEstudiantesGrad(salon, { excluirPagados = true, forzarNombre = null } = {}){
   const sel = document.getElementById('gNombre');
-  const manual = document.getElementById('gNombreManual');
   sel.innerHTML = '';
-  manual.style.display = 'none';
-  manual.value = '';
 
   if (!salon){
     sel.innerHTML = '<option value="">-- Primero selecciona el salón --</option>';
-    if (forzarNombre){
-      const optOtro = document.createElement('option');
-      optOtro.value = '__otro__';
-      optOtro.textContent = 'Otro / no está en la lista';
-      sel.appendChild(optOtro);
-      sel.value = '__otro__';
-      manual.style.display = 'block';
-      manual.value = forzarNombre;
-    }
     return;
   }
 
@@ -2877,19 +2864,10 @@ function poblarSelectEstudiantesGrad(salon, { excluirPagados = true, forzarNombr
     sel.appendChild(o);
   });
 
-  const optOtro = document.createElement('option');
-  optOtro.value = '__otro__';
-  optOtro.textContent = 'Otro / no está en la lista';
-  sel.appendChild(optOtro);
-
   if (forzarNombre){
     const existe = Array.from(sel.options).some(o=>o.value===forzarNombre);
     if (existe){
       sel.value = forzarNombre;
-    } else {
-      sel.value = '__otro__';
-      manual.style.display = 'block';
-      manual.value = forzarNombre;
     }
   }
 }
@@ -2899,22 +2877,8 @@ function actualizarListaEstudiantesGrad(){
   poblarSelectEstudiantesGrad(salon, { excluirPagados: !editingGradId });
 }
 
-function onCambioEstudianteGrad(){
-  const sel = document.getElementById('gNombre');
-  const manual = document.getElementById('gNombreManual');
-  if (sel.value === '__otro__'){
-    manual.style.display = 'block';
-    manual.focus();
-  } else {
-    manual.style.display = 'none';
-    manual.value = '';
-  }
-}
-
 function nombreSeleccionadoGrad(){
-  const sel = document.getElementById('gNombre').value;
-  if (sel === '__otro__') return document.getElementById('gNombreManual').value.trim();
-  return sel;
+  return document.getElementById('gNombre').value;
 }
 
 /* ---------------- Corregir un graduando ya guardado ---------------- */
@@ -3776,7 +3740,7 @@ function construirResumenGraduandos(grupo){
     });
 
     // Registros de este salon que no coinciden con ningun nombre de la lista
-    // (por ejemplo, un estudiante nuevo agregado con "Otro / no esta en la lista")
+    // (por ejemplo, registros antiguos guardados antes de limitar el formulario a la lista)
     cacheGrad.filter(g=>g.salon===salon && !usados.has(g.id)).forEach(r=>{
       const pagado = abonadoDeGraduando(r.id);
       const total = Number(r.monto_total);
