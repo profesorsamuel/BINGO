@@ -2819,18 +2819,27 @@ function poblarSelectEstudiantesGrad(salon, { excluirPagados = true, forzarNombr
   sel.appendChild(opt0);
 
   (ROSTER_GRAD[salon] || []).forEach(nombre=>{
-    if (excluirPagados && nombre !== forzarNombre){
-      // Antes solo se ocultaba a quien ya habia pagado completo, lo que permitia
-      // volver a "registrar" a alguien que estaba abonando (pago parcial) y crear
-      // por error una segunda cuenta duplicada para el mismo estudiante. Ahora se
-      // oculta a cualquiera que YA tenga una cuenta abierta en este salon, pague o
-      // no; para agregarle un pago se debe usar el boton "Agregar abono" de su fila.
-      const yaTieneCuenta = cacheGrad.some(g=> g.salon === salon && g.nombre_estudiante === nombre);
-      if (yaTieneCuenta) return;
+    // Al que ya pago completo (cancelado) se le oculta para que no lo vuelvan a
+    // "registrar" por error. Al que esta abonando (pago parcial) o no ha pagado
+    // nada SI se muestra, con su saldo pendiente al lado, para que se le pueda
+    // seleccionar cuando venga a abonar; al elegirlo, guardarGraduando() lo manda
+    // automaticamente a sumar un abono a su cuenta existente en vez de crear otra.
+    const cuenta = cacheGrad.find(g=> g.salon === salon && g.nombre_estudiante === nombre);
+    let etiqueta = nombre;
+    if (cuenta && nombre !== forzarNombre){
+      const pagado = abonadoDeGraduando(cuenta.id);
+      const saldo = Number(cuenta.monto_total) - pagado;
+      const cancelado = saldo <= 0.005;
+      if (excluirPagados && cancelado) return;
+      if (!cancelado){
+        etiqueta = `${nombre} (debe $${saldo.toFixed(2)})`;
+      } else {
+        etiqueta = `${nombre} (pagado completo)`;
+      }
     }
     const o = document.createElement('option');
     o.value = nombre;
-    o.textContent = nombre;
+    o.textContent = etiqueta;
     sel.appendChild(o);
   });
 
@@ -2946,9 +2955,17 @@ async function guardarGraduando(){
 
   if (isNaN(montoPagado) || montoPagado <= 0){ errEl.textContent = 'Escribe cuanto paga hoy (abono o pago completo).'; return; }
   if (montoPagado - montoTotal > 0.01){ errEl.textContent = 'El pago no puede ser mayor al monto total.'; return; }
-  const yaExiste = cacheGrad.some(g=> g.salon === salon && g.nombre_estudiante === nombre);
-  if (yaExiste){
-    errEl.textContent = `${nombre} ya tiene una cuenta registrada en ${salon}. Busca su fila en la tabla y usa "Agregar abono" para sumarle este pago.`;
+  const cuentaExistente = cacheGrad.find(g=> g.salon === salon && g.nombre_estudiante === nombre);
+  if (cuentaExistente){
+    // Ya tiene cuenta (esta abonando o no ha pagado nada todavia): en vez de
+    // bloquear, se abre directamente el modal de "Agregar abono" con ese monto
+    // precargado para que se le sume el pago, sin crear una cuenta duplicada.
+    errEl.textContent = '';
+    abrirModalAbono('graduando', cuentaExistente.id, cuentaExistente.nombre_estudiante);
+    document.getElementById('aMonto').value = montoPagado;
+    if (fecha) document.getElementById('aFecha').value = fecha;
+    if (cobra) document.getElementById('aCobra').value = cobra;
+    toast(`${nombre} ya tenia una cuenta abierta: completa el abono en la ventana que se abrio.`);
     return;
   }
   errEl.textContent = '';
