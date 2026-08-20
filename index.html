@@ -2824,7 +2824,7 @@ function poblarSelectEstudiantesGrad(salon, { excluirPagados = true, forzarNombr
     // nada SI se muestra, con su saldo pendiente al lado, para que se le pueda
     // seleccionar cuando venga a abonar; al elegirlo, guardarGraduando() lo manda
     // automaticamente a sumar un abono a su cuenta existente en vez de crear otra.
-    const cuenta = cacheGrad.find(g=> g.salon === salon && g.nombre_estudiante === nombre);
+    const cuenta = cacheGrad.find(g=> g.salon === salon && normalizarNombreGrad(g.nombre_estudiante) === normalizarNombreGrad(nombre));
     let etiqueta = nombre;
     if (cuenta && nombre !== forzarNombre){
       const pagado = abonadoDeGraduando(cuenta.id);
@@ -2955,7 +2955,15 @@ async function guardarGraduando(){
 
   if (isNaN(montoPagado) || montoPagado <= 0){ errEl.textContent = 'Escribe cuanto paga hoy (abono o pago completo).'; return; }
   if (montoPagado - montoTotal > 0.01){ errEl.textContent = 'El pago no puede ser mayor al monto total.'; return; }
-  const cuentaExistente = cacheGrad.find(g=> g.salon === salon && g.nombre_estudiante === nombre);
+
+  // Se recarga desde la base de datos justo antes de buscar si el estudiante
+  // ya tiene una cuenta abierta. Si no se hace esto, y otro cobrador (u otra
+  // pestana) ya lo habia registrado mientras este formulario estaba abierto,
+  // el sistema no lo encuentra y crea una cuenta repetida, perdiendo de vista
+  // lo que ya habia pagado antes (parece que "nunca hubiera pagado").
+  if (configuredOK) await cargarGraduandos();
+
+  const cuentaExistente = cacheGrad.find(g=> g.salon === salon && normalizarNombreGrad(g.nombre_estudiante) === normalizarNombreGrad(nombre));
   if (cuentaExistente){
     // Ya tiene cuenta (esta abonando o no ha pagado nada todavia): en vez de
     // bloquear, se abre directamente el modal de "Agregar abono" con ese monto
@@ -3036,8 +3044,15 @@ async function guardarAbonoGraduando(){
   if (!fecha){ errEl.textContent = 'Escribe la fecha del pago.'; return; }
   errEl.textContent = '';
 
+  // Se recarga desde la base de datos justo antes de calcular cuanto lleva
+  // pagado, para no usar una copia vieja en memoria (por ejemplo si esta
+  // ventana quedo abierta un rato y mientras tanto se registro otro pago
+  // suyo desde otra sesion). Sin esto, el saldo se calcula mal y puede
+  // parecer que el estudiante no habia pagado nada todavia.
+  if (configuredOK) await cargarGraduandos();
+
   const graduando = cacheGrad.find(g=>g.id===abonoPromesaId);
-  if (!graduando){ toast('No se encontro al graduando.'); return; }
+  if (!graduando){ toast('No se encontro al graduando (puede que se haya corregido). Cierra esta ventana e intenta de nuevo.'); return; }
 
   const yaAbonado = abonadoDeGraduando(graduando.id);
   const saldoAntes = Number(graduando.monto_total) - yaAbonado;
