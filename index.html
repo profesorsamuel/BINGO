@@ -646,6 +646,7 @@
       <div class="tabs">
         <button class="tab active" data-tab="graduar" onclick="switchTab('graduar')">Registrar pago</button>
         <button class="tab" data-tab="graduandos" onclick="switchTab('graduandos')">Historial de graduandos</button>
+        <button class="tab" data-tab="abonosGrad" onclick="switchTab('abonosGrad')">Historial de abonos</button>
         <button class="tab" data-tab="resumenGrad" onclick="switchTab('resumenGrad')">Resumen de pagos</button>
         <button class="tab" data-tab="recibosGrad" onclick="switchTab('recibosGrad')">Descargar recibos</button>
       </div>
@@ -753,6 +754,38 @@
           <button class="btn-outline" onclick="importarAbonos9A()">Importar abonos (salón 9A)</button>
         </div>
         <p class="section-sub" style="margin-top:-6px;">Los botones "Importar abonos" cargan de una sola vez los abonos y pagos completos del salón correspondiente que ya me pasaste, todos con la fecha de hoy, y descargan el recibo en PDF de cada estudiante para que se los envíes. Si ya lo usaste antes, lo puedes volver a presionar sin miedo: a los estudiantes que ya estén cargados simplemente los salta.</p>
+      </section>
+
+      <!-- --- Historial de abonos (cada pago individual, por fecha) --- -->
+      <section id="tab-abonosGrad" class="card" style="display:none;">
+        <h3 class="section-title">Historial de abonos
+          <span class="total-pill" id="abonosGradTotal">$0.00 en abonos</span>
+        </h3>
+        <p class="section-sub">Cada abono o pago registrado, ordenado por fecha de abono (el más reciente primero). Si alguno está mal, lo puedes borrar aquí mismo.</p>
+
+        <div class="grid2" style="margin-bottom:10px;">
+          <div>
+            <label for="abonosGradFiltroSalon">Filtrar por salón</label>
+            <select id="abonosGradFiltroSalon" onchange="renderTablaAbonosGrad()">
+              <option value="TODOS">Todos los salones</option>
+              <option value="9A">9°A</option>
+              <option value="9B">9°B</option>
+              <option value="9C">9°C</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="tableWrapAbonosGrad">
+          <table id="abonosGradTable">
+            <thead>
+              <tr>
+                <th>No. abono</th><th>Fecha</th><th>Salón</th><th>Estudiante</th><th>Monto</th><th>Recibido por</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="abonosGradBody"></tbody>
+          </table>
+          <div class="empty" id="emptyAbonosGradMsg" style="display:none;">Aún no se han registrado abonos.</div>
+        </div>
       </section>
 
       <!-- --- Resumen de pagos, grafica e informe PDF --- -->
@@ -1205,7 +1238,7 @@ function switchTab(name){
     registrar:'tab-registrar', historial:'tab-historial',
     donar:'tab-donar', donaciones:'tab-donaciones', resumenDon2:'tab-resumenDon2',
     prometer:'tab-prometer', promesas:'tab-promesas', resumenDon:'tab-resumenDon',
-    graduar:'tab-graduar', graduandos:'tab-graduandos',
+    graduar:'tab-graduar', graduandos:'tab-graduandos', abonosGrad:'tab-abonosGrad',
     resumenGrad:'tab-resumenGrad', recibosGrad:'tab-recibosGrad'
   };
   Object.entries(map).forEach(([key, id])=>{
@@ -1218,6 +1251,7 @@ function switchTab(name){
   if (name==='promesas') cargarPromesas();
   if (name==='resumenDon') cargarResumenDonaciones();
   if (name==='graduandos') cargarGraduandos();
+  if (name==='abonosGrad') cargarGraduandos();
   if (name==='resumenGrad') cargarGraduandos();
   if (name==='recibosGrad') cargarGraduandos();
 }
@@ -3109,6 +3143,7 @@ async function cargarGraduandos(){
     cacheAbonosGrad = localFallbackAbonosGrad.slice();
   }
   renderTablaGraduandos();
+  renderTablaAbonosGrad();
   actualizarResumenGraduandos();
   renderTablaRecibosGrad();
 }
@@ -3291,6 +3326,74 @@ async function borrarGraduando(id){
     localFallbackAbonosGrad = localFallbackAbonosGrad.filter(a=>a.graduando_id!==id);
   }
   toast('Graduando eliminado');
+  cargarGraduandos();
+}
+
+/* ---------------- Historial de abonos (cada pago individual, ordenado por fecha) ---------------- */
+function renderTablaAbonosGrad(){
+  const body = document.getElementById('abonosGradBody');
+  const empty = document.getElementById('emptyAbonosGradMsg');
+  if (!body) return; // la pestaña puede no estar renderizada todavia
+  const filtroSel = document.getElementById('abonosGradFiltroSalon');
+  const filtro = filtroSel ? filtroSel.value : 'TODOS';
+  body.innerHTML = '';
+  let totalAbonos = 0;
+
+  // Une cada abono con los datos del graduando al que pertenece.
+  let filas = cacheAbonosGrad.map(a=>{
+    const g = cacheGrad.find(g=>g.id===a.graduando_id);
+    return { abono:a, graduando:g };
+  }).filter(f=>f.graduando); // descarta abonos huerfanos (graduando ya borrado)
+
+  if (filtro !== 'TODOS'){
+    filas = filas.filter(f=>f.graduando.salon===filtro);
+  }
+
+  // Ordena por fecha de abono, la mas reciente primero. Si dos abonos tienen
+  // la misma fecha, el que se registro despues (creado_en) aparece primero.
+  filas.sort((a,b)=>{
+    const diff = new Date(b.abono.fecha) - new Date(a.abono.fecha);
+    if (diff !== 0) return diff;
+    return new Date(b.abono.creado_en || 0) - new Date(a.abono.creado_en || 0);
+  });
+
+  if (filas.length === 0){
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    filas.forEach(({abono, graduando})=>{
+      totalAbonos += Number(abono.monto);
+      const fecha = new Date((abono.fecha || '') + 'T00:00:00');
+      const fechaTxt = isNaN(fecha) ? (abono.fecha || '—') : fecha.toLocaleDateString('es-PA', { day:'2-digit', month:'2-digit', year:'numeric' });
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="num">${abono.numero_abono ?? '—'}</td>
+        <td>${fechaTxt}</td>
+        <td>${SALON_LABEL[graduando.salon] || graduando.salon || '—'}</td>
+        <td>${escapeHtml(graduando.nombre_estudiante)}</td>
+        <td class="mono-amt">$${Number(abono.monto).toFixed(2)}</td>
+        <td>${COBRA_DONACION[abono.cobra] || abono.cobra}</td>
+        <td>
+          <div class="row-actions">
+            <button class="icon-btn del" onclick="borrarAbonoGraduando('${abono.id}')">Borrar</button>
+          </div>
+        </td>`;
+      body.appendChild(tr);
+    });
+  }
+  const totalEl = document.getElementById('abonosGradTotal');
+  if (totalEl) totalEl.textContent = '$' + totalAbonos.toFixed(2) + ' en abonos';
+}
+
+async function borrarAbonoGraduando(id){
+  if (!confirm('¿Borrar este abono? El total pagado del estudiante se recalculará.')) return;
+  if (configuredOK){
+    const { error } = await supa.from('abonos_graduando').delete().eq('id', id);
+    if (error){ toast('Error al borrar: ' + error.message); return; }
+  } else {
+    localFallbackAbonosGrad = localFallbackAbonosGrad.filter(a=>a.id!==id);
+  }
+  toast('Abono eliminado');
   cargarGraduandos();
 }
 
