@@ -1410,9 +1410,12 @@ let editingPromId = null; // id de la promesa que se esta corrigiendo (null = re
 
 let cacheGrad = [];        // graduandos (Promocion 2026)
 let cacheAbonosGrad = [];  // todos los abonos de graduandos
+let cacheFoto = [];        // pagos de foto de graduacion (Promocion 2026)
+let cacheAbonosFoto = [];  // todos los abonos de foto de graduacion
 let editingGradId = null;  // id del graduando que se esta corrigiendo (null = registro nuevo)
 let editingFotoId = null;  // id del registro de foto que se esta corrigiendo (null = registro nuevo)
 let seleccionadosRecibosGrad = new Set(); // ids marcados en la pestaña "Descargar recibos"
+let seleccionadosRecibosFoto = new Set(); // ids marcados en "Descargar recibos" de Foto de Graduación
 let gradFraseIdx = 0;
 
 let abonoTipo = null;      // 'promesa' | 'graduando' -- que esta usando el modal de abono
