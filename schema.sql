@@ -220,3 +220,68 @@ create policy "abonos_grad_delete" on public.abonos_graduando for delete using (
 create index if not exists abonos_graduando_idx on public.abonos_graduando (graduando_id);
 
 grant select, insert, update, delete on public.abonos_graduando to anon;
+
+-- ---------------------------------------------------------
+-- Tabla NUEVA: fotos_grad (pago de la foto de graduación, Promocion 2026)
+-- Misma logica que "graduandos" pero para el cobro de la foto ($17.00).
+-- ---------------------------------------------------------
+create table if not exists public.fotos_grad (
+  id uuid primary key default gen_random_uuid(),
+  nombre_estudiante text not null,
+  whatsapp text,
+  monto_total numeric(10,2) not null check (monto_total > 0),
+  fecha_pago date not null,
+  cobra text not null check (cobra in ('samuel','betzaida','jiral','mirian','wendy')),
+  numero_recibo integer generated always as identity,
+  creado_en timestamptz not null default now(),
+  salon text
+);
+
+create index if not exists fotos_grad_salon_idx on public.fotos_grad (salon);
+
+alter table public.fotos_grad enable row level security;
+
+drop policy if exists "fotos_grad_select" on public.fotos_grad;
+create policy "fotos_grad_select" on public.fotos_grad for select using (true);
+
+drop policy if exists "fotos_grad_insert" on public.fotos_grad;
+create policy "fotos_grad_insert" on public.fotos_grad for insert with check (true);
+
+drop policy if exists "fotos_grad_update" on public.fotos_grad;
+create policy "fotos_grad_update" on public.fotos_grad for update using (true) with check (true);
+
+drop policy if exists "fotos_grad_delete" on public.fotos_grad;
+create policy "fotos_grad_delete" on public.fotos_grad for delete using (true);
+
+grant select, insert, update, delete on public.fotos_grad to anon;
+
+-- ---------------------------------------------------------
+-- Tabla NUEVA: abonos (pagos parciales) de un pago de foto de graduación
+-- ---------------------------------------------------------
+create table if not exists public.abonos_foto (
+  id uuid primary key default gen_random_uuid(),
+  foto_id uuid not null references public.fotos_grad(id) on delete cascade,
+  monto numeric(10,2) not null check (monto > 0),
+  fecha date not null,
+  cobra text not null check (cobra in ('samuel','betzaida','jiral','mirian','wendy')),
+  numero_abono integer generated always as identity,
+  creado_en timestamptz not null default now()
+);
+
+alter table public.abonos_foto enable row level security;
+
+drop policy if exists "abonos_foto_select" on public.abonos_foto;
+create policy "abonos_foto_select" on public.abonos_foto for select using (true);
+
+drop policy if exists "abonos_foto_insert" on public.abonos_foto;
+create policy "abonos_foto_insert" on public.abonos_foto for insert with check (true);
+
+drop policy if exists "abonos_foto_update" on public.abonos_foto;
+create policy "abonos_foto_update" on public.abonos_foto for update using (true) with check (true);
+
+drop policy if exists "abonos_foto_delete" on public.abonos_foto;
+create policy "abonos_foto_delete" on public.abonos_foto for delete using (true);
+
+create index if not exists abonos_foto_idx on public.abonos_foto (foto_id);
+
+grant select, insert, update, delete on public.abonos_foto to anon;
