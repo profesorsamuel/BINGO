@@ -266,6 +266,52 @@
   .field-row label{margin:0;}
   .btn-tiny{padding:6px 10px;font-size:11.5px;background:rgba(18,41,59,0.07);color:var(--navy);}
   .btn-tiny:hover{background:rgba(227,169,59,0.2);}
+
+  /* ---- Resumen de pagos: donut + tarjetas KPI modernas ---- */
+  .resumen-top{display:flex;gap:28px;flex-wrap:wrap;align-items:center;margin-top:18px;}
+  .donut-wrap{position:relative;flex:none;width:200px;height:200px;}
+  .donut-wrap canvas{width:200px!important;height:200px!important;}
+  .donut-center{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    pointer-events:none;
+  }
+  .donut-center .num{font-family:'Baloo 2',sans-serif;font-size:30px;color:var(--navy-deep);line-height:1;}
+  .donut-center .lbl{font-size:11px;color:#8b98a3;font-weight:700;letter-spacing:0.3px;margin-top:2px;text-transform:uppercase;}
+  .kpi-grid{display:flex;flex-direction:column;gap:10px;flex:1;min-width:230px;}
+  .kpi-card{
+    display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;
+    background:#fdfbf6;border:1px solid var(--line);
+  }
+  .kpi-dot{width:11px;height:11px;border-radius:50%;flex:none;}
+  .kpi-body{flex:1;min-width:0;}
+  .kpi-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
+  .kpi-name{font-size:13px;font-weight:700;color:var(--navy-deep);}
+  .kpi-amount{font-size:12.5px;font-weight:800;color:var(--navy-deep);white-space:nowrap;}
+  .kpi-track{height:6px;border-radius:6px;background:rgba(18,41,59,0.08);margin-top:6px;overflow:hidden;}
+  .kpi-fill{height:100%;border-radius:6px;transition:width 0.4s ease;}
+  .kpi-money{margin-top:2px;}
+  .money-cards{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;}
+  .money-card{
+    flex:1;min-width:150px;border-radius:12px;padding:14px 16px;
+    background:linear-gradient(135deg,var(--navy-deep),var(--navy));color:#fff;
+  }
+  .money-card.pend{background:linear-gradient(135deg,#7a3a2e,var(--red));}
+  .money-card .mc-label{font-size:11px;font-weight:700;letter-spacing:0.3px;text-transform:uppercase;opacity:0.75;}
+  .money-card .mc-value{font-family:'Baloo 2',sans-serif;font-size:22px;margin-top:2px;}
+
+  /* ---- Comparacion por salon (grafico de barras moderno) ---- */
+  .salones-card{
+    margin-top:22px;border-radius:14px;border:1px solid var(--line);background:#fdfbf6;
+    padding:18px 18px 8px;
+  }
+  .salones-card h4{
+    font-family:'Baloo 2',sans-serif;font-size:16px;color:var(--navy-deep);margin:0 0 2px;
+  }
+  .salones-card .sc-sub{font-size:12.5px;color:#8b98a3;margin:0 0 14px;}
+  .salones-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;padding-top:12px;border-top:1px solid var(--line);}
+  .salones-legend span{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--navy);}
+  .salones-legend i{width:10px;height:10px;border-radius:3px;display:inline-block;}
+  #graficoComparacionSalones{max-height:230px;}
 </style>
 </head>
 <body>
@@ -804,10 +850,18 @@
           </div>
         </div>
 
-        <div style="display:flex;gap:26px;flex-wrap:wrap;align-items:center;margin-top:16px;">
-          <canvas id="graficoGraduandos" width="220" height="220" style="max-width:220px;flex:none;"></canvas>
-          <div id="resumenStats" style="flex:1;min-width:230px;font-size:14px;line-height:1.8;"></div>
+        <div class="resumen-top">
+          <div class="donut-wrap">
+            <canvas id="graficoGraduandos" width="200" height="200"></canvas>
+            <div class="donut-center">
+              <div class="num" id="resumenDonutTotal">0</div>
+              <div class="lbl">estudiantes</div>
+            </div>
+          </div>
+          <div class="kpi-grid" id="resumenStats"></div>
         </div>
+
+        <div class="money-cards" id="resumenMoneyCards"></div>
 
         <div class="actions-bar">
           <button class="btn-outline" onclick="toggleDetalleGraduandos()"><span id="detalleToggleText">Ver detalle en pantalla</span></button>
@@ -816,6 +870,18 @@
 
         <div id="detalleGraduandosWrap" style="display:none;margin-top:22px;">
           <div id="detalleGraduandosBody"></div>
+        </div>
+
+        <!-- --- Comparacion de los 3 salones a la vez --- -->
+        <div class="salones-card">
+          <h4>Comparación por salón</h4>
+          <p class="sc-sub">9°A, 9°B y 9°C lado a lado, siempre actualizado.</p>
+          <canvas id="graficoComparacionSalones" height="90"></canvas>
+          <div class="salones-legend">
+            <span><i style="background:#3E7A57;"></i>Pagado completo</span>
+            <span><i style="background:#E3A93B;"></i>Abonando</span>
+            <span><i style="background:#C13F35;"></i>No ha pagado</span>
+          </div>
         </div>
       </section>
 
@@ -3793,17 +3859,42 @@ function actualizarResumenGraduandos(){
 
   const statsEl = document.getElementById('resumenStats');
   if (statsEl){
-    statsEl.innerHTML = `
-      <div><span style="color:var(--green);font-weight:700;">● Pagado completo:</span> ${r.pagados.length} de ${r.totalEstudiantes} (${pct(r.pagados.length)}%)</div>
-      <div><span style="color:var(--gold);font-weight:700;">● Abonando:</span> ${r.abonando.length} de ${r.totalEstudiantes} (${pct(r.abonando.length)}%)</div>
-      <div><span style="color:var(--red);font-weight:700;">● No ha pagado nada:</span> ${r.noPagado.length} de ${r.totalEstudiantes} (${pct(r.noPagado.length)}%)</div>
-      <div style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px;">
-        Recaudado: <b>$${r.montoRecaudado.toFixed(2)}</b> &nbsp;·&nbsp;
-        Pendiente (de lo ya registrado): <b>$${r.montoPendiente.toFixed(2)}</b>
+    const filas = [
+      { name:'Pagado completo', n:r.pagados.length, color:'#3E7A57' },
+      { name:'Abonando',        n:r.abonando.length, color:'#E3A93B' },
+      { name:'No ha pagado nada', n:r.noPagado.length, color:'#C13F35' }
+    ];
+    statsEl.innerHTML = filas.map(f=>`
+      <div class="kpi-card">
+        <span class="kpi-dot" style="background:${f.color};"></span>
+        <div class="kpi-body">
+          <div class="kpi-row">
+            <span class="kpi-name">${f.name}</span>
+            <span class="kpi-amount">${f.n} de ${r.totalEstudiantes} · ${pct(f.n)}%</span>
+          </div>
+          <div class="kpi-track"><div class="kpi-fill" style="width:${pct(f.n)}%;background:${f.color};"></div></div>
+        </div>
+      </div>`).join('');
+  }
+
+  const totalEl = document.getElementById('resumenDonutTotal');
+  if (totalEl) totalEl.textContent = r.totalEstudiantes;
+
+  const moneyEl = document.getElementById('resumenMoneyCards');
+  if (moneyEl){
+    moneyEl.innerHTML = `
+      <div class="money-card">
+        <div class="mc-label">Recaudado</div>
+        <div class="mc-value">$${r.montoRecaudado.toFixed(2)}</div>
+      </div>
+      <div class="money-card pend">
+        <div class="mc-label">Pendiente (de lo ya registrado)</div>
+        <div class="mc-value">$${r.montoPendiente.toFixed(2)}</div>
       </div>`;
   }
 
   dibujarGraficoGraduandos(r);
+  dibujarComparacionSalones();
   renderDetalleGraduandos(r);
 }
 
@@ -3921,9 +4012,14 @@ function dibujarGraficoGraduandos(r){
     type: 'doughnut',
     data,
     options: {
+      cutout: '72%',
+      animation: { duration: 500 },
       plugins: {
         legend: { display: false },
         tooltip: {
+          backgroundColor: '#12293B',
+          padding: 10,
+          cornerRadius: 8,
           callbacks: {
             label: function(ctx){
               const total = ctx.dataset.data.reduce((a,b)=>a+b,0) || 1;
@@ -3935,6 +4031,78 @@ function dibujarGraficoGraduandos(r){
       }
     }
   });
+}
+
+/* ---------------- Comparacion de los 3 salones a la vez (grafico de barras) ---------------- */
+let graficoComparacionSalonesChart = null;
+
+function dibujarComparacionSalones(){
+  const canvas = document.getElementById('graficoComparacionSalones');
+  if (!canvas || typeof Chart === 'undefined') return;
+
+  const salones = ['9A','9B','9C'];
+  const resumenes = salones.map(s=>construirResumenGraduandos(s));
+
+  const data = {
+    labels: salones.map(s=>SALON_LABEL[s] || s),
+    datasets: [
+      {
+        label: 'Pagado completo',
+        data: resumenes.map(r=>r.pagados.length),
+        backgroundColor: '#3E7A57',
+        borderRadius: 6,
+        maxBarThickness: 46
+      },
+      {
+        label: 'Abonando',
+        data: resumenes.map(r=>r.abonando.length),
+        backgroundColor: '#E3A93B',
+        borderRadius: 6,
+        maxBarThickness: 46
+      },
+      {
+        label: 'No ha pagado',
+        data: resumenes.map(r=>r.noPagado.length),
+        backgroundColor: '#C13F35',
+        borderRadius: 6,
+        maxBarThickness: 46
+      }
+    ]
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 500 },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#12293B',
+        padding: 10,
+        cornerRadius: 8,
+        callbacks: {
+          footer: function(items){
+            const idx = items[0].dataIndex;
+            const total = resumenes[idx].totalEstudiantes || 1;
+            const suma = items.reduce((a,it)=>a+it.parsed.y,0);
+            return 'Total: ' + total;
+          }
+        }
+      }
+    },
+    scales: {
+      x: { stacked: true, grid: { display:false }, ticks: { font:{ family:"'Baloo 2',sans-serif", size:13, weight:'700' }, color:'#12293B' } },
+      y: { stacked: true, beginAtZero:true, ticks:{ precision:0 }, grid:{ color:'rgba(18,41,59,0.07)' } }
+    }
+  };
+
+  if (graficoComparacionSalonesChart){
+    graficoComparacionSalonesChart.data = data;
+    graficoComparacionSalonesChart.options = options;
+    graficoComparacionSalonesChart.update();
+    return;
+  }
+  graficoComparacionSalonesChart = new Chart(canvas.getContext('2d'), { type:'bar', data, options });
 }
 
 /* ---------------- Informe PDF (total o por salon) ---------------- */
