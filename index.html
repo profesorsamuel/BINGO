@@ -336,6 +336,7 @@
       <option value="samuel">Samuel</option>
       <option value="betzaida">Betzaida</option>
       <option value="mirian">Mirian Valencia</option>
+      <option value="wendy">Wendy</option>
     </select>
 
     <label for="loginPass">Clave</label>
@@ -351,32 +352,39 @@
     <h2>¿Qué recibo vas a hacer?</h2>
     <p class="sub">Elige el tipo de recibo que necesitas generar</p>
     <div class="mode-options">
-      <button class="mode-card" onclick="selectMode('bingo')">
+      <button class="mode-card" id="modeCardBingo" onclick="selectMode('bingo')">
         <span class="mode-icon">🎟️</span>
         <span class="mode-text">
           <span class="mode-title">Recibo de Bingo</span>
           <span class="mode-desc">Venta de boletos del bingo</span>
         </span>
       </button>
-      <button class="mode-card" onclick="selectMode('donacion')">
+      <button class="mode-card" id="modeCardDonacion" onclick="selectMode('donacion')">
         <span class="mode-icon">🎺</span>
         <span class="mode-text">
           <span class="mode-title">Recibo de Donación</span>
           <span class="mode-desc">Apoyo a la Banda C.E.B.G El Jiral</span>
         </span>
       </button>
-      <button class="mode-card" onclick="selectMode('promesa')">
+      <button class="mode-card" id="modeCardPromesa" onclick="selectMode('promesa')">
         <span class="mode-icon">🤝</span>
         <span class="mode-text">
           <span class="mode-title">Promesa de Donación</span>
           <span class="mode-desc">Aún no ha donado, pero desea apoyar</span>
         </span>
       </button>
-      <button class="mode-card" onclick="selectMode('graduandos')">
+      <button class="mode-card" id="modeCardGraduandos" onclick="selectMode('graduandos')">
         <span class="mode-icon">🎓</span>
         <span class="mode-text">
           <span class="mode-title">Graduandos 2026</span>
           <span class="mode-desc">Pagos de la Promoción 2026</span>
+        </span>
+      </button>
+      <button class="mode-card" id="modeCardFotos" onclick="selectMode('fotosGrad')">
+        <span class="mode-icon">📸</span>
+        <span class="mode-text">
+          <span class="mode-title">Foto de Graduación</span>
+          <span class="mode-desc">Pago de la foto — $17.00 por estudiante</span>
         </span>
       </button>
     </div>
@@ -921,6 +929,236 @@
         <p class="error" id="formErrorRecibosGrad"></p>
       </section>
     </div>
+    <div id="modoFotosGrad" style="display:none;">
+      <div class="tabs">
+        <button class="tab active" data-tab="fotoGraduar" onclick="switchTab('fotoGraduar')">Registrar pago</button>
+        <button class="tab" data-tab="fotosGrad" onclick="switchTab('fotosGrad')">Historial de fotos</button>
+        <button class="tab" data-tab="abonosFoto" onclick="switchTab('abonosFoto')">Historial de abonos</button>
+        <button class="tab" data-tab="resumenFoto" onclick="switchTab('resumenFoto')">Resumen de pagos</button>
+        <button class="tab" data-tab="recibosFoto" onclick="switchTab('recibosFoto')">Descargar recibos</button>
+      </div>
+
+      <!-- --- Registrar pago de graduando --- -->
+      <section id="tab-fotoGraduar" class="card">
+        <h3 class="section-title">C.E.B.G El Jiral — Foto de Graduación</h3>
+        <p class="section-sub">Registro de pago de la foto de graduación</p>
+
+        <div class="grid2">
+          <div>
+            <label for="fSalon">Salón</label>
+            <select id="fSalon" onchange="actualizarListaEstudiantesFoto()">
+              <option value="">-- Selecciona el salón --</option>
+              <option value="9A">9°A</option>
+              <option value="9B">9°B</option>
+              <option value="9C">9°C</option>
+            </select>
+          </div>
+          <div>
+            <label for="fNombre">Nombre del estudiante</label>
+            <select id="fNombre">
+              <option value="">-- Primero selecciona el salón --</option>
+            </select>
+          </div>
+          <div>
+            <label for="fWhatsapp">WhatsApp (para enviar el recibo)</label>
+            <input id="fWhatsapp" type="tel" placeholder="Ej. 6xxx-xxxx" />
+          </div>
+          <div>
+            <label for="fMontoTotal">Monto total a pagar ($)</label>
+            <input id="fMontoTotal" type="number" min="0" step="0.01" placeholder="0.00" value="17.00" />
+          </div>
+          <div>
+            <label for="fMontoPagado">Cuánto paga hoy — abono o pago completo ($)</label>
+            <input id="fMontoPagado" type="number" min="0" step="0.01" placeholder="0.00" />
+          </div>
+          <div>
+            <label for="fFecha">Fecha de pago</label>
+            <input id="fFecha" type="date" />
+          </div>
+          <div>
+            <label for="fCobra">Quién recibió</label>
+            <select id="fCobra">
+              <option value="wendy">Wendy</option>
+              <option value="mirian">Mirian Valencia</option>
+              <option value="samuel">Samuel</option>
+              <option value="betzaida">Betzaida</option>
+              <option value="jiral">C.E.B.G El Jiral</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="actions-bar">
+          <button class="btn-primary" style="width:auto;margin-top:0;" onclick="guardarFoto()"><span id="guardarFotoBtnText">Guardar pago</span></button>
+          <button class="btn-outline" id="cancelEditFotoBtn" style="display:none;" onclick="cancelarEdicionFoto()">Cancelar correccion</button>
+        </div>
+        <p class="error" id="formErrorFoto"></p>
+      </section>
+
+      <!-- --- Historial de graduandos --- -->
+      <section id="tab-fotosGrad" class="card" style="display:none;">
+        <h3 class="section-title">Foto de Graduación — Promoción 2026
+          <span class="total-pill" id="fotoTotal">$0.00 total</span>
+        </h3>
+        <p class="section-sub">Por defecto solo se muestran los que aún deben o están abonando. Cambia el filtro de estado a "Pagado completo" o "Todos" si necesitas corregir el registro de alguien que ya pagó.</p>
+
+        <div class="grid2" style="margin-bottom:10px;">
+          <div>
+            <label for="fotoFiltroSalon">Filtrar por salón</label>
+            <select id="fotoFiltroSalon" onchange="renderTablaFotos()">
+              <option value="TODOS">Todos los salones</option>
+              <option value="9A">9°A</option>
+              <option value="9B">9°B</option>
+              <option value="9C">9°C</option>
+            </select>
+          </div>
+          <div>
+            <label for="fotoFiltroEstado">Filtrar por estado</label>
+            <select id="fotoFiltroEstado" onchange="renderTablaFotos()">
+              <option value="PENDIENTES">Pendientes y abonando (por defecto)</option>
+              <option value="NOPAGO">No han pagado nada</option>
+              <option value="PAGADO">Pagado completo</option>
+              <option value="TODOS">Todos (para corregir cualquiera)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="tableWrapFoto">
+          <table id="fotosTable">
+            <thead>
+              <tr>
+                <th>#</th><th>Salón</th><th>Estudiante</th><th>WhatsApp</th><th>Total</th><th>Pagado</th><th>Saldo</th><th>Estado</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="fotosBody"></tbody>
+          </table>
+          <div class="empty" id="emptyFotoMsg" style="display:none;">No hay estudiantes pendientes de pago de la foto en este momento.</div>
+        </div>
+
+        <div class="actions-bar">
+          <button class="btn-secondary" onclick="exportarExcelFotos()">Descargar Excel de fotos de graduación</button>
+        </div>
+      </section>
+
+      <!-- --- Historial de abonos (cada pago individual, por fecha) --- -->
+      <section id="tab-abonosFoto" class="card" style="display:none;">
+        <h3 class="section-title">Historial de abonos
+          <span class="total-pill" id="abonosFotoTotal">$0.00 en abonos</span>
+        </h3>
+        <p class="section-sub">Cada abono o pago registrado, ordenado por fecha de abono (el más reciente primero). Si alguno está mal, lo puedes borrar aquí mismo.</p>
+
+        <div class="grid2" style="margin-bottom:10px;">
+          <div>
+            <label for="abonosFotoFiltroSalon">Filtrar por salón</label>
+            <select id="abonosFotoFiltroSalon" onchange="renderTablaAbonosFoto()">
+              <option value="TODOS">Todos los salones</option>
+              <option value="9A">9°A</option>
+              <option value="9B">9°B</option>
+              <option value="9C">9°C</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="tableWrapAbonosFoto">
+          <table id="abonosFotoTable">
+            <thead>
+              <tr>
+                <th>No. abono</th><th>Fecha</th><th>Salón</th><th>Estudiante</th><th>Monto</th><th>Recibido por</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="abonosFotoBody"></tbody>
+          </table>
+          <div class="empty" id="emptyAbonosFotoMsg" style="display:none;">Aún no se han registrado abonos.</div>
+        </div>
+      </section>
+
+      <!-- --- Resumen de pagos, grafica e informe PDF --- -->
+      <section id="tab-resumenFoto" class="card" style="display:none;">
+        <h3 class="section-title">Resumen de pagos</h3>
+        <p class="section-sub">Porcentaje de estudiantes que ya pagaron completo, que están abonando, y que no han pagado nada — en total o por salón.</p>
+
+        <div class="grid2">
+          <div>
+            <label for="resumenFotoGrupoSelect">Grupo</label>
+            <select id="resumenFotoGrupoSelect" onchange="actualizarResumenFotos()">
+              <option value="TODOS">Todos los salones</option>
+              <option value="9A">9°A</option>
+              <option value="9B">9°B</option>
+              <option value="9C">9°C</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="resumen-top">
+          <div class="donut-wrap">
+            <canvas id="graficoFotos" width="200" height="200"></canvas>
+            <div class="donut-center">
+              <div class="num" id="resumenFotoDonutTotal">0</div>
+              <div class="lbl">estudiantes</div>
+            </div>
+          </div>
+          <div class="kpi-grid" id="resumenFotoStats"></div>
+        </div>
+
+        <div class="money-cards" id="resumenFotoMoneyCards"></div>
+
+        <div class="actions-bar">
+          <button class="btn-outline" onclick="toggleDetalleFoto()"><span id="detalleFotoToggleText">Ver detalle en pantalla</span></button>
+          <button class="btn-secondary" onclick="generarInformePDFFotos()">Descargar informe PDF</button>
+        </div>
+
+        <div id="detalleFotoWrap" style="display:none;margin-top:22px;">
+          <div id="detalleFotoBody"></div>
+        </div>
+
+        <!-- --- Comparacion de los 3 salones a la vez --- -->
+        <div class="salones-card">
+          <h4>Comparación por salón</h4>
+          <p class="sc-sub">9°A, 9°B y 9°C lado a lado, siempre actualizado.</p>
+          <canvas id="graficoComparacionSalonesFoto" height="90"></canvas>
+          <div class="salones-legend">
+            <span><i style="background:#3E7A57;"></i>Pagado completo</span>
+            <span><i style="background:#E3A93B;"></i>Abonando</span>
+            <span><i style="background:#C13F35;"></i>No ha pagado</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- --- Descargar recibos (individual o por salon completo) --- -->
+      <section id="tab-recibosFoto" class="card" style="display:none;">
+        <h3 class="section-title">Descargar recibos de foto de graduación</h3>
+        <p class="section-sub">Marca los estudiantes que quieras (o filtra por salón y marca "Seleccionar todos") y descarga el recibo en PDF de cada uno de una sola vez.</p>
+
+        <div class="grid2" style="margin-bottom:10px;">
+          <div>
+            <label for="recibosFotoFiltroSalon">Filtrar por salón</label>
+            <select id="recibosFotoFiltroSalon" onchange="renderTablaRecibosFoto()">
+              <option value="TODOS">Todos los salones</option>
+              <option value="9A">9°A</option>
+              <option value="9B">9°B</option>
+              <option value="9C">9°C</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="tableWrapRecibosFoto">
+          <table id="recibosFotoTable">
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="recibosSeleccionarTodosFoto" onchange="toggleSeleccionarTodosRecibosFoto(this.checked)" /></th>
+                <th>Salón</th><th>Estudiante</th><th>Total</th><th>Pagado</th><th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="recibosFotoBody"></tbody>
+          </table>
+          <div class="empty" id="emptyRecibosFotoMsg" style="display:none;">Aún no se han registrado pagos de foto de graduación.</div>
+        </div>
+
+        <div class="actions-bar">
+          <button class="btn-primary" style="width:auto;margin-top:0;" onclick="descargarRecibosSeleccionadosFoto()">Descargar recibos seleccionados</button>
+        </div>
+        <p class="error" id="formErrorRecibosFoto"></p>
+      </section>
+    </div>
   </div>
 
   <footer>C.E.B.G El Jiral · Bingo, Donaciones &amp; Graduandos 2026 · Control interno de cobros</footer>
@@ -944,6 +1182,7 @@
       <option value="betzaida">Betzaida</option>
       <option value="jiral">C.E.B.G El Jiral</option>
       <option value="mirian">Mirian Valencia</option>
+      <option value="wendy">Wendy</option>
     </select>
 
     <div class="actions-bar">
@@ -976,7 +1215,8 @@ const BANDA_BG_IMG = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAU
 const USERS = {
   betzaida: { pass: "123456", label: "Betzaida" },
   samuel:   { pass: "8441",   label: "Samuel" },
-  mirian:   { pass: "999999", label: "Mirian Valencia" }
+  mirian:   { pass: "999999", label: "Mirian Valencia" },
+  wendy:    { pass: "001",    label: "Wendy" }
 };
 
 const PRECIO_BOLETO = 5; // cada boleto vale $5 (balboas)
@@ -1171,6 +1411,7 @@ let editingPromId = null; // id de la promesa que se esta corrigiendo (null = re
 let cacheGrad = [];        // graduandos (Promocion 2026)
 let cacheAbonosGrad = [];  // todos los abonos de graduandos
 let editingGradId = null;  // id del graduando que se esta corrigiendo (null = registro nuevo)
+let editingFotoId = null;  // id del registro de foto que se esta corrigiendo (null = registro nuevo)
 let seleccionadosRecibosGrad = new Set(); // ids marcados en la pestaña "Descargar recibos"
 let gradFraseIdx = 0;
 
@@ -1209,11 +1450,13 @@ function doLogin(){
   }
 }
 
-/* Mirian solo hace recibos de Graduandos 2026, asi que entra directo ahi.
-   Los demas cobradores ven la pantalla para elegir el tipo de recibo. */
+/* Wendy solo hace recibos de Foto de Graduación, asi que entra directo ahi
+   (una sola libreta, sin pantalla de seleccion). Mirian puede escoger entre
+   Graduandos 2026 y Foto de Graduación (dos libretas). Samuel y Betzaida
+   escogen entre las 4 libretas de siempre. */
 function irAPantallaInicial(){
-  if (currentUser === 'mirian'){
-    currentMode = 'graduandos';
+  if (currentUser === 'wendy'){
+    currentMode = 'fotosGrad';
     enterApp();
   } else {
     mostrarSeleccionModo();
@@ -1227,6 +1470,7 @@ function doLogout(){
   editingDonId = null;
   editingPromId = null;
   editingGradId = null;
+  editingFotoId = null;
   sessionStorage.removeItem('jiral_user');
   document.getElementById('appView').style.display = 'none';
   document.getElementById('modeView').style.display = 'none';
@@ -1235,10 +1479,18 @@ function doLogout(){
 }
 
 /* ---------------- Seleccion del tipo de recibo ---------------- */
+/* Mirian solo ve las 2 libretas de graduacion (Graduandos y Foto de
+   Graduación); Samuel y Betzaida ven las 4 libretas de siempre. Wendy
+   nunca llega a esta pantalla (entra directo a Foto de Graduación). */
 function mostrarSeleccionModo(){
   document.getElementById('loginView').style.display = 'none';
   document.getElementById('appView').style.display = 'none';
   document.getElementById('modeView').style.display = 'block';
+
+  const esSoloGraduacion = currentUser === 'mirian';
+  document.getElementById('modeCardBingo').style.display = esSoloGraduacion ? 'none' : 'flex';
+  document.getElementById('modeCardDonacion').style.display = esSoloGraduacion ? 'none' : 'flex';
+  document.getElementById('modeCardPromesa').style.display = esSoloGraduacion ? 'none' : 'flex';
 }
 
 function volverASeleccion(){
@@ -1259,23 +1511,27 @@ function enterApp(){
   const etiquetaModo = currentMode==='bingo' ? ' · Recibos de Bingo'
     : currentMode==='donacion' ? ' · Recibos de Donación'
     : currentMode==='promesa' ? ' · Promesas de Donación'
+    : currentMode==='fotosGrad' ? ' · Foto de Graduación'
     : ' · Graduandos 2026';
   document.getElementById('whoName').textContent = USERS[currentUser].label + etiquetaModo;
   document.getElementById('histWho').textContent = USERS[currentUser].label;
   showConfigNoteIfNeeded();
 
-  // Mirian solo maneja Graduandos 2026: encabezado simplificado y sin boton
-  // para cambiar de tipo de recibo (no le hace falta).
-  const esSoloMirian = currentUser === 'mirian';
-  document.getElementById('brandSubtitle').textContent = esSoloMirian
-    ? 'Cobro de Graduación'
+  // Wendy solo maneja UNA libreta (Foto de Graduación): encabezado
+  // simplificado y sin boton para cambiar de tipo de recibo (no le hace
+  // falta). Mirian tiene DOS libretas (Graduandos y Foto), asi que si
+  // ve el boton para volver a escoger entre esas dos.
+  const esLibretaUnica = currentUser === 'wendy';
+  document.getElementById('brandSubtitle').textContent = esLibretaUnica
+    ? 'Cobro de Foto de Graduación'
     : 'Libreta de cobro';
-  document.getElementById('modeSwitchBtn').style.display = esSoloMirian ? 'none' : 'inline-block';
+  document.getElementById('modeSwitchBtn').style.display = esLibretaUnica ? 'none' : 'inline-block';
 
   document.getElementById('modoBingo').style.display = currentMode==='bingo' ? 'block' : 'none';
   document.getElementById('modoDonacion').style.display = currentMode==='donacion' ? 'block' : 'none';
   document.getElementById('modoPromesa').style.display = currentMode==='promesa' ? 'block' : 'none';
   document.getElementById('modoGraduandos').style.display = currentMode==='graduandos' ? 'block' : 'none';
+  document.getElementById('modoFotosGrad').style.display = currentMode==='fotosGrad' ? 'block' : 'none';
 
   if (currentMode==='bingo'){
     switchTab('registrar');
@@ -1289,6 +1545,10 @@ function enterApp(){
     switchTab('prometer');
     prepararFormularioPromesa();
     cargarPromesas();
+  } else if (currentMode==='fotosGrad'){
+    switchTab('fotoGraduar');
+    prepararFormularioFoto();
+    cargarFotos();
   } else {
     switchTab('graduar');
     prepararFormularioGraduando();
@@ -1304,7 +1564,9 @@ function switchTab(name){
     donar:'tab-donar', donaciones:'tab-donaciones', resumenDon2:'tab-resumenDon2',
     prometer:'tab-prometer', promesas:'tab-promesas', resumenDon:'tab-resumenDon',
     graduar:'tab-graduar', graduandos:'tab-graduandos', abonosGrad:'tab-abonosGrad',
-    resumenGrad:'tab-resumenGrad', recibosGrad:'tab-recibosGrad'
+    resumenGrad:'tab-resumenGrad', recibosGrad:'tab-recibosGrad',
+    fotoGraduar:'tab-fotoGraduar', fotosGrad:'tab-fotosGrad', abonosFoto:'tab-abonosFoto',
+    resumenFoto:'tab-resumenFoto', recibosFoto:'tab-recibosFoto'
   };
   Object.entries(map).forEach(([key, id])=>{
     const el = document.getElementById(id);
@@ -1319,6 +1581,10 @@ function switchTab(name){
   if (name==='abonosGrad') cargarGraduandos();
   if (name==='resumenGrad') cargarGraduandos();
   if (name==='recibosGrad') cargarGraduandos();
+  if (name==='fotosGrad') cargarFotos();
+  if (name==='abonosFoto') cargarFotos();
+  if (name==='resumenFoto') cargarFotos();
+  if (name==='recibosFoto') cargarFotos();
 }
 
 /* ---------------- Local fallback storage (session only, used if Supabase not configured) ---------------- */
@@ -2445,16 +2711,16 @@ function generarInformePDFResumenDonaciones(sufijo){
 
 /* ---------------- Modal: agregar abono a una promesa ---------------- */
 function abrirModalAbono(tipo, itemId, nombre){
-  abonoTipo = tipo; // 'promesa' | 'graduando'
+  abonoTipo = tipo; // 'promesa' | 'graduando' | 'foto'
   abonoPromesaId = itemId;
   document.getElementById('abonoModalTitulo').textContent =
-    tipo==='graduando' ? 'Registrar pago' : 'Registrar abono';
+    (tipo==='graduando' || tipo==='foto') ? 'Registrar pago' : 'Registrar abono';
   document.getElementById('abonoDonanteLabel').textContent =
-    (tipo==='graduando' ? 'Estudiante: ' : 'Donante: ') + nombre;
+    (tipo==='graduando' || tipo==='foto') ? 'Estudiante: ' + nombre : 'Donante: ' + nombre;
   document.getElementById('aMonto').value = '';
   document.getElementById('aFecha').value = hoyISO();
   document.getElementById('aCobra').value =
-    (currentUser==='samuel' || currentUser==='betzaida' || currentUser==='mirian') ? currentUser : 'jiral';
+    (currentUser==='samuel' || currentUser==='betzaida' || currentUser==='mirian' || currentUser==='wendy') ? currentUser : 'jiral';
   document.getElementById('formErrorAbono').textContent = '';
   document.getElementById('abonoOverlay').classList.add('show');
 }
@@ -2468,6 +2734,8 @@ function cerrarModalAbono(){
 async function guardarAbono(){
   if (abonoTipo === 'graduando'){
     await guardarAbonoGraduando();
+  } else if (abonoTipo === 'foto'){
+    await guardarAbonoFoto();
   } else {
     await guardarAbonoPromesa();
   }
@@ -4362,6 +4630,1298 @@ async function compartirReciboGraduando(graduando, abono, montoPagadoHoy, saldo,
   doc.save(filename);
 }
 
+/* =========================================================
+   FOTO DE GRADUACION (misma logica que Graduandos, monto fijo $17.00)
+   ========================================================= */
+function prepararFormularioFoto(){
+  if (!editingFotoId){
+    document.getElementById('fFecha').value = hoyISO();
+    document.getElementById('fCobra').value =
+      (currentUser==='wendy' || currentUser==='samuel' || currentUser==='betzaida' || currentUser==='mirian') ? currentUser : 'wendy';
+    document.getElementById('fSalon').value = '';
+    document.getElementById('fMontoTotal').value = '17.00';
+    poblarSelectEstudiantesFoto('', { excluirPagados:true });
+  }
+}
+/* ---------------- Salon -> lista de estudiantes (select dinamico) ---------------- */
+/* Llena el <select id="gNombre"> con los estudiantes del salon elegido.
+   Por defecto (excluirPagados=true) no muestra a los que ya pagaron completo,
+   para que el cobrador no vuelva a registrarlos por error. Al editar un
+   registro ya guardado se pasa excluirPagados=false para no ocultar a nadie. */
+function poblarSelectEstudiantesFoto(salon, { excluirPagados = true, forzarNombre = null } = {}){
+  const sel = document.getElementById('fNombre');
+  sel.innerHTML = '';
+
+  if (!salon){
+    sel.innerHTML = '<option value="">-- Primero selecciona el salón --</option>';
+    return;
+  }
+
+  const opt0 = document.createElement('option');
+  opt0.value = '';
+  opt0.textContent = '-- Selecciona el estudiante --';
+  sel.appendChild(opt0);
+
+  (ROSTER_GRAD[salon] || []).forEach(nombre=>{
+    // Al que ya pago completo (cancelado) se le oculta para que no lo vuelvan a
+    // "registrar" por error. Al que esta abonando (pago parcial) o no ha pagado
+    // nada SI se muestra, con su saldo pendiente al lado, para que se le pueda
+    // seleccionar cuando venga a abonar; al elegirlo, guardarFoto() lo manda
+    // automaticamente a sumar un abono a su cuenta existente en vez de crear otra.
+    const cuenta = cacheFoto.find(g=> g.salon === salon && normalizarNombreGrad(g.nombre_estudiante) === normalizarNombreGrad(nombre));
+    let etiqueta = nombre;
+    if (cuenta && nombre !== forzarNombre){
+      const pagado = abonadoDeFoto(cuenta.id);
+      const saldo = Number(cuenta.monto_total) - pagado;
+      const cancelado = saldo <= 0.005;
+      if (excluirPagados && cancelado) return;
+      if (!cancelado){
+        etiqueta = `${nombre} (debe $${saldo.toFixed(2)})`;
+      } else {
+        etiqueta = `${nombre} (pagado completo)`;
+      }
+    }
+    const o = document.createElement('option');
+    o.value = nombre;
+    o.textContent = etiqueta;
+    sel.appendChild(o);
+  });
+
+  if (forzarNombre){
+    const existe = Array.from(sel.options).some(o=>o.value===forzarNombre);
+    if (existe){
+      sel.value = forzarNombre;
+    }
+  }
+}
+
+function actualizarListaEstudiantesFoto(){
+  const salon = document.getElementById('fSalon').value;
+  poblarSelectEstudiantesFoto(salon, { excluirPagados: !editingFotoId });
+}
+
+function nombreSeleccionadoFoto(){
+  return document.getElementById('fNombre').value;
+}
+/* ---------------- Corregir un graduando ya guardado ---------------- */
+function iniciarEdicionFoto(r){
+  editingFotoId = r.id;
+  document.getElementById('fSalon').value = r.salon || '';
+  poblarSelectEstudiantesFoto(r.salon || '', { excluirPagados:false, forzarNombre: r.nombre_estudiante });
+  document.getElementById('fWhatsapp').value = r.whatsapp || '';
+  document.getElementById('fMontoTotal').value = r.monto_total;
+  document.getElementById('fMontoPagado').value = '';
+  document.getElementById('fFecha').value = (r.fecha_pago || '').slice(0,10);
+  document.getElementById('fCobra').value = r.cobra || 'wendy';
+  document.getElementById('formErrorFoto').textContent = '';
+  document.getElementById('guardarFotoBtnText').textContent = 'Actualizar datos';
+  document.getElementById('cancelEditFotoBtn').style.display = 'inline-block';
+  switchTab('fotoGraduar');
+  window.scrollTo({ top:0, behavior:'smooth' });
+  toast('Corrigiendo los datos de ' + r.nombre_estudiante);
+}
+
+function cancelarEdicionFoto(){
+  editingFotoId = null;
+  document.getElementById('fSalon').value = '';
+  poblarSelectEstudiantesFoto('', { excluirPagados:true });
+  document.getElementById('fWhatsapp').value = '';
+  document.getElementById('fMontoTotal').value = '17.00';
+  document.getElementById('fMontoPagado').value = '';
+  document.getElementById('formErrorFoto').textContent = '';
+  document.getElementById('guardarFotoBtnText').textContent = 'Guardar pago';
+  document.getElementById('cancelEditFotoBtn').style.display = 'none';
+  prepararFormularioFoto();
+}
+
+/* ---------------- Guardar graduando (registro nuevo o correccion) ---------------- */
+let localFallbackFoto = [];
+let localFallbackAbonosFoto = [];
+
+async function guardarFoto(){
+  const salon = document.getElementById('fSalon').value;
+  const nombre = nombreSeleccionadoFoto();
+  const whatsapp = document.getElementById('fWhatsapp').value.trim();
+  const montoTotal = parseFloat(document.getElementById('fMontoTotal').value);
+  const montoPagado = parseFloat(document.getElementById('fMontoPagado').value);
+  const fecha = document.getElementById('fFecha').value;
+  const cobra = document.getElementById('fCobra').value;
+  const errEl = document.getElementById('formErrorFoto');
+
+  if (!salon){ errEl.textContent = 'Selecciona el salón (9°A, 9°B o 9°C).'; return; }
+  if (!nombre){ errEl.textContent = 'Selecciona o escribe el nombre del estudiante.'; return; }
+  if (isNaN(montoTotal) || montoTotal <= 0){ errEl.textContent = 'Escribe el monto total a pagar.'; return; }
+  if (!fecha){ errEl.textContent = 'Escribe la fecha de pago.'; return; }
+
+  if (editingFotoId){
+    // Correccion de datos (salon, nombre, whatsapp, monto total, fecha, cobra) - no crea un nuevo abono
+    errEl.textContent = '';
+    if (configuredOK){
+      const { error } = await supa.from('fotos_grad')
+        .update({ salon, nombre_estudiante: nombre, whatsapp: whatsapp || null, monto_total: montoTotal, fecha_pago: fecha, cobra })
+        .eq('id', editingFotoId);
+      if (error){ toast('Error al actualizar: ' + error.message); return; }
+    } else {
+      const idx = localFallbackFoto.findIndex(r=>r.id===editingFotoId);
+      if (idx > -1){
+        localFallbackFoto[idx] = { ...localFallbackFoto[idx], salon, nombre_estudiante: nombre, whatsapp: whatsapp || null, monto_total: montoTotal, fecha_pago: fecha, cobra };
+      }
+    }
+    toast('Datos corregidos correctamente');
+    cancelarEdicionFoto();
+    cargarFotos();
+    return;
+  }
+
+  if (isNaN(montoPagado) || montoPagado <= 0){ errEl.textContent = 'Escribe cuanto paga hoy (abono o pago completo).'; return; }
+  if (montoPagado - montoTotal > 0.01){ errEl.textContent = 'El pago no puede ser mayor al monto total.'; return; }
+
+  // Se recarga desde la base de datos justo antes de buscar si el estudiante
+  // ya tiene una cuenta abierta. Si no se hace esto, y otro cobrador (u otra
+  // pestana) ya lo habia registrado mientras este formulario estaba abierto,
+  // el sistema no lo encuentra y crea una cuenta repetida, perdiendo de vista
+  // lo que ya habia pagado antes (parece que "nunca hubiera pagado").
+  if (configuredOK) await cargarFotos();
+
+  const cuentaExistente = cacheFoto.find(g=> g.salon === salon && normalizarNombreGrad(g.nombre_estudiante) === normalizarNombreGrad(nombre));
+  if (cuentaExistente){
+    // Ya tiene cuenta (esta abonando o no ha pagado nada todavia): en vez de
+    // bloquear, se abre directamente el modal de "Agregar abono" con ese monto
+    // precargado para que se le sume el pago, sin crear una cuenta duplicada.
+    errEl.textContent = '';
+    abrirModalAbono('foto', cuentaExistente.id, cuentaExistente.nombre_estudiante);
+    document.getElementById('aMonto').value = montoPagado;
+    if (fecha) document.getElementById('aFecha').value = fecha;
+    if (cobra) document.getElementById('aCobra').value = cobra;
+    toast(`${nombre} ya tenia una cuenta abierta: completa el abono en la ventana que se abrio.`);
+    return;
+  }
+  errEl.textContent = '';
+
+  const registro = {
+    salon,
+    nombre_estudiante: nombre,
+    whatsapp: whatsapp || null,
+    monto_total: montoTotal,
+    fecha_pago: fecha,
+    cobra: cobra,
+    creado_en: new Date().toISOString()
+  };
+
+  let graduandoGuardado;
+  if (configuredOK){
+    const { data, error } = await supa.from('fotos_grad').insert(registro).select().single();
+    if (error){ toast('Error al guardar: ' + error.message); return; }
+    graduandoGuardado = data;
+  } else {
+    registro.id = 'local-foto-' + Date.now();
+    registro.numero_recibo = localFallbackFoto.length + 1;
+    localFallbackFoto.push(registro);
+    graduandoGuardado = registro;
+  }
+
+  // El primer pago se registra tambien como el primer abono
+  const abonoRegistro = {
+    foto_id: graduandoGuardado.id,
+    monto: montoPagado,
+    fecha: fecha,
+    cobra: cobra,
+    creado_en: new Date().toISOString()
+  };
+
+  let abonoGuardado;
+  if (configuredOK){
+    const { data, error } = await supa.from('abonos_foto').insert(abonoRegistro).select().single();
+    if (error){ toast('Se guardó el estudiante, pero no se pudo registrar el pago: ' + error.message); return; }
+    abonoGuardado = data;
+  } else {
+    abonoRegistro.id = 'local-abonofoto-' + Date.now();
+    abonoRegistro.numero_abono = localFallbackAbonosFoto.length + 1;
+    localFallbackAbonosFoto.push(abonoRegistro);
+    abonoGuardado = abonoRegistro;
+  }
+
+  document.getElementById('fSalon').value = '';
+  document.getElementById('fWhatsapp').value = '';
+  document.getElementById('fMontoTotal').value = '17.00';
+  document.getElementById('fMontoPagado').value = '';
+  await cargarFotos();
+  prepararFormularioFoto();
+  toast('Pago registrado correctamente');
+
+  const saldo = Math.max(0, montoTotal - montoPagado);
+  descargarReciboFoto(graduandoGuardado, abonoGuardado, montoPagado, saldo);
+}
+
+/* ---------------- Guardar un abono adicional (desde el modal generico) ---------------- */
+async function guardarAbonoFoto(){
+  const monto = parseFloat(document.getElementById('aMonto').value);
+  const fecha = document.getElementById('aFecha').value;
+  const cobra = document.getElementById('aCobra').value;
+  const errEl = document.getElementById('formErrorAbono');
+
+  if (isNaN(monto) || monto <= 0){ errEl.textContent = 'Escribe el monto pagado.'; return; }
+  if (!fecha){ errEl.textContent = 'Escribe la fecha del pago.'; return; }
+  errEl.textContent = '';
+
+  // Se recarga desde la base de datos justo antes de calcular cuanto lleva
+  // pagado, para no usar una copia vieja en memoria (por ejemplo si esta
+  // ventana quedo abierta un rato y mientras tanto se registro otro pago
+  // suyo desde otra sesion). Sin esto, el saldo se calcula mal y puede
+  // parecer que el estudiante no habia pagado nada todavia.
+  if (configuredOK) await cargarFotos();
+
+  const graduando = cacheFoto.find(g=>g.id===abonoPromesaId);
+  if (!graduando){ toast('No se encontro al graduando (puede que se haya corregido). Cierra esta ventana e intenta de nuevo.'); return; }
+
+  const yaAbonado = abonadoDeFoto(graduando.id);
+  const saldoAntes = Number(graduando.monto_total) - yaAbonado;
+  if (monto - saldoAntes > 0.01){
+    errEl.textContent = `El pago no puede ser mayor al saldo pendiente ($${saldoAntes.toFixed(2)}).`;
+    return;
+  }
+
+  const registro = {
+    foto_id: graduando.id,
+    monto: monto,
+    fecha: fecha,
+    cobra: cobra,
+    creado_en: new Date().toISOString()
+  };
+
+  let abonoGuardado;
+  if (configuredOK){
+    const { data, error } = await supa.from('abonos_foto').insert(registro).select().single();
+    if (error){ toast('Error al guardar el pago: ' + error.message); return; }
+    abonoGuardado = data;
+  } else {
+    registro.id = 'local-abonofoto-' + Date.now();
+    registro.numero_abono = localFallbackAbonosFoto.length + 1;
+    localFallbackAbonosFoto.push(registro);
+    abonoGuardado = registro;
+  }
+
+  cerrarModalAbono();
+  toast('Pago registrado correctamente');
+  await cargarFotos();
+
+  const nuevoAbonado = yaAbonado + monto;
+  const nuevoSaldo = Math.max(0, Number(graduando.monto_total) - nuevoAbonado);
+  descargarReciboFoto(graduando, abonoGuardado, monto, nuevoSaldo, nuevoAbonado);
+}
+
+/* ---------------- Cargar todos los graduandos y sus abonos ---------------- */
+async function cargarFotos(){
+  if (configuredOK){
+    const { data, error } = await supa.from('fotos_grad')
+      .select('*')
+      .order('creado_en', { ascending:false });
+    if (error){ toast('Error al cargar graduandos: ' + error.message); return; }
+    cacheFoto = data || [];
+
+    const { data: abonosData, error: errorAbonos } = await supa.from('abonos_foto')
+      .select('*')
+      .order('creado_en', { ascending:true });
+    if (errorAbonos){ toast('Error al cargar pagos: ' + errorAbonos.message); return; }
+    cacheAbonosFoto = abonosData || [];
+  } else {
+    cacheFoto = localFallbackFoto.slice().reverse();
+    cacheAbonosFoto = localFallbackAbonosFoto.slice();
+  }
+  renderTablaFotos();
+  renderTablaAbonosFoto();
+  actualizarResumenFotos();
+  renderTablaRecibosFoto();
+}
+
+function abonadoDeFoto(graduandoId){
+  return cacheAbonosFoto
+    .filter(a=>a.foto_id===graduandoId)
+    .reduce((sum, a)=>sum + Number(a.monto), 0);
+}
+
+/* ---------------- Corregir el "Pagado" directamente en la tabla (clic para editar) ----------------
+   Convierte la celda en un campo de texto, sin tener que ir a otra pestaña. Al confirmar,
+   ajusta el abono mas reciente de ese estudiante (o crea uno nuevo si no tenia ninguno) para
+   que el total pagado quede en el monto corregido. */
+function activarEdicionPagadoFoto(td, graduandoId, valorActual){
+  if (td.querySelector('input')) return; // ya esta en edicion
+  const original = td.innerHTML;
+  td.innerHTML = `<input type="number" step="0.01" min="0" inputmode="decimal" value="${Number(valorActual).toFixed(2)}" />`;
+  const input = td.querySelector('input');
+  input.focus();
+  input.select();
+  let resuelto = false;
+
+  const cancelar = ()=>{ if (resuelto) return; resuelto = true; td.innerHTML = original; };
+
+  const confirmar = async ()=>{
+    if (resuelto) return;
+    resuelto = true;
+    const nuevo = parseFloat(input.value);
+    if (isNaN(nuevo) || nuevo < 0){ toast('Escribe un monto válido.'); td.innerHTML = original; return; }
+    if (Math.abs(nuevo - Number(valorActual)) < 0.005){ td.innerHTML = original; return; }
+    td.textContent = '…';
+    const ok = await corregirMontoPagadoFoto(graduandoId, nuevo);
+    if (!ok) td.innerHTML = original;
+  };
+
+  input.addEventListener('keydown', (e)=>{
+    if (e.key === 'Enter'){ e.preventDefault(); confirmar(); }
+    else if (e.key === 'Escape'){ e.preventDefault(); cancelar(); }
+  });
+  input.addEventListener('blur', confirmar);
+  input.addEventListener('click', (e)=> e.stopPropagation());
+}
+
+async function corregirMontoPagadoFoto(graduandoId, nuevoPagado){
+  const graduando = cacheFoto.find(g=>g.id===graduandoId);
+  if (!graduando){ toast('No se encontró al estudiante (intenta recargar).'); return false; }
+
+  if (nuevoPagado - Number(graduando.monto_total) > 0.01){
+    toast(`El pagado no puede ser mayor al total ($${Number(graduando.monto_total).toFixed(2)}).`);
+    return false;
+  }
+
+  const abonosDeEste = cacheAbonosFoto
+    .filter(a=>a.foto_id===graduandoId)
+    .sort((a,b)=> new Date(a.creado_en) - new Date(b.creado_en));
+
+  if (abonosDeEste.length === 0){
+    if (nuevoPagado <= 0){ toast('No hay ningún pago que corregir.'); return false; }
+    const registro = {
+      foto_id: graduandoId,
+      monto: nuevoPagado,
+      fecha: hoyISO(),
+      cobra: (currentUser==='wendy' || currentUser==='samuel' || currentUser==='betzaida' || currentUser==='mirian') ? currentUser : 'wendy',
+      creado_en: new Date().toISOString()
+    };
+    if (configuredOK){
+      const { error } = await supa.from('abonos_foto').insert(registro);
+      if (error){ toast('Error al corregir: ' + error.message); return false; }
+    } else {
+      registro.id = 'local-abonofoto-' + Date.now();
+      registro.numero_abono = localFallbackAbonosFoto.length + 1;
+      localFallbackAbonosFoto.push(registro);
+    }
+  } else {
+    const ultimo = abonosDeEste[abonosDeEste.length - 1];
+    const otrosAbonados = abonosDeEste.slice(0, -1).reduce((s,a)=>s + Number(a.monto), 0);
+    const nuevoMontoUltimo = nuevoPagado - otrosAbonados;
+    if (nuevoMontoUltimo < -0.005){
+      toast('Ese monto es menor que los otros abonos ya registrados de este estudiante; corrígelo agregando o borrando un abono.');
+      return false;
+    }
+    const montoFinal = Math.max(0, nuevoMontoUltimo);
+    if (montoFinal <= 0.005){
+      // La base de datos no permite abonos en $0 (monto > 0), asi que en vez de
+      // actualizar a 0 se borra ese abono - el efecto final es el mismo.
+      if (configuredOK){
+        const { error } = await supa.from('abonos_foto').delete().eq('id', ultimo.id);
+        if (error){ toast('Error al corregir: ' + error.message); return false; }
+      } else {
+        const idx = localFallbackAbonosFoto.findIndex(a=>a.id===ultimo.id);
+        if (idx > -1) localFallbackAbonosFoto.splice(idx, 1);
+      }
+    } else if (configuredOK){
+      const { error } = await supa.from('abonos_foto').update({ monto: montoFinal }).eq('id', ultimo.id);
+      if (error){ toast('Error al corregir: ' + error.message); return false; }
+    } else {
+      const idx = localFallbackAbonosFoto.findIndex(a=>a.id===ultimo.id);
+      if (idx > -1) localFallbackAbonosFoto[idx].monto = montoFinal;
+    }
+  }
+
+  toast('Monto pagado corregido correctamente');
+  await cargarFotos();
+  return true;
+}
+
+/* Por defecto muestra solo a los que TODAVIA deben (pendientes o abonando),
+   igual que antes. El filtro de estado ("gradFiltroEstado") permite tambien
+   ver "Pagado completo" o "Todos", para poder encontrar y corregir a un
+   estudiante que ya completo su pago. */
+function renderTablaFotos(){
+  const body = document.getElementById('fotosBody');
+  const empty = document.getElementById('emptyFotoMsg');
+  const filtroSel = document.getElementById('fotoFiltroSalon');
+  const filtro = filtroSel ? filtroSel.value : 'TODOS';
+  const filtroEstadoSel = document.getElementById('fotoFiltroEstado');
+  const filtroEstado = filtroEstadoSel ? filtroEstadoSel.value : 'PENDIENTES';
+  body.innerHTML = '';
+  let totalGeneral = 0;
+
+  const filas = cacheFoto.filter(r=>{
+    if (filtro !== 'TODOS' && r.salon !== filtro) return false;
+    const pagado = abonadoDeFoto(r.id);
+    const saldo = Number(r.monto_total) - pagado;
+    const cancelado = saldo <= 0.005;
+    if (filtroEstado === 'PENDIENTES') return !cancelado;
+    if (filtroEstado === 'NOPAGO') return !cancelado && pagado <= 0.005;
+    if (filtroEstado === 'PAGADO') return cancelado;
+    return true; // TODOS
+  });
+
+  if (filas.length === 0){
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    filas.forEach((r, idx)=>{
+      const pagado = abonadoDeFoto(r.id);
+      const saldo = Math.max(0, Number(r.monto_total) - pagado);
+      const cancelado = saldo <= 0.005;
+      totalGeneral += saldo;
+      const tr = document.createElement('tr');
+      const mensajeWA = cancelado
+        ? `Hola ${r.nombre_estudiante}, le comparto su recibo de pago de la foto de graduación (No. ${r.numero_recibo ?? ''}). ¡Gracias por su pago completo!`
+        : `Hola ${r.nombre_estudiante}, le comparto su recibo de pago de la foto de graduación (No. ${r.numero_recibo ?? ''}). Saldo pendiente: $${saldo.toFixed(2)}. ¡Gracias!`;
+      const badge = cancelado
+        ? `<span class="badge cumplida">Pagado completo</span>`
+        : `<span class="badge pendiente">${pagado > 0.005 ? 'Abonando' : 'Pendiente'}</span>`;
+      tr.innerHTML = `
+        <td class="num">${r.numero_recibo ?? (filas.length-idx)}</td>
+        <td>${SALON_LABEL[r.salon] || r.salon || '—'}</td>
+        <td>${escapeHtml(r.nombre_estudiante)}</td>
+        <td>${telefonoWhatsappCell(r.whatsapp, mensajeWA)}</td>
+        <td class="mono-amt">$${Number(r.monto_total).toFixed(2)}</td>
+        <td class="num editable-pagado" title="Clic para corregir el monto pagado" onclick="activarEdicionPagadoFoto(this,'${r.id}',${pagado})">$${pagado.toFixed(2)}</td>
+        <td class="num saldo-pos">$${saldo.toFixed(2)}</td>
+        <td>${badge}</td>
+        <td>
+          <div class="row-actions">
+            ${cancelado ? '' : `<button class="icon-btn" onclick='abrirModalAbono("foto", "${r.id}", ${JSON.stringify(r.nombre_estudiante).replace(/'/g,"&#39;")})'>Agregar abono</button>`}
+            <button class="icon-btn" onclick='iniciarEdicionFoto(${JSON.stringify(r).replace(/'/g,"&#39;")})'>Editar</button>
+            ${r.whatsapp ? `<button class="icon-btn" onclick='abrirWhatsapp(${JSON.stringify(r.whatsapp).replace(/'/g,"&#39;")}, ${JSON.stringify(mensajeWA).replace(/'/g,"&#39;")})'>WhatsApp</button>` : ''}
+            <button class="icon-btn del" onclick="borrarFoto('${r.id}')">Borrar</button>
+          </div>
+        </td>`;
+      body.appendChild(tr);
+    });
+  }
+  document.getElementById('fotoTotal').textContent = '$' + totalGeneral.toFixed(2) + ' pendiente';
+}
+
+/* ---------------- Borrar graduando ---------------- */
+async function borrarFoto(id){
+  if (!confirm('Borrar este registro de foto de graduación y todos sus pagos?')) return;
+  if (configuredOK){
+    const { error } = await supa.from('fotos_grad').delete().eq('id', id);
+    if (error){ toast('Error al borrar: ' + error.message); return; }
+  } else {
+    localFallbackFoto = localFallbackFoto.filter(r=>r.id!==id);
+    localFallbackAbonosFoto = localFallbackAbonosFoto.filter(a=>a.foto_id!==id);
+  }
+  toast('Registro de foto de graduación eliminado');
+  cargarFotos();
+}
+
+/* ---------------- Historial de abonos (cada pago individual, ordenado por fecha) ---------------- */
+function renderTablaAbonosFoto(){
+  const body = document.getElementById('abonosFotoBody');
+  const empty = document.getElementById('emptyAbonosFotoMsg');
+  if (!body) return; // la pestaña puede no estar renderizada todavia
+  const filtroSel = document.getElementById('abonosFotoFiltroSalon');
+  const filtro = filtroSel ? filtroSel.value : 'TODOS';
+  body.innerHTML = '';
+  let totalAbonos = 0;
+
+  // Une cada abono con los datos del graduando al que pertenece.
+  let filas = cacheAbonosFoto.map(a=>{
+    const g = cacheFoto.find(g=>g.id===a.foto_id);
+    return { abono:a, foto:g };
+  }).filter(f=>f.foto); // descarta abonos huerfanos (graduando ya borrado)
+
+  if (filtro !== 'TODOS'){
+    filas = filas.filter(f=>f.foto.salon===filtro);
+  }
+
+  // Ordena por fecha de abono, la mas reciente primero. Si dos abonos tienen
+  // la misma fecha, el que se registro despues (creado_en) aparece primero.
+  filas.sort((a,b)=>{
+    const diff = new Date(b.abono.fecha) - new Date(a.abono.fecha);
+    if (diff !== 0) return diff;
+    return new Date(b.abono.creado_en || 0) - new Date(a.abono.creado_en || 0);
+  });
+
+  if (filas.length === 0){
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    filas.forEach(({abono, foto})=>{
+      totalAbonos += Number(abono.monto);
+      const fecha = new Date((abono.fecha || '') + 'T00:00:00');
+      const fechaTxt = isNaN(fecha) ? (abono.fecha || '—') : fecha.toLocaleDateString('es-PA', { day:'2-digit', month:'2-digit', year:'numeric' });
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="num">${abono.numero_abono ?? '—'}</td>
+        <td>${fechaTxt}</td>
+        <td>${SALON_LABEL[foto.salon] || foto.salon || '—'}</td>
+        <td>${escapeHtml(foto.nombre_estudiante)}</td>
+        <td class="mono-amt">$${Number(abono.monto).toFixed(2)}</td>
+        <td>${COBRA_DONACION[abono.cobra] || abono.cobra}</td>
+        <td>
+          <div class="row-actions">
+            <button class="icon-btn del" onclick="borrarAbonoFoto('${abono.id}')">Borrar</button>
+          </div>
+        </td>`;
+      body.appendChild(tr);
+    });
+  }
+  const totalEl = document.getElementById('abonosFotoTotal');
+  if (totalEl) totalEl.textContent = '$' + totalAbonos.toFixed(2) + ' en abonos';
+}
+
+async function borrarAbonoFoto(id){
+  if (!confirm('¿Borrar este abono? El total pagado del estudiante se recalculará.')) return;
+  if (configuredOK){
+    const { error } = await supa.from('abonos_foto').delete().eq('id', id);
+    if (error){ toast('Error al borrar: ' + error.message); return; }
+  } else {
+    localFallbackAbonosFoto = localFallbackAbonosFoto.filter(a=>a.id!==id);
+  }
+  toast('Abono eliminado');
+  cargarFotos();
+}
+
+/* ---------------- Exportar Excel de graduandos ---------------- */
+function exportarExcelFotos(){
+  if (cacheFoto.length === 0){ toast('No hay pagos de foto de graduación para exportar.'); return; }
+  const rows = cacheFoto.map(r=>{
+    const pagado = abonadoDeFoto(r.id);
+    return {
+      'No. Recibo': r.numero_recibo,
+      'Salón': SALON_LABEL[r.salon] || r.salon || '',
+      'Estudiante': r.nombre_estudiante,
+      'WhatsApp': r.whatsapp || '',
+      'Monto total': Number(r.monto_total),
+      'Pagado': pagado,
+      'Saldo': Math.max(0, Number(r.monto_total) - pagado),
+      'Estado': (Number(r.monto_total) - pagado) <= 0.005 ? 'Cancelado' : (pagado > 0.005 ? 'Abonando' : 'Pendiente'),
+      'Fecha de pago': r.fecha_pago,
+      'Recibido por': COBRA_DONACION[r.cobra] || r.cobra
+    };
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Foto de Graduación');
+  XLSX.writeFile(wb, `foto_graduacion_promocion_2026.xlsx`);
+}
+
+/* =========================================================
+   DESCARGAR RECIBOS (individual o de un salon completo)
+   ========================================================= */
+
+/* Marca/desmarca un graduando para descargar su recibo */
+function toggleSeleccionReciboFoto(id, marcado){
+  if (marcado) seleccionadosRecibosFoto.add(id);
+  else seleccionadosRecibosFoto.delete(id);
+  actualizarCheckboxMaestroRecibosFoto();
+}
+
+/* El checkbox del encabezado marca/desmarca solo lo que esta visible
+   (respeta el filtro de salon actual) */
+function toggleSeleccionarTodosRecibosFoto(marcado){
+  const filtroSel = document.getElementById('recibosFotoFiltroSalon');
+  const filtro = filtroSel ? filtroSel.value : 'TODOS';
+  const visibles = cacheFoto.filter(r=> filtro==='TODOS' || r.salon===filtro);
+  visibles.forEach(r=>{
+    if (marcado) seleccionadosRecibosFoto.add(r.id);
+    else seleccionadosRecibosFoto.delete(r.id);
+  });
+  renderTablaRecibosFoto();
+}
+
+/* Refleja si todos los visibles estan marcados, para el checkbox maestro */
+function actualizarCheckboxMaestroRecibosFoto(){
+  const maestro = document.getElementById('recibosSeleccionarTodosFoto');
+  if (!maestro) return;
+  const filtroSel = document.getElementById('recibosFotoFiltroSalon');
+  const filtro = filtroSel ? filtroSel.value : 'TODOS';
+  const visibles = cacheFoto.filter(r=> filtro==='TODOS' || r.salon===filtro);
+  maestro.checked = visibles.length > 0 && visibles.every(r=>seleccionadosRecibosFoto.has(r.id));
+}
+
+function renderTablaRecibosFoto(){
+  const body = document.getElementById('recibosFotoBody');
+  if (!body) return; // la pestaña aun no existe en el DOM (no deberia pasar)
+  const empty = document.getElementById('emptyRecibosFotoMsg');
+  const filtroSel = document.getElementById('recibosFotoFiltroSalon');
+  const filtro = filtroSel ? filtroSel.value : 'TODOS';
+
+  const visibles = cacheFoto.filter(r=> filtro==='TODOS' || r.salon===filtro);
+  body.innerHTML = '';
+
+  if (visibles.length === 0){
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    visibles.forEach(r=>{
+      const pagado = abonadoDeFoto(r.id);
+      const saldo = Number(r.monto_total) - pagado;
+      const cancelado = saldo <= 0.005;
+      const estado = cancelado ? 'Cancelado' : (pagado > 0.005 ? 'Abonando' : 'Pendiente');
+      const marcado = seleccionadosRecibosFoto.has(r.id);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="checkbox" ${marcado ? 'checked' : ''} onchange="toggleSeleccionReciboFoto('${r.id}', this.checked)" /></td>
+        <td>${SALON_LABEL[r.salon] || r.salon || '—'}</td>
+        <td>${escapeHtml(r.nombre_estudiante)}</td>
+        <td class="mono-amt">$${Number(r.monto_total).toFixed(2)}</td>
+        <td class="num">$${pagado.toFixed(2)}</td>
+        <td><span class="badge ${cancelado ? 'cumplida' : 'pendiente'}">${estado}</span></td>`;
+      body.appendChild(tr);
+    });
+  }
+  actualizarCheckboxMaestroRecibosFoto();
+}
+
+/* Descarga el recibo (con el ultimo abono registrado) de cada graduando marcado */
+/* Descarga varios PDFs juntos como UN SOLO archivo .zip.
+   Esto evita que el navegador bloquee en silencio las descargas
+   multiples seguidas (Chrome/Edge suelen descartar la 2da, 3ra, etc.
+   descarga automatica sin avisar nada en la consola). */
+
+async function descargarRecibosSeleccionadosFoto(){
+  const errEl = document.getElementById('formErrorRecibosFoto');
+  errEl.textContent = '';
+
+  const seleccionados = cacheFoto.filter(r=>seleccionadosRecibosFoto.has(r.id));
+  if (seleccionados.length === 0){
+    errEl.textContent = 'Marca al menos un estudiante (o usa "Seleccionar todos" arriba de la tabla).';
+    return;
+  }
+
+  const btn = document.querySelector('#tab-recibosFoto .btn-primary');
+  if (btn) btn.disabled = true;
+  toast(`Armando ${seleccionados.length} recibo(s) en un ZIP...`);
+
+  try {
+    const items = [];
+    let saltados = 0;
+
+    for (const graduando of seleccionados){
+      const abonosDeEste = cacheAbonosFoto
+        .filter(a=>a.foto_id===graduando.id)
+        .sort((a,b)=> new Date(a.creado_en || a.fecha) - new Date(b.creado_en || b.fecha));
+      const ultimoAbono = abonosDeEste[abonosDeEste.length - 1];
+      if (!ultimoAbono){
+        console.warn('Sin abonos registrados, se salta:', graduando.nombre_estudiante);
+        saltados++;
+        continue;
+      }
+
+      const totalAbonado = abonadoDeFoto(graduando.id);
+      const saldo = Math.max(0, Number(graduando.monto_total) - totalAbonado);
+      const { doc, filename } = construirReciboFotoPDF(graduando, ultimoAbono, ultimoAbono.monto, saldo, totalAbonado);
+      items.push({ doc, filename });
+    }
+
+    if (items.length === 0){
+      errEl.textContent = 'Ninguno de los seleccionados tiene abonos registrados todavía.';
+      return;
+    }
+
+    await descargarComoZip(items, `recibos_foto_graduacion_${hoyISO()}.zip`);
+    toast(`Listo: ${items.length} recibo(s) descargados en un ZIP${saltados ? ` (${saltados} sin abonos, se saltaron)` : ''}.`);
+  } catch(e){
+    console.error('Error descargando recibos seleccionados:', e);
+    errEl.textContent = 'Algo falló armando el ZIP: ' + (e && e.message ? e.message : 'error desconocido');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+/* =========================================================
+   RESUMEN, GRAFICA E INFORME PDF (por salon o total)
+   ========================================================= */
+
+/* Compara contra la lista completa del salon (ROSTER_GRAD), asi que
+   cuenta tambien a los estudiantes que todavia no tienen ningun pago
+   registrado (no aparecen en cacheFoto). */
+function construirResumenFotos(grupo){
+  const salones = grupo === 'TODOS' ? ['9A','9B','9C'] : [grupo];
+  const pagados = [], abonando = [], noPagado = [];
+  let montoRecaudado = 0, montoEsperado = 0;
+
+  salones.forEach(salon=>{
+    const usados = new Set();
+    (ROSTER_GRAD[salon] || []).forEach(nombre=>{
+      const r = cacheFoto.find(g=>g.salon===salon && g.nombre_estudiante===nombre);
+      if (r){
+        usados.add(r.id);
+        const pagado = abonadoDeFoto(r.id);
+        const total = Number(r.monto_total);
+        montoEsperado += total;
+        montoRecaudado += pagado;
+        if (total - pagado <= 0.005){
+          pagados.push({ id: r.id, nombre, salon, total, pagado, fecha: r.fecha_pago });
+        } else if (pagado <= 0.005){
+          noPagado.push({ id: r.id, nombre, salon });
+        } else {
+          abonando.push({ id: r.id, nombre, salon, total, pagado, saldo: total - pagado });
+        }
+      } else {
+        noPagado.push({ nombre, salon });
+      }
+    });
+
+    // Registros de este salon que no coinciden con ningun nombre de la lista
+    // (por ejemplo, registros antiguos guardados antes de limitar el formulario a la lista)
+    cacheFoto.filter(g=>g.salon===salon && !usados.has(g.id)).forEach(r=>{
+      const pagado = abonadoDeFoto(r.id);
+      const total = Number(r.monto_total);
+      montoEsperado += total;
+      montoRecaudado += pagado;
+      if (total - pagado <= 0.005){
+        pagados.push({ id: r.id, nombre: r.nombre_estudiante, salon, total, pagado, fecha: r.fecha_pago });
+      } else if (pagado <= 0.005){
+        noPagado.push({ id: r.id, nombre: r.nombre_estudiante, salon });
+      } else {
+        abonando.push({ id: r.id, nombre: r.nombre_estudiante, salon, total, pagado, saldo: total - pagado });
+      }
+    });
+  });
+
+  // Registros guardados antes de tener salon asignado (legado): solo se
+  // incluyen en el resumen "Todos los salones".
+  if (grupo === 'TODOS'){
+    cacheFoto.filter(g=>!g.salon).forEach(r=>{
+      const pagado = abonadoDeFoto(r.id);
+      const total = Number(r.monto_total);
+      montoEsperado += total;
+      montoRecaudado += pagado;
+      if (total - pagado <= 0.005){
+        pagados.push({ id: r.id, nombre: r.nombre_estudiante, salon: '—', total, pagado, fecha: r.fecha_pago });
+      } else if (pagado <= 0.005){
+        noPagado.push({ id: r.id, nombre: r.nombre_estudiante, salon: '—' });
+      } else {
+        abonando.push({ id: r.id, nombre: r.nombre_estudiante, salon: '—', total, pagado, saldo: total - pagado });
+      }
+    });
+  }
+
+  const totalEstudiantes = pagados.length + abonando.length + noPagado.length;
+  return {
+    grupo, pagados, abonando, noPagado, totalEstudiantes,
+    montoRecaudado, montoEsperado,
+    montoPendiente: Math.max(0, montoEsperado - montoRecaudado)
+  };
+}
+
+let graficoFotoChart = null;
+
+function actualizarResumenFotos(){
+  const selEl = document.getElementById('resumenFotoGrupoSelect');
+  if (!selEl) return; // la seccion aun no existe en el DOM (no deberia pasar)
+  const grupo = selEl.value || 'TODOS';
+  const r = construirResumenFotos(grupo);
+  const pct = n => r.totalEstudiantes ? ((n / r.totalEstudiantes) * 100).toFixed(1) : '0.0';
+
+  const statsEl = document.getElementById('resumenFotoStats');
+  if (statsEl){
+    const filas = [
+      { name:'Pagado completo', n:r.pagados.length, color:'#3E7A57' },
+      { name:'Abonando',        n:r.abonando.length, color:'#E3A93B' },
+      { name:'No ha pagado nada', n:r.noPagado.length, color:'#C13F35' }
+    ];
+    statsEl.innerHTML = filas.map(f=>`
+      <div class="kpi-card">
+        <span class="kpi-dot" style="background:${f.color};"></span>
+        <div class="kpi-body">
+          <div class="kpi-row">
+            <span class="kpi-name">${f.name}</span>
+            <span class="kpi-amount">${f.n} de ${r.totalEstudiantes} · ${pct(f.n)}%</span>
+          </div>
+          <div class="kpi-track"><div class="kpi-fill" style="width:${pct(f.n)}%;background:${f.color};"></div></div>
+        </div>
+      </div>`).join('');
+  }
+
+  const totalEl = document.getElementById('resumenFotoDonutTotal');
+  if (totalEl) totalEl.textContent = r.totalEstudiantes;
+
+  const moneyEl = document.getElementById('resumenFotoMoneyCards');
+  if (moneyEl){
+    moneyEl.innerHTML = `
+      <div class="money-card">
+        <div class="mc-label">Recaudado</div>
+        <div class="mc-value">$${r.montoRecaudado.toFixed(2)}</div>
+      </div>
+      <div class="money-card pend">
+        <div class="mc-label">Pendiente (de lo ya registrado)</div>
+        <div class="mc-value">$${r.montoPendiente.toFixed(2)}</div>
+      </div>`;
+  }
+
+  dibujarGraficoFotos(r);
+  dibujarComparacionSalonesFoto();
+  renderDetalleFoto(r);
+}
+
+/* ---------------- Detalle en pantalla (listas con nombres, sin descargar nada) ---------------- */
+function toggleDetalleFoto(){
+  const wrap = document.getElementById('detalleFotoWrap');
+  const txt = document.getElementById('detalleFotoToggleText');
+  if (!wrap || !txt) return;
+  const visible = wrap.style.display !== 'none';
+  wrap.style.display = visible ? 'none' : 'block';
+  txt.textContent = visible ? 'Ver detalle en pantalla' : 'Ocultar detalle';
+}
+
+/* Boton "Editar" de la tabla de Resumen: busca el registro completo en
+   cacheFoto y abre directamente el formulario de correccion, sin tener
+   que ir primero a la pestaña "Historial de graduandos". */
+function irAEditarFotoDesdeResumen(id){
+  const r = cacheFoto.find(g=>g.id===id);
+  if (!r){ toast('No se encontro ese registro (intenta recargar).'); return; }
+  iniciarEdicionFoto(r);
+}
+
+/* Boton "Editar" de los que "No han pagado nada" en el Resumen y que TODAVIA
+   no tienen ningun registro guardado (no aplica a los que ya tienen un
+   registro con $0.00 abonado, esos usan irAEditarFotoDesdeResumen) -
+   abre el formulario de "Registrar pago" con el salon y el estudiante ya
+   seleccionados, listo para escribir cuanto pago. */
+function irARegistrarPagoFotoDesdeResumen(nombre, salon){
+  editingFotoId = null;
+  document.getElementById('fSalon').value = salon || '';
+  poblarSelectEstudiantesFoto(salon || '', { excluirPagados:true, forzarNombre: nombre });
+  document.getElementById('fWhatsapp').value = '';
+  document.getElementById('fMontoTotal').value = '17.00';
+  document.getElementById('fMontoPagado').value = '';
+  document.getElementById('fFecha').value = hoyISO();
+  document.getElementById('fCobra').value =
+    (currentUser==='wendy' || currentUser==='samuel' || currentUser==='betzaida' || currentUser==='mirian') ? currentUser : 'wendy';
+  document.getElementById('formErrorFoto').textContent = '';
+  document.getElementById('guardarFotoBtnText').textContent = 'Guardar pago';
+  document.getElementById('cancelEditFotoBtn').style.display = 'none';
+  switchTab('fotoGraduar');
+  window.scrollTo({ top:0, behavior:'smooth' });
+  toast('Registrando el pago de ' + nombre);
+}
+
+function renderDetalleFoto(r){
+  const wrap = document.getElementById('detalleFotoBody');
+  if (!wrap) return;
+
+  const filaVacia = (cols)=>`<tr><td colspan="${cols}" style="text-align:center;color:#8b98a3;padding:16px;">(ninguno)</td></tr>`;
+
+  const tablaPagados = `
+    <h4 style="font-family:'Baloo 2',sans-serif;color:var(--green);margin:0 0 6px;font-size:15px;">Pagado completo (${r.pagados.length})</h4>
+    <table>
+      <thead><tr><th>Salón</th><th>Estudiante</th><th>Total</th><th>Fecha</th><th></th></tr></thead>
+      <tbody>${r.pagados.length ? r.pagados.map(p=>`
+        <tr>
+          <td>${SALON_LABEL[p.salon] || p.salon}</td>
+          <td>${escapeHtml(p.nombre)}</td>
+          <td class="mono-amt">$${p.total.toFixed(2)}</td>
+          <td class="num">${p.fecha || '—'}</td>
+          <td>${p.id ? `<button class="icon-btn" onclick="irAEditarFotoDesdeResumen('${p.id}')">Editar</button>` : ''}</td>
+        </tr>`).join('') : filaVacia(5)}</tbody>
+    </table>`;
+
+  const tablaAbonando = `
+    <h4 style="font-family:'Baloo 2',sans-serif;color:#8a5a12;margin:22px 0 6px;font-size:15px;">Abonando (${r.abonando.length})</h4>
+    <table>
+      <thead><tr><th>Salón</th><th>Estudiante</th><th>Total</th><th>Pagado</th><th>Saldo</th><th></th></tr></thead>
+      <tbody>${r.abonando.length ? r.abonando.map(p=>`
+        <tr>
+          <td>${SALON_LABEL[p.salon] || p.salon}</td>
+          <td>${escapeHtml(p.nombre)}</td>
+          <td class="mono-amt">$${p.total.toFixed(2)}</td>
+          <td class="num editable-pagado" title="Clic para corregir el monto pagado" onclick="activarEdicionPagadoFoto(this,'${p.id}',${p.pagado})">$${p.pagado.toFixed(2)}</td>
+          <td class="num saldo-pos">$${p.saldo.toFixed(2)}</td>
+          <td>${p.id ? `<button class="icon-btn" onclick="irAEditarFotoDesdeResumen('${p.id}')">Editar</button>` : ''}</td>
+        </tr>`).join('') : filaVacia(6)}</tbody>
+    </table>`;
+
+  const tablaNoPagado = `
+    <h4 style="font-family:'Baloo 2',sans-serif;color:var(--red);margin:22px 0 6px;font-size:15px;">No han pagado nada (${r.noPagado.length})</h4>
+    <table>
+      <thead><tr><th>Salón</th><th>Estudiante</th><th></th></tr></thead>
+      <tbody>${r.noPagado.length ? r.noPagado.map(p=>`
+        <tr>
+          <td>${SALON_LABEL[p.salon] || p.salon}</td>
+          <td>${escapeHtml(p.nombre)}</td>
+          <td>${p.id
+            ? `<button class="icon-btn" onclick="irAEditarFotoDesdeResumen('${p.id}')">Editar</button>`
+            : `<button class="icon-btn" onclick='irARegistrarPagoFotoDesdeResumen(${JSON.stringify(p.nombre).replace(/'/g,"&#39;")}, ${JSON.stringify(p.salon).replace(/'/g,"&#39;")})'>Editar</button>`}</td>
+        </tr>`).join('') : filaVacia(3)}</tbody>
+    </table>`;
+
+  wrap.innerHTML = tablaPagados + tablaAbonando + tablaNoPagado;
+}
+
+function dibujarGraficoFotos(r){
+  const canvas = document.getElementById('graficoFotos');
+  if (!canvas || typeof Chart === 'undefined') return;
+  const data = {
+    labels: ['Pagado completo', 'Abonando', 'No ha pagado nada'],
+    datasets: [{
+      data: [r.pagados.length, r.abonando.length, r.noPagado.length],
+      backgroundColor: ['#3E7A57', '#E3A93B', '#C13F35'],
+      borderWidth: 0
+    }]
+  };
+  if (graficoFotoChart){
+    graficoFotoChart.data = data;
+    graficoFotoChart.update();
+    return;
+  }
+  graficoFotoChart = new Chart(canvas.getContext('2d'), {
+    type: 'doughnut',
+    data,
+    options: {
+      cutout: '72%',
+      animation: { duration: 500 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#12293B',
+          padding: 10,
+          cornerRadius: 8,
+          callbacks: {
+            label: function(ctx){
+              const total = ctx.dataset.data.reduce((a,b)=>a+b,0) || 1;
+              const pct = (ctx.parsed / total * 100).toFixed(1);
+              return `${ctx.label}: ${ctx.parsed} (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+/* ---------------- Comparacion de los 3 salones a la vez (grafico de barras) ---------------- */
+let graficoComparacionSalonesFotoChart = null;
+
+function dibujarComparacionSalonesFoto(){
+  const canvas = document.getElementById('graficoComparacionSalonesFoto');
+  if (!canvas || typeof Chart === 'undefined') return;
+
+  const salones = ['9A','9B','9C'];
+  const resumenes = salones.map(s=>construirResumenFotos(s));
+
+  const data = {
+    labels: salones.map(s=>SALON_LABEL[s] || s),
+    datasets: [
+      {
+        label: 'Pagado completo',
+        data: resumenes.map(r=>r.pagados.length),
+        backgroundColor: '#3E7A57',
+        borderRadius: 6,
+        maxBarThickness: 46
+      },
+      {
+        label: 'Abonando',
+        data: resumenes.map(r=>r.abonando.length),
+        backgroundColor: '#E3A93B',
+        borderRadius: 6,
+        maxBarThickness: 46
+      },
+      {
+        label: 'No ha pagado',
+        data: resumenes.map(r=>r.noPagado.length),
+        backgroundColor: '#C13F35',
+        borderRadius: 6,
+        maxBarThickness: 46
+      }
+    ]
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 500 },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#12293B',
+        padding: 10,
+        cornerRadius: 8,
+        callbacks: {
+          footer: function(items){
+            const idx = items[0].dataIndex;
+            const total = resumenes[idx].totalEstudiantes || 1;
+            const suma = items.reduce((a,it)=>a+it.parsed.y,0);
+            return 'Total: ' + total;
+          }
+        }
+      }
+    },
+    scales: {
+      x: { stacked: true, grid: { display:false }, ticks: { font:{ family:"'Baloo 2',sans-serif", size:13, weight:'700' }, color:'#12293B' } },
+      y: { stacked: true, beginAtZero:true, ticks:{ precision:0 }, grid:{ color:'rgba(18,41,59,0.07)' } }
+    }
+  };
+
+  if (graficoComparacionSalonesFotoChart){
+    graficoComparacionSalonesFotoChart.data = data;
+    graficoComparacionSalonesFotoChart.options = options;
+    graficoComparacionSalonesFotoChart.update();
+    return;
+  }
+  graficoComparacionSalonesFotoChart = new Chart(canvas.getContext('2d'), { type:'bar', data, options });
+}
+
+/* ---------------- Informe PDF (total o por salon) ---------------- */
+function generarInformePDFFotos(){
+  try {
+    if (typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF){
+      toast('No se pudo cargar la librería de PDF. Revisa tu conexión y recarga la página.');
+      return;
+    }
+    const { jsPDF } = window.jspdf;
+    if (typeof jsPDF.API === 'undefined' || typeof new jsPDF().autoTable !== 'function'){
+      toast('Falta un componente para armar las tablas del PDF. Recarga la página con Ctrl+Shift+R e intenta de nuevo.');
+      return;
+    }
+
+    const selEl = document.getElementById('resumenFotoGrupoSelect');
+    const grupo = selEl ? (selEl.value || 'TODOS') : 'TODOS';
+    const r = construirResumenFotos(grupo);
+    const grupoLabel = grupo === 'TODOS' ? 'Todos los salones (9°A, 9°B, 9°C)' : ('Salón ' + (SALON_LABEL[grupo] || grupo));
+
+    const doc = new jsPDF({ unit:'mm', format:'letter' });
+    const navy = [18,41,59];
+    const gold = [227,169,59];
+
+    doc.setFillColor(...navy);
+    doc.rect(0,0,216,22,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(14);
+    doc.text('C.E.B.G El Jiral — Promoción 2026', 12, 10);
+    doc.setFontSize(10);
+    doc.setTextColor(...gold);
+    doc.text('Informe de pagos de foto de graduación', 12, 17);
+
+    doc.setTextColor(60,60,60);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.text(`Grupo: ${grupoLabel}`, 12, 29);
+    doc.text(`Generado: ${new Date().toLocaleDateString()}`, 150, 29);
+
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(10);
+    doc.setTextColor(...navy);
+    doc.text(`Total de estudiantes: ${r.totalEstudiantes}   |   Pagado completo: ${r.pagados.length}   |   Abonando: ${r.abonando.length}   |   Sin pagar: ${r.noPagado.length}`, 12, 36);
+    doc.text(`Recaudado: $${r.montoRecaudado.toFixed(2)}   |   Pendiente (de lo registrado): $${r.montoPendiente.toFixed(2)}`, 12, 42);
+
+    let y = 50;
+
+    doc.setFontSize(11);
+    doc.setTextColor(...navy);
+    doc.text('Pagado completo', 12, y);
+    doc.autoTable({
+      startY: y + 3,
+      head: [['Salón','Estudiante','Total','Fecha de pago']],
+      body: r.pagados.length
+        ? r.pagados.map(p=>[SALON_LABEL[p.salon] || p.salon, p.nombre, '$'+p.total.toFixed(2), p.fecha || '—'])
+        : [['—','(ninguno)','—','—']],
+      theme: 'striped',
+      headStyles: { fillColor: [62,122,87] },
+      styles: { fontSize: 8.5 },
+      margin: { left: 12, right: 12 }
+    });
+    y = doc.lastAutoTable.finalY + 10;
+
+    if (y > 250){ doc.addPage(); y = 18; }
+    doc.setFontSize(11);
+    doc.setTextColor(...navy);
+    doc.text('Abonando (pago parcial)', 12, y);
+    doc.autoTable({
+      startY: y + 3,
+      head: [['Salón','Estudiante','Total','Pagado','Saldo']],
+      body: r.abonando.length
+        ? r.abonando.map(p=>[SALON_LABEL[p.salon] || p.salon, p.nombre, '$'+p.total.toFixed(2), '$'+p.pagado.toFixed(2), '$'+p.saldo.toFixed(2)])
+        : [['—','(ninguno)','—','—','—']],
+      theme: 'striped',
+      headStyles: { fillColor: [227,169,59], textColor: [30,30,30] },
+      styles: { fontSize: 8.5 },
+      margin: { left: 12, right: 12 }
+    });
+    y = doc.lastAutoTable.finalY + 10;
+
+    if (y > 250){ doc.addPage(); y = 18; }
+    doc.setFontSize(11);
+    doc.setTextColor(...navy);
+    doc.text('No han pagado nada', 12, y);
+    doc.autoTable({
+      startY: y + 3,
+      head: [['Salón','Estudiante']],
+      body: r.noPagado.length
+        ? r.noPagado.map(p=>[SALON_LABEL[p.salon] || p.salon, p.nombre])
+        : [['—','(ninguno)']],
+      theme: 'striped',
+      headStyles: { fillColor: [193,63,53] },
+      styles: { fontSize: 8.5 },
+      margin: { left: 12, right: 12 }
+    });
+
+    const nombreArchivo = `informe_foto_graduacion_${grupo}_${hoyISO()}.pdf`;
+    doc.save(nombreArchivo);
+  } catch(e){
+    console.error('Error generando el informe PDF:', e);
+    toast('No se pudo generar el PDF: ' + (e && e.message ? e.message : 'error desconocido'));
+  }
+}
+
+
+function construirReciboFotoPDF(graduando, abono, montoPagadoHoy, saldo, totalAbonado){
+  const { jsPDF } = window.jspdf;
+  const navy = [18,41,59];
+  const gold = [227,169,59];
+  const green = [62,122,87];
+  const cream = [251,244,228];
+  const cancelado = saldo <= 0.005;
+  const abonadoTotal = totalAbonado != null ? totalAbonado : montoPagadoHoy;
+  const lema = FRASES_GRADUACION[Math.floor(Math.random() * FRASES_GRADUACION.length)];
+
+  const doc = new jsPDF({ unit:'mm', format:[100, 150] });
+
+  // Imagen de fondo (camiseta de la Banda) como marca de agua suave
+  try {
+    doc.saveGraphicsState();
+    doc.setGState(new doc.GState({ opacity: 0.12 }));
+    doc.addImage(BANDA_BG_IMG, 'JPEG', 0, 45, 100, 100);
+    doc.restoreGraphicsState();
+  } catch(e){}
+
+  doc.setFillColor(...navy);
+  doc.rect(0,0,100,30,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(13);
+  doc.text('C.E.B.G EL JIRAL', 50, 11, { align:'center' });
+  doc.setFontSize(9.5);
+  doc.setTextColor(...gold);
+  doc.text('PROMOCIÓN 2026', 50, 18, { align:'center' });
+  doc.setFontSize(8.5);
+  doc.setTextColor(255,255,255);
+  doc.text('RECIBO DE PAGO - FOTO DE GRADUACIÓN', 50, 24.5, { align:'center' });
+
+  let y = 38;
+
+  if (cancelado){
+    doc.setFillColor(...green);
+    doc.rect(0, 30, 100, 9, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(9);
+    doc.text('★ CANCELADO ★', 50, 36, { align:'center' });
+    y = 46;
+  }
+
+  doc.setTextColor(30,30,30);
+  doc.setFont('helvetica','normal');
+
+  const numero = abono.numero_abono ?? '---';
+  const fecha = new Date((abono.fecha || '') + 'T00:00:00');
+
+  const line = (label, value)=>{
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(9);
+    doc.text(label, 8, y);
+    doc.setFont('helvetica','normal');
+    doc.text(String(value), 42, y);
+    y += 7.5;
+  };
+
+  line('No. Recibo:', numero);
+  line('Estudiante:', graduando.nombre_estudiante);
+  line('Fecha de pago:', fecha.toLocaleDateString());
+  line('Recibió:', COBRA_DONACION[abono.cobra] || abono.cobra);
+  if (graduando.whatsapp){
+    line('WhatsApp:', graduando.whatsapp);
+  }
+
+  y += 3;
+
+  // Caja destacada con el monto pagado hoy
+  doc.setFillColor(...cream);
+  doc.setDrawColor(...gold);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(8, y, 84, 14, 2.5, 2.5, 'FD');
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...navy);
+  doc.text(cancelado && abonadoTotal === montoPagadoHoy ? 'PAGO COMPLETO' : 'ABONO / PAGO DE HOY', 50, y + 5.5, { align:'center' });
+  doc.setFontSize(13);
+  doc.setTextColor(...green);
+  doc.text('$' + Number(montoPagadoHoy).toFixed(2), 50, y + 11.5, { align:'center' });
+  y += 21;
+
+  const total = Number(graduando.monto_total);
+  const pct = Math.max(0, Math.min(1, abonadoTotal / total));
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...navy);
+  doc.text('PROGRESO DEL PAGO', 8, y);
+  y += 5;
+  doc.setFillColor(230,225,210);
+  doc.roundedRect(8, y, 84, 5, 2.5, 2.5, 'F');
+  doc.setFillColor(...(cancelado ? green : gold));
+  doc.roundedRect(8, y, Math.max(6, 84 * pct), 5, 2.5, 2.5, 'F');
+  y += 9;
+
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(8);
+  doc.setTextColor(70,70,70);
+  doc.text(`Monto total: $${total.toFixed(2)}`, 8, y);
+  doc.text(`Pagado: $${abonadoTotal.toFixed(2)}`, 8, y + 5);
+  doc.setFont('helvetica','bold');
+  doc.setTextColor(...(cancelado ? green : [180,60,40]));
+  doc.text(`Saldo pendiente: $${saldo.toFixed(2)}`, 8, y + 10);
+  y += 20;
+
+  doc.setDrawColor(...gold);
+  doc.setLineWidth(0.5);
+  doc.line(8, y, 92, y);
+  y += 8;
+
+  doc.setFont('helvetica','italic');
+  doc.setFontSize(9);
+  doc.setTextColor(...navy);
+  const doc2 = new jsPDF({ unit:'mm', format:[100,50] }); // helper para medir texto
+  const lemaLines = doc2.splitTextToSize('"' + lema + '"', 84);
+  doc.text(lemaLines, 50, y, { align:'center' });
+  y += lemaLines.length * 5 + 8;
+
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(120,120,120);
+  doc.text('Contacto: 6883-6634 - C.E.B.G El Jiral', 50, y, { align:'center' });
+
+  const filename = `foto_graduacion_${numero}_${(graduando.nombre_estudiante||'').replace(/\s+/g,'_')}.pdf`;
+  return { doc, filename };
+}
+
+function descargarReciboFoto(graduando, abono, montoPagadoHoy, saldo, totalAbonado){
+  const { doc, filename } = construirReciboFotoPDF(graduando, abono, montoPagadoHoy, saldo, totalAbonado);
+  doc.save(filename);
+}
+
+async function compartirReciboFoto(graduando, abono, montoPagadoHoy, saldo, totalAbonado){
+  const { doc, filename } = construirReciboFotoPDF(graduando, abono, montoPagadoHoy, saldo, totalAbonado);
+  try {
+    const blob = doc.output('blob');
+    const file = new File([blob], filename, { type: 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: 'Recibo de Pago - Foto de Graduación 2026',
+        text: `Recibo de pago - ${graduando.nombre_estudiante}`
+      });
+      return;
+    }
+  } catch(e){
+    if (e && e.name === 'AbortError') return;
+  }
+  doc.save(filename);
+}
+
+
 /* ---------------- Restore session ---------------- */
 window.addEventListener('DOMContentLoaded', ()=>{
   const saved = sessionStorage.getItem('jiral_user');
@@ -4376,6 +5936,10 @@ window.addEventListener('DOMContentLoaded', ()=>{
   const filtroSel = document.getElementById('gradFiltroSalon');
   if (filtroSel){
     filtroSel.addEventListener('change', renderTablaGraduandos);
+  }
+  const filtroFotoSel = document.getElementById('fotoFiltroSalon');
+  if (filtroFotoSel){
+    filtroFotoSel.addEventListener('change', renderTablaFotos);
   }
 });
 </script>
