@@ -954,8 +954,8 @@
             </select>
           </div>
           <div>
-            <label for="fNombre">Nombre del estudiante</label>
-            <select id="fNombre">
+            <label for="fotoNombre">Nombre del estudiante</label>
+            <select id="fotoNombre">
               <option value="">-- Primero selecciona el salón --</option>
             </select>
           </div>
@@ -4652,7 +4652,7 @@ function prepararFormularioFoto(){
    para que el cobrador no vuelva a registrarlos por error. Al editar un
    registro ya guardado se pasa excluirPagados=false para no ocultar a nadie. */
 function poblarSelectEstudiantesFoto(salon, { excluirPagados = true, forzarNombre = null } = {}){
-  const sel = document.getElementById('fNombre');
+  const sel = document.getElementById('fotoNombre');
   sel.innerHTML = '';
 
   if (!salon){
@@ -4704,7 +4704,7 @@ function actualizarListaEstudiantesFoto(){
 }
 
 function nombreSeleccionadoFoto(){
-  return document.getElementById('fNombre').value;
+  return document.getElementById('fotoNombre').value;
 }
 /* ---------------- Corregir un graduando ya guardado ---------------- */
 function iniciarEdicionFoto(r){
