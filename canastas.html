@@ -5,15 +5,71 @@
 <div class="grid"><section class="card"><h2>Registrar venta</h2><label>Integrante que vende</label><select id="vendedor"></select><label>Nombre de quien compra</label><input id="comprador" placeholder="Nombre y apellido"><label>Teléfono / WhatsApp del comprador</label><input id="telefono" inputmode="tel" placeholder="Ej. 6123-4567"><label>Cantidad de boletos</label><input id="cantidad" type="number" min="1" value="1"><button class="primary" id="guardar">Guardar venta y enviar agradecimiento</button><p class="small">El teléfono se guarda de forma privada y nunca aparece en la lista pública.</p></section>
 <section class="card"><h2>Avance de la banda</h2><div id="resumen"></div><hr><button class="admin" id="loginAdmin">🔐 Administrador</button><button class="danger hidden" id="logoutAdmin">Cerrar administrador</button><p class="small">Solo el administrador puede modificar o eliminar una venta ya registrada.</p></section></div>
 <div class="stats"><div class="stat">🎟️ Boletos vendidos: <span id="totalBoletos">0</span></div><div class="stat">💵 Recaudado: B/.<span id="totalDinero">0.00</span></div><div class="stat">👥 Ventas registradas: <span id="totalVentas">0</span></div></div>
-<section class="card"><h2>Ventas públicas</h2><p class="small">Por privacidad, aquí no se muestran teléfonos ni enlaces de WhatsApp.</p><div class="table"><table><thead><tr><th>#</th><th>Vendedor</th><th>Comprador</th><th>Boletos</th><th>Aporte</th><th>Fecha</th><th>Estado</th><th id="adminHead" class="hidden">Administrar</th></tr></thead><tbody id="ventasBody"></tbody></table></div></section></div><div id="toast"></div>
+<section class="card"><h2>Ventas públicas</h2><p class="small">Por privacidad, aquí no se muestran teléfonos ni enlaces de WhatsApp.</p><div class="table"><table><thead><tr><th>#</th><th>N.º de boleto(s)</th><th>Vendedor</th><th>Comprador</th><th id="telefonoHead" class="hidden">Teléfono</th><th>Boletos</th><th>Aporte</th><th>Fecha</th><th>Estado</th><th id="adminHead" class="hidden">Administrar</th></tr></thead><tbody id="ventasBody"></tbody></table></div></section></div><div id="toast"></div>
 <script>
 const SUPABASE_URL='https://luewrpzgetqslxqmdcxv.supabase.co';const SUPABASE_ANON_KEY='sb_publishable_zJc68aiTxJs7HBgaqeHxrQ_JDcm91xG';const db=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 const integrantes=`Abdel Edwin Chiru|Abdías Guevara|Alberto Adams|Aldair López|Alina Guerra|Ameth Ortega|Amy Betancur|Ashley Austin|Brittany Guevara|César Jordan|Daniel Urieta|Edgar Ortega|Ehimar Macías|Emmanuel Charris|Erick Wright|Erubiel Leones|Eymeleth Wright|Francisco Betancur|Francisco Macías|Glorielis Ruiz|Hellen Flores|Hilma Guerra|Itzel López|Jesuanis Solís|Jeyco Cortés|Johelys Jaén|Josafat Peralta|José Mitre|Keiyanis Moreno|Kenneth Ramos|Luis Herrera|Magdiel Guevara|Maily Solís|Maritzelis López|Mía Jiménez|Mía Sánchez|Milagros Hernández|Moisés Ortega|Nathaly Díaz|Noemy Valdez|Otoniel Rodríguez|Rosa Martínez|Rosalín Guerra|Tomás Gutiérrez|Tomás Vásquez|Víctor Ramos|Yahidelis Rodríguez|Yahirianis Rodríguez|Yamilka González|Yanki Moreno|Yeily López|Yenifer Cruz|Yibellys Toribio|Yisaac Toribio|Zair Urrieta|Yan Carlos|Jennifer Meneses|Joel Rodríguez|Moisés Corales|Alvin Urieta|Amy Jiménez|Daneth Acevedo|Isabel Toribio|Josmar López|Kairianys Víquez|Kathlyn Victoria|Lineth Guerra|Osmar López|Sofía Moreno|Lucas Vera`.split('|');
 const vendedor=document.querySelector('#vendedor');integrantes.forEach(n=>vendedor.add(new Option(n,n)));let isAdmin=sessionStorage.getItem('canastaAdmin')==='1';let adminPass=sessionStorage.getItem('canastaAdminPass')||'';let ventas=[];const toast=t=>{let x=document.querySelector('#toast');x.textContent=t;x.style.display='block';setTimeout(()=>x.style.display='none',2600)};const cleanPhone=s=>(s||'').replace(/\D/g,'');const waPhone=s=>{let n=cleanPhone(s);return n.length===8?'507'+n:n};
 async function load(){const {data,error}=await db.rpc('listar_ventas_canasta');if(error){toast('Primero ejecute schema_canastas.sql en Supabase');return}ventas=data||[];render()}
-function render(){let tb=document.querySelector('#ventasBody');tb.innerHTML='';let boletos=0;ventas.forEach((v,i)=>{boletos+=v.cantidad;let tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td class="seller">${esc(v.vendedor)}</td><td>${esc(v.comprador)}</td><td>${v.cantidad}</td><td>B/.${Number(v.cantidad).toFixed(2)}</td><td>${v.fecha}</td><td><span class="tag">Participando</span></td>${isAdmin?`<td><button onclick="editar('${v.id}')">Editar</button> <button class="danger" onclick="borrar('${v.id}')">Eliminar</button></td>`:''}`;tb.appendChild(tr)});document.querySelector('#totalBoletos').textContent=boletos;document.querySelector('#totalDinero').textContent=boletos.toFixed(2);document.querySelector('#totalVentas').textContent=ventas.length;document.querySelector('#adminHead').classList.toggle('hidden',!isAdmin);document.querySelector('#logoutAdmin').classList.toggle('hidden',!isAdmin);document.querySelector('#loginAdmin').classList.toggle('hidden',isAdmin);let counts={};integrantes.forEach(n=>counts[n]=0);ventas.forEach(v=>counts[v.vendedor]=(counts[v.vendedor]||0)+v.cantidad);document.querySelector('#resumen').innerHTML=integrantes.map(n=>{let c=counts[n]||0,p=Math.min(100,c/3*100);return `<div style="margin:7px 0"><span>${esc(n)} — <b>${c}/3</b></span><div class="progress"><i style="width:${p}%"></i></div></div>`}).join('')}
+function rangoBoletos(v){
+  if(v.boleto_desde==null) return '—';
+  const a=Number(v.boleto_desde), b=Number(v.boleto_hasta ?? v.boleto_desde);
+  return a===b ? `#${a}` : `#${a} al #${b}`;
+}
+function render(){let tb=document.querySelector('#ventasBody');tb.innerHTML='';let boletos=0;ventas.forEach((v,i)=>{boletos+=v.cantidad;let tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td><b>${rangoBoletos(v)}</b></td><td class="seller">${esc(v.vendedor)}</td><td>${esc(v.comprador)}</td>${isAdmin?`<td><b>${esc(v.telefono||'—')}</b></td>`:''}<td>${v.cantidad}</td><td>B/.${Number(v.cantidad).toFixed(2)}</td><td>${v.fecha}</td><td><span class="tag">Participando</span></td>${isAdmin?`<td><button onclick="editar('${v.id}')">Editar</button> <button class="danger" onclick="borrar('${v.id}')">Eliminar</button></td>`:''}`;tb.appendChild(tr)});document.querySelector('#totalBoletos').textContent=boletos;document.querySelector('#totalDinero').textContent=boletos.toFixed(2);document.querySelector('#totalVentas').textContent=ventas.length;document.querySelector('#adminHead').classList.toggle('hidden',!isAdmin);document.querySelector('#telefonoHead').classList.toggle('hidden',!isAdmin);document.querySelector('#logoutAdmin').classList.toggle('hidden',!isAdmin);document.querySelector('#loginAdmin').classList.toggle('hidden',isAdmin);let counts={};integrantes.forEach(n=>counts[n]=0);ventas.forEach(v=>counts[v.vendedor]=(counts[v.vendedor]||0)+v.cantidad);document.querySelector('#resumen').innerHTML=integrantes.map(n=>{let c=counts[n]||0,p=Math.min(100,c/3*100);let estado=c>=3?' ✅ Meta cumplida':' — faltan '+(3-c);return `<div style="margin:7px 0"><span>${esc(n)} — <b>${c} vendidos</b>${estado}</span><div class="progress"><i style="width:${p}%"></i></div></div>`}).join('')}
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-async function save(){let comprador=document.querySelector('#comprador').value.trim(),telefono=document.querySelector('#telefono').value.trim(),cantidad=+document.querySelector('#cantidad').value;if(!comprador||cleanPhone(telefono).length<8||cantidad<1)return toast('Complete comprador, teléfono y cantidad.');document.querySelector('#guardar').disabled=true;const {error}=await db.from('ventas_canasta_banda').insert({vendedor:vendedor.value,comprador,telefono,cantidad,fecha:new Date().toISOString().slice(0,10)});document.querySelector('#guardar').disabled=false;if(error)return toast('No se pudo guardar: '+error.message);let fechaCompra=new Date().toLocaleString('es-PA',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});let msg=`🎟️ *CONFIRMACIÓN DE PARTICIPACIÓN*\n\nHola *${comprador}*. Gracias por su apoyo.\n\n✅ *Comprador:* ${comprador}\n👤 *Vendido por:* ${vendedor.value}\n🎫 *Boletos comprados:* ${cantidad}\n💵 *Valor por boleto:* B/.1.00\n💰 *Total:* B/.${cantidad.toFixed(2)}\n📅 *Fecha de compra:* ${fechaCompra}\n\nUsted está participando en la *Tómbola de 2 Canastas de Comida* y apoyando a la *Banda Yadira Jiral del C.E.B.G. El Jiral*.\n\n🎁 *Premios:* 2 canastas de comida\n📅 *Sorteo:* 30 de octubre de 2026\n\n🏆 Puede consultar los resultados y ver quién resulte ganador en nuestra página:\nhttps://profesorsamuel.github.io/BINGO/canastas.html\n\n🙏 *¡Muchas gracias por su colaboración y por apoyar a nuestra banda!*`;document.querySelector('#comprador').value='';document.querySelector('#telefono').value='';document.querySelector('#cantidad').value=1;await load();toast('Venta guardada. Abriendo WhatsApp…');window.open(`https://wa.me/${waPhone(telefono)}?text=${encodeURIComponent(msg)}`,'_blank')}
+async function save(){
+  let comprador=document.querySelector('#comprador').value.trim(),
+      telefono=document.querySelector('#telefono').value.trim(),
+      cantidad=+document.querySelector('#cantidad').value;
+  if(!comprador||cleanPhone(telefono).length<8||cantidad<1) return toast('Complete comprador, teléfono y cantidad.');
+
+  document.querySelector('#guardar').disabled=true;
+  const {data,error}=await db.rpc('registrar_venta_canasta_numerada',{
+    p_vendedor:vendedor.value,
+    p_comprador:comprador,
+    p_telefono:telefono,
+    p_cantidad:cantidad
+  });
+  document.querySelector('#guardar').disabled=false;
+  if(error) return toast('No se pudo guardar: '+error.message);
+
+  const r=Array.isArray(data)?data[0]:data;
+  const desde=Number(r.boleto_desde), hasta=Number(r.boleto_hasta);
+  const numeros=desde===hasta ? `#${desde}` : `#${desde} al #${hasta}`;
+  let fechaCompra=new Date().toLocaleString('es-PA',{
+    day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'
+  });
+
+  let msg=`🎟️ *CONFIRMACIÓN DE PARTICIPACIÓN*
+
+Hola *${comprador}*. Gracias por su apoyo.
+
+✅ *Comprador:* ${comprador}
+👤 *Vendido por:* ${vendedor.value}
+🎫 *Cantidad de boletos:* ${cantidad}
+🔢 *Número(s) de boleto:* ${numeros}
+💵 *Valor por boleto:* B/.1.00
+💰 *Total:* B/.${cantidad.toFixed(2)}
+📅 *Fecha de compra:* ${fechaCompra}
+
+Usted está participando en la *Tómbola de 2 Canastas de Comida* y apoyando a la *Banda Yadira Jiral del C.E.B.G. El Jiral*.
+
+🎁 *Premios:* 2 canastas de comida
+📅 *Sorteo:* 30 de octubre de 2026
+
+🏆 Puede consultar las ventas y ver quién resulte ganador en:
+https://profesorsamuel.github.io/BINGO/canastas.html
+
+🙏 *¡Muchas gracias por su colaboración y por apoyar a nuestra banda!*`;
+
+  document.querySelector('#comprador').value='';
+  document.querySelector('#telefono').value='';
+  document.querySelector('#cantidad').value=1;
+  await load();
+  toast(`Venta guardada. Boletos ${numeros}. Abriendo WhatsApp…`);
+  window.open(`https://wa.me/${waPhone(telefono)}?text=${encodeURIComponent(msg)}`,'_blank');
+}
 async function adminLogin(){let p=prompt('Clave de administrador:');if(!p)return;const {data,error}=await db.rpc('verificar_admin_canasta',{p_clave:p});if(error||!data)return alert('Clave incorrecta.');isAdmin=true;adminPass=p;sessionStorage.setItem('canastaAdmin','1');sessionStorage.setItem('canastaAdminPass',p);render()}
 async function editar(id){if(!isAdmin)return;let v=ventas.find(x=>x.id===id);let comprador=prompt('Comprador:',v.comprador);if(comprador===null)return;let cantidad=+prompt('Cantidad de boletos:',v.cantidad);if(!comprador.trim()||cantidad<1)return;let {error}=await db.rpc('admin_actualizar_venta_canasta',{p_id:id,p_comprador:comprador.trim(),p_cantidad:cantidad,p_clave:adminPass});if(error)return alert(error.message);load()}
 async function borrar(id){if(!isAdmin||!confirm('¿Eliminar esta venta?'))return;let {error}=await db.rpc('admin_eliminar_venta_canasta',{p_id:id,p_clave:adminPass});if(error)return alert(error.message);load()}
