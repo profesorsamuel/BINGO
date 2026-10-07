@@ -10,7 +10,18 @@
 const SUPABASE_URL='https://luewrpzgetqslxqmdcxv.supabase.co';const SUPABASE_ANON_KEY='sb_publishable_zJc68aiTxJs7HBgaqeHxrQ_JDcm91xG';const db=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 const integrantes=`Abdel Edwin Chiru|Abdías Guevara|Alberto Adams|Aldair López|Alina Guerra|Ameth Ortega|Amy Betancur|Ashley Austin|Brittany Guevara|César Jordan|Daniel Urieta|Edgar Ortega|Ehimar Macías|Emmanuel Charris|Erick Wright|Erubiel Leones|Eymeleth Wright|Francisco Betancur|Francisco Macías|Glorielis Ruiz|Hellen Flores|Hilma Guerra|Itzel López|Jesuanis Solís|Jeyco Cortés|Johelys Jaén|Josafat Peralta|José Mitre|Keiyanis Moreno|Kenneth Ramos|Luis Herrera|Magdiel Guevara|Maily Solís|Maritzelis López|Mía Jiménez|Mía Sánchez|Milagros Hernández|Moisés Ortega|Nathaly Díaz|Noemy Valdez|Otoniel Rodríguez|Rosa Martínez|Rosalín Guerra|Tomás Gutiérrez|Tomás Vásquez|Víctor Ramos|Yahidelis Rodríguez|Yahirianis Rodríguez|Yamilka González|Yanki Moreno|Yeily López|Yenifer Cruz|Yibellys Toribio|Yisaac Toribio|Zair Urrieta|Yan Carlos|Jennifer Meneses|Joel Rodríguez|Moisés Corales|Alvin Urieta|Amy Jiménez|Daneth Acevedo|Isabel Toribio|Josmar López|Kairianys Víquez|Kathlyn Victoria|Lineth Guerra|Osmar López|Sofía Moreno|Lucas Vera`.split('|');
 const vendedor=document.querySelector('#vendedor');integrantes.forEach(n=>vendedor.add(new Option(n,n)));let isAdmin=sessionStorage.getItem('canastaAdmin')==='1';let adminPass=sessionStorage.getItem('canastaAdminPass')||'';let ventas=[];const toast=t=>{let x=document.querySelector('#toast');x.textContent=t;x.style.display='block';setTimeout(()=>x.style.display='none',2600)};const cleanPhone=s=>(s||'').replace(/\D/g,'');const waPhone=s=>{let n=cleanPhone(s);return n.length===8?'507'+n:n};
-async function load(){const {data,error}=await db.rpc('listar_ventas_canasta');if(error){toast('Primero ejecute schema_canastas.sql en Supabase');return}ventas=data||[];render()}
+async function load(){
+  let respuesta;
+  if(isAdmin && adminPass){
+    respuesta=await db.rpc('listar_ventas_canasta_admin',{p_clave:adminPass});
+  }else{
+    respuesta=await db.rpc('listar_ventas_canasta');
+  }
+  const {data,error}=respuesta;
+  if(error){console.error(error);toast('Error cargando las ventas: '+error.message);return}
+  ventas=data||[];
+  render();
+}
 function rangoBoletos(v){
   if(v.boleto_desde==null) return '—';
   const a=Number(v.boleto_desde), b=Number(v.boleto_hasta ?? v.boleto_desde);
@@ -70,8 +81,24 @@ https://profesorsamuel.github.io/BINGO/canastas.html
   toast(`Venta guardada. Boletos ${numeros}. Abriendo WhatsApp…`);
   window.open(`https://wa.me/${waPhone(telefono)}?text=${encodeURIComponent(msg)}`,'_blank');
 }
-async function adminLogin(){let p=prompt('Clave de administrador:');if(!p)return;const {data,error}=await db.rpc('verificar_admin_canasta',{p_clave:p});if(error||!data)return alert('Clave incorrecta.');isAdmin=true;adminPass=p;sessionStorage.setItem('canastaAdmin','1');sessionStorage.setItem('canastaAdminPass',p);render()}
+async function adminLogin(){
+  let p=prompt('Clave de administrador:');
+  if(!p)return;
+  const {data,error}=await db.rpc('verificar_admin_canasta',{p_clave:p});
+  if(error||!data)return alert('Clave incorrecta.');
+  isAdmin=true;adminPass=p;
+  sessionStorage.setItem('canastaAdmin','1');
+  sessionStorage.setItem('canastaAdminPass',p);
+  await load();
+  toast('Modo administrador activado. Teléfonos visibles.');
+}
 async function editar(id){if(!isAdmin)return;let v=ventas.find(x=>x.id===id);let comprador=prompt('Comprador:',v.comprador);if(comprador===null)return;let cantidad=+prompt('Cantidad de boletos:',v.cantidad);if(!comprador.trim()||cantidad<1)return;let {error}=await db.rpc('admin_actualizar_venta_canasta',{p_id:id,p_comprador:comprador.trim(),p_cantidad:cantidad,p_clave:adminPass});if(error)return alert(error.message);load()}
 async function borrar(id){if(!isAdmin||!confirm('¿Eliminar esta venta?'))return;let {error}=await db.rpc('admin_eliminar_venta_canasta',{p_id:id,p_clave:adminPass});if(error)return alert(error.message);load()}
-document.querySelector('#guardar').onclick=save;document.querySelector('#loginAdmin').onclick=adminLogin;document.querySelector('#logoutAdmin').onclick=()=>{isAdmin=false;adminPass='';sessionStorage.removeItem('canastaAdmin');sessionStorage.removeItem('canastaAdminPass');render()};load();setInterval(load,15000);
+document.querySelector('#guardar').onclick=save;document.querySelector('#loginAdmin').onclick=adminLogin;document.querySelector('#logoutAdmin').onclick=async()=>{
+  isAdmin=false;adminPass='';
+  sessionStorage.removeItem('canastaAdmin');
+  sessionStorage.removeItem('canastaAdminPass');
+  await load();
+  toast('Modo administrador cerrado. Teléfonos ocultos.');
+};load();setInterval(load,15000);
 </script></body></html>
