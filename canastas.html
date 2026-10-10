@@ -3,7 +3,7 @@
 <header><h1>🎁 Tómbola Pro Banda — 2 Canastas de Comida</h1><p><b>Banda Yadira Jiral — C.E.B.G. El Jiral</b></p><p>Boleto: <b>B/.1.00</b> · Sorteo: <b>30 de octubre de 2026</b> · Cada integrante debe vender mínimo <b>3 boletos</b>.</p></header>
 <div class="wrap"><div class="notice"><b>🥫 Aporte de alimentos:</b> entregar el <b>sábado 24 de octubre de 2026</b> a <b>Alina Guerra</b>, WhatsApp <b>6265-1238</b>. El objetivo es preparar <b>dos canastas básicas</b>.</div>
 <div class="grid"><section class="card"><h2>Registrar venta</h2><label>Integrante que vende</label><select id="vendedor"></select><label>Nombre de quien compra</label><input id="comprador" placeholder="Nombre y apellido"><label>Teléfono / WhatsApp del comprador</label><input id="telefono" inputmode="tel" placeholder="Ej. 6123-4567"><label>Cantidad de boletos</label><input id="cantidad" type="number" min="1" value="1"><button class="primary" id="guardar">Guardar venta y enviar agradecimiento</button><p class="small">El teléfono se guarda de forma privada y nunca aparece en la lista pública.</p></section>
-<section class="card"><h2>Avance de la banda</h2><div id="resumen"></div><hr><button class="admin" id="loginAdmin">🔐 Administrador</button><button class="danger hidden" id="logoutAdmin">Cerrar administrador</button><p class="small">Solo el administrador puede modificar o eliminar una venta ya registrada.</p></section></div>
+<section class="card"><h2>Avance de la banda</h2><div id="filtroDiaBox" class="hidden" style="margin:6px 0 10px"><b style="font-size:13px">📅 Ver por día:</b> <select id="filtroDia" style="width:auto;max-width:100%;padding:8px"></select></div><div id="resumen"></div><hr><button class="admin" id="loginAdmin">🔐 Administrador</button><button class="danger hidden" id="logoutAdmin">Cerrar administrador</button><p class="small">Solo el administrador puede modificar o eliminar una venta ya registrada.</p></section></div>
 <div class="stats"><div class="stat">🎟️ Boletos vendidos: <span id="totalBoletos">0</span></div><div class="stat">💵 Recaudado: B/.<span id="totalDinero">0.00</span></div><div class="stat">👥 Ventas registradas: <span id="totalVentas">0</span></div><div class="stat bluestat">💙 Entregado al administrador: B/.<span id="totalPagado">0.00</span></div><div class="stat">⏳ Pendiente de entregar: B/.<span id="totalPendiente">0.00</span></div></div>
 <section class="card hidden" id="resumenDia" style="margin-bottom:16px"><h2>📅 Resumen por día (solo administrador)</h2><div id="diasBody"></div></section>
 <section class="card"><h2>Ventas públicas</h2><p class="small">Por privacidad, aquí no se muestran teléfonos ni enlaces de WhatsApp.</p><div style="margin:8px 0"><b style="font-size:13px">📅 Orden por fecha:</b> <select id="orden" style="width:auto;padding:8px"><option value="asc">Más antiguas primero (1.º arriba)</option><option value="desc">Más recientes primero</option></select></div><div class="table"><table><thead><tr><th>#</th><th>N.º de boleto(s)</th><th>Vendedor</th><th>Comprador</th><th id="telefonoHead" class="hidden">Teléfono</th><th>Boletos</th><th>Aporte</th><th>Fecha</th><th>Estado</th><th id="pagoHead" class="hidden">Pago al admin</th><th id="adminHead" class="hidden">Administrar</th></tr></thead><tbody id="ventasBody"></tbody></table></div></section></div><div id="toast"></div>
@@ -20,7 +20,7 @@ function actualizarListaVendedores(){
  nombres.forEach(n=>vendedor.add(new Option(`${n} (${conteos.get(n)||0})`,n)));
  if(nombres.includes(seleccionado))vendedor.value=seleccionado;
 }
-let isAdmin=sessionStorage.getItem('canastaAdmin')==='1';let adminPass=sessionStorage.getItem('canastaAdminPass')||'';let ventas=[];let pagos={};let pagosHist=[];actualizarListaVendedores();const toast=t=>{let x=document.querySelector('#toast');x.textContent=t;x.style.display='block';setTimeout(()=>x.style.display='none',2600)};const cleanPhone=s=>(s||'').replace(/\D/g,'');const waPhone=s=>{let n=cleanPhone(s);return n.length===8?'507'+n:n};
+let isAdmin=sessionStorage.getItem('canastaAdmin')==='1';let adminPass=sessionStorage.getItem('canastaAdminPass')||'';let ventas=[];let pagos={};let pagosHist=[];let filtroDia='todos';actualizarListaVendedores();const toast=t=>{let x=document.querySelector('#toast');x.textContent=t;x.style.display='block';setTimeout(()=>x.style.display='none',2600)};const cleanPhone=s=>(s||'').replace(/\D/g,'');const waPhone=s=>{let n=cleanPhone(s);return n.length===8?'507'+n:n};
 async function load(){
   let respuesta;
   if(isAdmin && adminPass){
@@ -51,13 +51,13 @@ function rangoBoletos(v){
   const a=Number(v.boleto_desde), b=Number(v.boleto_hasta ?? v.boleto_desde);
   return a===b ? `#${a}` : `#${a} al #${b}`;
 }
-function render(){calcularAsignacion();let tb=document.querySelector('#ventasBody');tb.innerHTML='';let boletos=0;ventasOrdenadas().forEach((v,i)=>{boletos+=v.cantidad;let tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td><b>${rangoBoletos(v)}</b></td><td class="seller">${esc(v.vendedor)}</td><td>${esc(v.comprador)}</td>${isAdmin?`<td><b>${esc(v.telefono||'—')}</b></td>`:''}<td>${v.cantidad}</td><td>B/.${Number(v.cantidad).toFixed(2)}</td><td>${fechaBonita(v.fecha)}</td><td><span class="tag">Participando</span></td>${isAdmin?pagoCell(v):''}${isAdmin?`<td><button onclick="editar('${v.id}')">Editar</button> <button class="danger" onclick="borrar('${v.id}')">Eliminar</button></td>`:''}`;tb.appendChild(tr)});document.querySelector('#totalBoletos').textContent=boletos;document.querySelector('#totalDinero').textContent=boletos.toFixed(2);document.querySelector('#totalVentas').textContent=ventas.length;renderDias();document.querySelector('#adminHead').classList.toggle('hidden',!isAdmin);document.querySelector('#pagoHead').classList.toggle('hidden',!isAdmin);document.querySelector('#telefonoHead').classList.toggle('hidden',!isAdmin);document.querySelector('#logoutAdmin').classList.toggle('hidden',!isAdmin);document.querySelector('#loginAdmin').classList.toggle('hidden',isAdmin);let counts={};integrantes.forEach(n=>counts[n]=0);ventas.forEach(v=>counts[v.vendedor]=(counts[v.vendedor]||0)+v.cantidad);const conVentas=integrantes.filter(n=>(counts[n]||0)>0).sort((a,b)=>(counts[b]||0)-(counts[a]||0)||a.localeCompare(b,'es'));const sinVentas=integrantes.filter(n=>(counts[n]||0)===0).sort((a,b)=>a.localeCompare(b,'es'));const fila=n=>{let c=counts[n]||0,p=Math.min(100,c/3*100);let estado=c>=3?' ✅ Meta cumplida':' — faltan '+(3-c);
+function render(){calcularAsignacion();let tb=document.querySelector('#ventasBody');tb.innerHTML='';let boletos=0;ventasOrdenadas().forEach((v,i)=>{boletos+=v.cantidad;let tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td><b>${rangoBoletos(v)}</b></td><td class="seller">${esc(v.vendedor)}</td><td>${esc(v.comprador)}</td>${isAdmin?`<td><b>${esc(v.telefono||'—')}</b></td>`:''}<td>${v.cantidad}</td><td>B/.${Number(v.cantidad).toFixed(2)}</td><td>${fechaBonita(v.fecha)}</td><td><span class="tag">Participando</span></td>${isAdmin?pagoCell(v):''}${isAdmin?`<td><button onclick="editar('${v.id}')">Editar</button> <button class="danger" onclick="borrar('${v.id}')">Eliminar</button></td>`:''}`;tb.appendChild(tr)});document.querySelector('#totalBoletos').textContent=boletos;document.querySelector('#totalDinero').textContent=boletos.toFixed(2);document.querySelector('#totalVentas').textContent=ventas.length;renderDias();actualizarFiltroDias();document.querySelector('#adminHead').classList.toggle('hidden',!isAdmin);document.querySelector('#pagoHead').classList.toggle('hidden',!isAdmin);document.querySelector('#telefonoHead').classList.toggle('hidden',!isAdmin);document.querySelector('#logoutAdmin').classList.toggle('hidden',!isAdmin);document.querySelector('#loginAdmin').classList.toggle('hidden',isAdmin);let counts={};integrantes.forEach(n=>counts[n]=0);ventas.forEach(v=>counts[v.vendedor]=(counts[v.vendedor]||0)+v.cantidad);const conVentas=integrantes.filter(n=>(counts[n]||0)>0).sort((a,b)=>(counts[b]||0)-(counts[a]||0)||a.localeCompare(b,'es'));const sinVentas=integrantes.filter(n=>(counts[n]||0)===0).sort((a,b)=>a.localeCompare(b,'es'));const fila=n=>{let c=counts[n]||0,p=Math.min(100,c/3*100);let estado=c>=3?' ✅ Meta cumplida':' — faltan '+(3-c);
 let pagado=pagos[n]||0,pend=Math.max(0,c-pagado),pp=c>0?Math.min(100,pagado/c*100):0;let pagoHtml='';
 if(c>0){
  const completo=pagado>=c;
  pagoHtml=`<div class="pay">${completo?'☑️ Pagado completo':'💙 Pagado'}: B/.${pagado.toFixed(2)} de B/.${c.toFixed(2)}${completo?'':` · <span class="pend">Pendiente B/.${pend.toFixed(2)}</span>`}${isAdmin?` <button onclick="pagoTodo(decodeURIComponent('${encodeURIComponent(n)}'))">✔ Pagó todo</button><button onclick="pagoAbono(decodeURIComponent('${encodeURIComponent(n)}'))">+ Abono</button><button onclick="pagoCorregir(decodeURIComponent('${encodeURIComponent(n)}'))">Corregir</button>`:''}</div><div class="progress pg"><i style="width:${pp}%"></i></div>`;
 }
-return `<div style="margin:9px 0"><span>${esc(n)} — <b>${c} vendidos</b>${estado}</span><div class="progress"><i style="width:${p}%"></i></div>${pagoHtml}</div>`};const sumPag=Object.values(pagos).reduce((a,b)=>a+b,0);document.querySelector('#totalPagado').textContent=sumPag.toFixed(2);document.querySelector('#totalPendiente').textContent=Math.max(0,boletos-sumPag).toFixed(2);document.querySelector('#resumen').innerHTML=`<h3 style="color:var(--g);margin:12px 0 8px">🎟️ Integrantes con ventas (${conVentas.length})</h3>${conVentas.map(fila).join('')||'<p>Aún no se han registrado ventas.</p>'}<hr style="margin:22px 0"><h3 style="color:var(--g);margin:12px 0 8px">📋 Sin ventas todavía — orden alfabético (${sinVentas.length})</h3>${sinVentas.map(fila).join('')||'<p>¡Todos han vendido al menos un boleto!</p>'}`}
+return `<div style="margin:9px 0"><span>${esc(n)} — <b>${c} vendidos</b>${estado}</span><div class="progress"><i style="width:${p}%"></i></div>${pagoHtml}</div>`};const sumPag=Object.values(pagos).reduce((a,b)=>a+b,0);document.querySelector('#totalPagado').textContent=sumPag.toFixed(2);document.querySelector('#totalPendiente').textContent=Math.max(0,boletos-sumPag).toFixed(2);if(isAdmin&&filtroDia!=='todos'){renderResumenDia();return}document.querySelector('#resumen').innerHTML=`<h3 style="color:var(--g);margin:12px 0 8px">🎟️ Integrantes con ventas (${conVentas.length})</h3>${conVentas.map(fila).join('')||'<p>Aún no se han registrado ventas.</p>'}<hr style="margin:22px 0"><h3 style="color:var(--g);margin:12px 0 8px">📋 Sin ventas todavía — orden alfabético (${sinVentas.length})</h3>${sinVentas.map(fila).join('')||'<p>¡Todos han vendido al menos un boleto!</p>'}`}
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 async function save(){
   let comprador=document.querySelector('#comprador').value.trim(),
@@ -185,6 +185,47 @@ const pagoCell=v=>{
   const tag=x>=c?'<span class="tag az">☑️ Pagó</span>':x<=0?'<span class="tag pen">⏳ No ha pagado</span>':'<span class="tag par">Pago parcial</span>';
   return `<td class="pagoCell">${tag}<br><b style="color:#1d4ed8">B/.${x.toFixed(2)}</b> <span class="small">de B/.${c.toFixed(2)}</span></td>`;
 };
+function actualizarFiltroDias(){
+  const box=document.querySelector('#filtroDiaBox'),sel=document.querySelector('#filtroDia');
+  box.classList.toggle('hidden',!isAdmin);
+  if(!isAdmin){filtroDia='todos';return}
+  const hoy=fmtKey(new Date());
+  const porDia={};
+  ventas.forEach(v=>{const k=diaKey(v.fecha);if(k!=='sin-fecha')porDia[k]=(porDia[k]||0)+Number(v.cantidad||0)});
+  if(!(hoy in porDia))porDia[hoy]=0;
+  const keys=Object.keys(porDia).sort((a,b)=>b.localeCompare(a));
+  if(filtroDia!=='todos'&&!keys.includes(filtroDia))filtroDia='todos';
+  sel.replaceChildren(new Option('Todos los días','todos'));
+  keys.forEach(k=>{
+    const f=new Date(k+'T12:00:00').toLocaleDateString('es-PA',{weekday:'short',day:'numeric',month:'short'});
+    sel.add(new Option(`${k===hoy?'HOY — ':''}${f} (${porDia[k]} boletos)`,k));
+  });
+  sel.value=filtroDia;
+}
+function renderResumenDia(){
+  const del=ventas.filter(v=>diaKey(v.fecha)===filtroDia);
+  const por={};
+  del.forEach(v=>{const o=por[v.vendedor]||(por[v.vendedor]={c:0,pag:0});o.c+=Number(v.cantidad||0);o.pag+=(asign[v.id]||0)});
+  const nombres=Object.keys(por);
+  const tot=nombres.reduce((a,n)=>a+por[n].c,0),pag=nombres.reduce((a,n)=>a+por[n].pag,0),pen=Math.max(0,tot-pag);
+  nombres.sort((a,b)=>((por[b].c-por[b].pag)-(por[a].c-por[a].pag))||a.localeCompare(b,'es'));
+  const hoy=fmtKey(new Date());
+  const filas=nombres.map(n=>{
+    const o=por[n],c=o.c,x=Math.min(c,o.pag),pp=c>0?Math.min(100,x/c*100):0;
+    const tag=x>=c?'<span class="tag az">☑️ Pagó</span>':x<=0?'<span class="tag pen">⏳ No ha pagado</span>':'<span class="tag par">Pago parcial</span>';
+    const q=encodeURIComponent(n);
+    return `<div style="margin:10px 0"><span>${esc(n)} — <b>${c} vendidos</b> este día</span><div class="pay">${tag} <span style="color:#1d4ed8">B/.${x.toFixed(2)} de B/.${c.toFixed(2)}</span>${x>=c?'':` · <span class="pend">Pendiente B/.${(c-x).toFixed(2)}</span>`} <button onclick="pagoDia(decodeURIComponent('${q}'),'${filtroDia}')">✔ Pagó este día</button><button onclick="pagoAbono(decodeURIComponent('${q}'))">+ Abono</button><button onclick="pagoCorregir(decodeURIComponent('${q}'))">Corregir</button></div><div class="progress pg"><i style="width:${pp}%"></i></div></div>`;
+  }).join('')||'<p>No hay ventas en este día.</p>';
+  document.querySelector('#resumen').innerHTML=`<div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:12px;padding:12px;margin-bottom:10px"><b>${filtroDia===hoy?'HOY — ':''}<span style="text-transform:capitalize">${labelDia(filtroDia)}</span></b><div style="margin-top:6px">🎟️ <b>${tot}</b> boletos · 💵 Vendido: <b>${money(tot)}</b></div><div>💙 Pagado: <b style="color:#1d4ed8">${money(pag)}</b> · ⏳ Pendiente: <b style="color:#92400e">${money(pen)}</b></div></div><h3 style="color:var(--g);margin:12px 0 8px">🎟️ Vendedores del día (${nombres.length})</h3>${filas}`;
+}
+async function pagoDia(n,key){
+  if(!isAdmin)return;
+  const sumHasta=(incl)=>ventas.filter(v=>v.vendedor===n).filter(v=>{const k=diaKey(v.fecha);return k!=='sin-fecha'&&(incl?k<=key:k<key)}).reduce((a,v)=>a+Number(v.cantidad||0),0);
+  const cur=pagos[n]||0,hasta=sumHasta(true),antes=sumHasta(false);
+  if(cur>=hasta)return toast(`${n} ya tiene cubierto este día.`);
+  if(antes>cur&&!confirm(`${n} tiene ventas de días anteriores sin pagar (B/.${(antes-cur).toFixed(2)}).\nAl marcar este día también se marcarán como pagadas. ¿Continuar?`))return;
+  fijarPago(n,hasta);
+}
 const vendidosDe=n=>ventas.filter(v=>v.vendedor===n).reduce((a,v)=>a+Number(v.cantidad||0),0);
 async function fijarPago(n,monto){
   if(!isAdmin)return;
@@ -207,7 +248,7 @@ function pagoCorregir(n){
   fijarPago(n,m);
 }
 async function borrar(id){if(!isAdmin||!confirm('¿Eliminar esta venta?'))return;let {error}=await db.rpc('admin_eliminar_venta_canasta',{p_id:id,p_clave:adminPass});if(error)return alert(error.message);load()}
-document.querySelector('#orden').onchange=render;document.querySelector('#guardar').onclick=save;document.querySelector('#loginAdmin').onclick=adminLogin;document.querySelector('#logoutAdmin').onclick=async()=>{
+document.querySelector('#orden').onchange=render;document.querySelector('#filtroDia').onchange=function(){filtroDia=this.value;render()};document.querySelector('#guardar').onclick=save;document.querySelector('#loginAdmin').onclick=adminLogin;document.querySelector('#logoutAdmin').onclick=async()=>{
   isAdmin=false;adminPass='';
   sessionStorage.removeItem('canastaAdmin');
   sessionStorage.removeItem('canastaAdminPass');
