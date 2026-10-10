@@ -9,7 +9,17 @@
 <script>
 const SUPABASE_URL='https://luewrpzgetqslxqmdcxv.supabase.co';const SUPABASE_ANON_KEY='sb_publishable_zJc68aiTxJs7HBgaqeHxrQ_JDcm91xG';const db=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 const integrantes=`Abdel Edwin Chiru|Abdías Guevara|Alberto Adams|Aldair López|Alina Guerra|Ameth Ortega|Amy Betancur|Ashley Austin|Brittany Guevara|César Jordan|Daniel Urieta|Edgar Ortega|Ehimar Macías|Emmanuel Charris|Erick Wright|Erubiel Leones|Eymeleth Wright|Francisco Betancur|Francisco Macías|Glorielis Ruiz|Hellen Flores|Hilma Guerra|Itzel López|Jesuanis Solís|Jeyco Cortés|Johelys Jaén|Josafat Peralta|José Mitre|Keiyanis Moreno|Kenneth Ramos|Luis Herrera|Magdiel Guevara|Maily Solís|Maritzelis López|Mía Jiménez|Mía Sánchez|Milagros Hernández|Moisés Ortega|Nathaly Díaz|Noemy Valdez|Otoniel Rodríguez|Rosa Martínez|Rosalín Guerra|Samuel Ortega|Tomás Gutiérrez|Tomás Vásquez|Víctor Ramos|Yahidelis Rodríguez|Yahirianis Rodríguez|Yamilka González|Yanki Moreno|Yeily López|Yenifer Cruz|Yibellys Toribio|Yisaac Toribio|Zair Urrieta|Yan Carlos|Jennifer Meneses|Joel Rodríguez|Moisés Corales|Alvin Urieta|Amy Jiménez|Daneth Acevedo|Isabel Toribio|Josmar López|Kairianys Víquez|Kathlyn Victoria|Lineth Guerra|Osmar López|Sofía Moreno|Lucas Vera`.split('|');
-const vendedor=document.querySelector('#vendedor');integrantes.forEach(n=>vendedor.add(new Option(n,n)));let isAdmin=sessionStorage.getItem('canastaAdmin')==='1';let adminPass=sessionStorage.getItem('canastaAdminPass')||'';let ventas=[];const toast=t=>{let x=document.querySelector('#toast');x.textContent=t;x.style.display='block';setTimeout(()=>x.style.display='none',2600)};const cleanPhone=s=>(s||'').replace(/\D/g,'');const waPhone=s=>{let n=cleanPhone(s);return n.length===8?'507'+n:n};
+const vendedor=document.querySelector('#vendedor');
+function actualizarListaVendedores(){
+ const seleccionado=vendedor.value;
+ const conteos=new Map(integrantes.map(n=>[n,0]));
+ ventas.forEach(v=>{const nombre=String(v.vendedor||'');conteos.set(nombre,(conteos.get(nombre)||0)+Number(v.cantidad||0));});
+ const nombres=[...new Set([...integrantes,...ventas.map(v=>v.vendedor).filter(Boolean)])].sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}));
+ vendedor.replaceChildren();
+ nombres.forEach(n=>vendedor.add(new Option(`${n} (${conteos.get(n)||0})`,n)));
+ if(nombres.includes(seleccionado))vendedor.value=seleccionado;
+}
+let isAdmin=sessionStorage.getItem('canastaAdmin')==='1';let adminPass=sessionStorage.getItem('canastaAdminPass')||'';let ventas=[];actualizarListaVendedores();const toast=t=>{let x=document.querySelector('#toast');x.textContent=t;x.style.display='block';setTimeout(()=>x.style.display='none',2600)};const cleanPhone=s=>(s||'').replace(/\D/g,'');const waPhone=s=>{let n=cleanPhone(s);return n.length===8?'507'+n:n};
 async function load(){
   let respuesta;
   if(isAdmin && adminPass){
@@ -20,6 +30,7 @@ async function load(){
   const {data,error}=respuesta;
   if(error){console.error(error);toast('Error cargando las ventas: '+error.message);return}
   ventas=data||[];
+  actualizarListaVendedores();
   render();
 }
 function rangoBoletos(v){
