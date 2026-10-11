@@ -154,6 +154,9 @@ function renderDias(){
     const bol=d.ventas.reduce((a,v)=>a+Number(v.cantidad||0),0);
     const rec=d.pagos.reduce((a,p)=>a+Number(p.monto||0),0);
     const esHoy=k===hoy;
+    const alf=(x,y)=>String(x.vendedor||'').localeCompare(String(y.vendedor||''),'es',{sensitivity:'base'});
+    d.ventas.sort((x,y)=>alf(x,y)||String(x.comprador||'').localeCompare(String(y.comprador||''),'es',{sensitivity:'base'})||new Date(x.fecha)-new Date(y.fecha));
+    d.pagos.sort((x,y)=>alf(x,y)||new Date(x.fecha)-new Date(y.fecha));
     const lv=d.ventas.map(v=>`<li><b>${esc(v.vendedor)}</b> vendió ${v.cantidad} a ${esc(v.comprador)} — ${money(v.cantidad)}</li>`).join('')||'<li class="small">Sin ventas este día.</li>';
     const lp=d.pagos.map(p=>{const m=Number(p.monto);const h=new Date(p.fecha).toLocaleTimeString('es-PA',{timeZone:TZ,hour:'2-digit',minute:'2-digit'});return `<li><b>${esc(p.vendedor)}</b> ${m>=0?'te entregó':'corrección'} <span style="color:#1d4ed8;font-weight:700">${m>=0?'':'-'}${money(Math.abs(m))}</span> <span class="small">(${h})</span></li>`}).join('')||'<li class="small">Sin pagos recibidos este día.</li>';
     return `<details class="dia${esHoy?' hoy':''}"${esHoy?' open':''}><summary>${esHoy?'<span class="hoyTag">HOY</span>':''}<span style="text-transform:capitalize">${labelDia(k)}</span><span class="chip">🎟️ ${bol} boletos · ${money(bol)} vendidos</span><span class="chip az">💙 Recibido: ${money(rec)}</span></summary><div class="b"><h4>🛒 Ventas del día (${d.ventas.length})</h4><ul>${lv}</ul><h4>💙 Pagos recibidos del día (${d.pagos.length})</h4><ul>${lp}</ul></div></details>`;
