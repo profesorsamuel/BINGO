@@ -6,7 +6,7 @@
 <section class="card"><h2>Avance de la banda</h2><div style="margin:6px 0"><b style="font-size:13px">↕️ Ordenar:</b> <select id="ordenResumen" style="width:auto;max-width:100%;padding:8px"><option value="ventas">Más boletos vendidos primero</option><option value="nombre">Por nombre (A–Z)</option><option value="pendiente">Con más pendiente primero</option></select></div><div id="filtroDiaBox" class="hidden" style="margin:6px 0 10px"><b style="font-size:13px">📅 Ver por día:</b> <select id="filtroDia" style="width:auto;max-width:100%;padding:8px"></select></div><div id="resumen"></div><hr><button class="admin" id="loginAdmin">🔐 Administrador</button><button class="danger hidden" id="logoutAdmin">Cerrar administrador</button><p class="small">Solo el administrador puede modificar o eliminar una venta ya registrada.</p></section></div>
 <div class="stats"><div class="stat">🎟️ Boletos vendidos: <span id="totalBoletos">0</span></div><div class="stat">💵 Recaudado: B/.<span id="totalDinero">0.00</span></div><div class="stat">👥 Ventas registradas: <span id="totalVentas">0</span></div><div class="stat bluestat">💙 Entregado al administrador: B/.<span id="totalPagado">0.00</span></div><div class="stat">⏳ Pendiente de entregar: B/.<span id="totalPendiente">0.00</span></div></div>
 <section class="card hidden" id="resumenDia" style="margin-bottom:16px"><h2>📅 Resumen por día (solo administrador)</h2><div id="diasBody"></div></section>
-<section class="card"><h2>Ventas públicas</h2><p class="small">Por privacidad, aquí no se muestran teléfonos ni enlaces de WhatsApp.</p><div style="margin:8px 0"><b style="font-size:13px">↕️ Ordenar tabla:</b> <select id="orden" style="width:auto;padding:8px"><option value="asc">Más antiguas primero (1.º arriba)</option><option value="desc">Más recientes primero</option><option value="vend">Por vendedor (A–Z)</option><option value="comp">Por comprador (A–Z)</option></select></div><div class="table"><table><thead><tr><th>#</th><th>N.º de boleto(s)</th><th>Vendedor</th><th>Comprador</th><th id="telefonoHead" class="hidden">Teléfono</th><th>Boletos</th><th>Aporte</th><th>Fecha</th><th>Estado</th><th id="pagoHead" class="hidden">Pago al admin</th><th id="adminHead" class="hidden">Administrar</th></tr></thead><tbody id="ventasBody"></tbody></table></div></section></div><div id="toast"></div>
+<section class="card"><h2>Ventas públicas</h2><p class="small">Por privacidad, aquí no se muestran teléfonos ni enlaces de WhatsApp.</p><div style="margin:8px 0"><b style="font-size:13px">↕️ Ordenar tabla:</b> <select id="orden" style="width:auto;padding:8px"><option value="asc">Más antiguas primero (1.º arriba)</option><option value="desc">Más recientes primero</option><option value="vend">Por vendedor (A–Z)</option><option value="comp">Por comprador (A–Z)</option></select></div><div class="table"><table><thead><tr><th>#</th><th>N.º de boleto(s)</th><th>Vendedor</th><th>Comprador</th><th id="telefonoHead" class="hidden">Teléfono</th><th>Boletos</th><th>Aporte</th><th>Fecha</th><th>Estado</th><th id="pagoHead">Pago</th><th id="adminHead" class="hidden">Administrar</th></tr></thead><tbody id="ventasBody"></tbody></table></div></section></div><div id="toast"></div>
 <script>
 const SUPABASE_URL='https://luewrpzgetqslxqmdcxv.supabase.co';const SUPABASE_ANON_KEY='sb_publishable_zJc68aiTxJs7HBgaqeHxrQ_JDcm91xG';const db=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 const integrantes=`Abdel Edwin Chiru|Abdías Guevara|Alberto Adams|Aldair López|Alina Guerra|Ameth Ortega|Amy Betancur|Ashley Austin|Brittany Guevara|César Jordan|Daniel Urieta|Edgar Ortega|Ehimar Macías|Emmanuel Charris|Erick Wright|Erubiel Leones|Eymeleth Wright|Francisco Betancur|Francisco Macías|Glorielis Ruiz|Hellen Flores|Hilma Guerra|Itzel López|Jesuanis Solís|Jeyco Cortés|Johelys Jaén|Josafat Peralta|José Mitre|Keiyanis Moreno|Kenneth Ramos|Luis Herrera|Magdiel Guevara|Maily Solís|Maritzelis López|Mía Jiménez|Mía Sánchez|Milagros Hernández|Moisés Ortega|Nathaly Díaz|Noemy Valdez|Otoniel Rodríguez|Rosa Martínez|Rosalín Guerra|Samuel Ortega|Tomás Gutiérrez|Tomás Vásquez|Víctor Ramos|Yahidelis Rodríguez|Yahirianis Rodríguez|Yamilka González|Yanki Moreno|Yeily López|Yenifer Cruz|Yibellys Toribio|Yisaac Toribio|Zair Urrieta|Yan Carlos|Jennifer Meneses|Joel Rodríguez|Moisés Corales|Alvin Urieta|Amy Jiménez|Daneth Acevedo|Isabel Toribio|Josmar López|Kairianys Víquez|Kathlyn Victoria|Lineth Guerra|Osmar López|Sofía Moreno|Lucas Vera`.split('|');
@@ -44,7 +44,7 @@ async function load(){
     }catch(e){}
   }
   pagoVenta={};pagoVentaOk=false;
-  if(isAdmin&&adminPass)await cargarPagoVenta();
+  if(isAdmin&&adminPass)await cargarPagoVenta();else await cargarPagoVentaPublico();
   actualizarListaVendedores();
   render();
 }
@@ -53,7 +53,7 @@ function rangoBoletos(v){
   const a=Number(v.boleto_desde), b=Number(v.boleto_hasta ?? v.boleto_desde);
   return a===b ? `#${a}` : `#${a} al #${b}`;
 }
-function render(){calcularAsignacion();let tb=document.querySelector('#ventasBody');tb.innerHTML='';let boletos=0;ventasOrdenadas().forEach((v,i)=>{boletos+=v.cantidad;let tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td><b>${rangoBoletos(v)}</b></td><td class="seller">${esc(v.vendedor)}</td><td>${esc(v.comprador)}</td>${isAdmin?`<td><b>${esc(v.telefono||'—')}</b></td>`:''}<td>${v.cantidad}</td><td>B/.${Number(v.cantidad).toFixed(2)}</td><td>${fechaBonita(v.fecha)}</td><td><span class="tag">Participando</span></td>${isAdmin?pagoCell(v):''}${isAdmin?`<td><button onclick="editar('${v.id}')">Editar</button> <button class="danger" onclick="borrar('${v.id}')">Eliminar</button></td>`:''}`;tb.appendChild(tr)});document.querySelector('#totalBoletos').textContent=boletos;document.querySelector('#totalDinero').textContent=boletos.toFixed(2);document.querySelector('#totalVentas').textContent=ventas.length;renderDias();actualizarFiltroDias();document.querySelector('#adminHead').classList.toggle('hidden',!isAdmin);document.querySelector('#pagoHead').classList.toggle('hidden',!isAdmin);document.querySelector('#telefonoHead').classList.toggle('hidden',!isAdmin);document.querySelector('#logoutAdmin').classList.toggle('hidden',!isAdmin);document.querySelector('#loginAdmin').classList.toggle('hidden',isAdmin);let counts={};integrantes.forEach(n=>counts[n]=0);ventas.forEach(v=>counts[v.vendedor]=(counts[v.vendedor]||0)+v.cantidad);const conVentas=integrantes.filter(n=>(counts[n]||0)>0).sort((a,b)=>cmpResumen(a,b,n=>counts[n]||0));const sinVentas=integrantes.filter(n=>(counts[n]||0)===0).sort((a,b)=>a.localeCompare(b,'es'));const fila=n=>{let c=counts[n]||0,p=Math.min(100,c/3*100);let estado=c>=3?' ✅ Meta cumplida':' — faltan '+(3-c);
+function render(){calcularAsignacion();let tb=document.querySelector('#ventasBody');tb.innerHTML='';let boletos=0;ventasOrdenadas().forEach((v,i)=>{boletos+=v.cantidad;let tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td><b>${rangoBoletos(v)}</b></td><td class="seller">${esc(v.vendedor)}</td><td>${esc(v.comprador)}</td>${isAdmin?`<td><b>${esc(v.telefono||'—')}</b></td>`:''}<td>${v.cantidad}</td><td>B/.${Number(v.cantidad).toFixed(2)}</td><td>${fechaBonita(v.fecha)}</td><td><span class="tag">Participando</span></td>${pagoCell(v)}${isAdmin?`<td><button onclick="editar('${v.id}')">Editar</button> <button class="danger" onclick="borrar('${v.id}')">Eliminar</button></td>`:''}`;tb.appendChild(tr)});document.querySelector('#totalBoletos').textContent=boletos;document.querySelector('#totalDinero').textContent=boletos.toFixed(2);document.querySelector('#totalVentas').textContent=ventas.length;renderDias();actualizarFiltroDias();document.querySelector('#adminHead').classList.toggle('hidden',!isAdmin);document.querySelector('#telefonoHead').classList.toggle('hidden',!isAdmin);document.querySelector('#logoutAdmin').classList.toggle('hidden',!isAdmin);document.querySelector('#loginAdmin').classList.toggle('hidden',isAdmin);let counts={};integrantes.forEach(n=>counts[n]=0);ventas.forEach(v=>counts[v.vendedor]=(counts[v.vendedor]||0)+v.cantidad);const conVentas=integrantes.filter(n=>(counts[n]||0)>0).sort((a,b)=>cmpResumen(a,b,n=>counts[n]||0));const sinVentas=integrantes.filter(n=>(counts[n]||0)===0).sort((a,b)=>a.localeCompare(b,'es'));const fila=n=>{let c=counts[n]||0,p=Math.min(100,c/3*100);let estado=c>=3?' ✅ Meta cumplida':' — faltan '+(3-c);
 let pagado=pagos[n]||0,pend=Math.max(0,c-pagado),pp=c>0?Math.min(100,pagado/c*100):0;let pagoHtml='';
 if(c>0){
  const completo=pagado>=c;
@@ -182,7 +182,7 @@ const ventasOrdenadas=()=>{
 };
 let asign={};
 function calcularAsignacion(){
-  if(!(isAdmin&&pagoVentaOk)){calcularAsignacionFIFO();return}
+  if(!pagoVentaOk){calcularAsignacionFIFO();return}
   asign={};const tot={};
   ventas.forEach(v=>{const x=Math.min(Number(v.cantidad||0),Number(pagoVenta[v.id]||0));asign[v.id]=x;tot[v.vendedor]=(tot[v.vendedor]||0)+x});
   pagos=tot;
@@ -200,8 +200,8 @@ function calcularAsignacionFIFO(){
 }
 const pagoCell=v=>{
   const c=Number(v.cantidad||0),x=asign[v.id]||0;
-  const tag=x>=c?'<span class="tag az">☑️ Pagó</span>':x<=0?'<span class="tag pen">⏳ No ha pagado</span>':'<span class="tag par">Pago parcial</span>';
-  return `<td class="pagoCell">${tag}<br><b style="color:#1d4ed8">B/.${x.toFixed(2)}</b> <span class="small">de B/.${c.toFixed(2)}</span><br>${botonesPago(v)}</td>`;
+  const tag=x>=c?'<span class="tag az">☑️ Pagó</span>':x<=0?'<span class="tag pen">⏳ Pendiente</span>':'<span class="tag par">Pago parcial</span>';
+  return `<td class="pagoCell">${tag}<br><b style="color:#1d4ed8">B/.${x.toFixed(2)}</b> <span class="small">de B/.${c.toFixed(2)}</span>${isAdmin?'<br>'+botonesPago(v):''}</td>`;
 };
 function cmpResumen(a,b,vend,pend){
   const nom=a.localeCompare(b,'es');
@@ -237,13 +237,20 @@ function renderResumenDia(){
   const hoy=fmtKey(new Date());
   const filas=nombres.map(n=>{
     const o=por[n],c=o.c,x=Math.min(c,o.pag),pp=c>0?Math.min(100,x/c*100):0;
-    const tag=x>=c?'<span class="tag az">☑️ Pagó</span>':x<=0?'<span class="tag pen">⏳ No ha pagado</span>':'<span class="tag par">Pago parcial</span>';
+    const tag=x>=c?'<span class="tag az">☑️ Pagó</span>':x<=0?'<span class="tag pen">⏳ Pendiente</span>':'<span class="tag par">Pago parcial</span>';
     const q=encodeURIComponent(n);
     return `<div style="margin:10px 0"><span>${esc(n)} — <b>${c} vendidos</b> este día <span class="small">(en total: ${vendidosDe(n)})</span></span><div class="pay">${tag} <span style="color:#1d4ed8">B/.${x.toFixed(2)} de B/.${c.toFixed(2)}</span>${x>=c?'':` · <span class="pend">Pendiente B/.${(c-x).toFixed(2)}</span>`} ${x>=c?`<button onclick="pagoDia(decodeURIComponent('${q}'),'${filtroDia}',false)">↩ Deshacer día</button>`:`<button onclick="pagoDia(decodeURIComponent('${q}'),'${filtroDia}',true)">✔ Pagó este día</button>`}<button onclick="pagoAbono(decodeURIComponent('${q}'))">+ Abono</button><button onclick="pagoCorregir(decodeURIComponent('${q}'))">Corregir</button></div><div class="progress pg"><i style="width:${pp}%"></i></div></div>`;
   }).join('')||'<p>No hay ventas en este día.</p>';
   document.querySelector('#resumen').innerHTML=`<div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:12px;padding:12px;margin-bottom:10px"><b>${filtroDia===hoy?'HOY — ':''}<span style="text-transform:capitalize">${labelDia(filtroDia)}</span></b><div style="margin-top:6px">🎟️ <b>${tot}</b> boletos · 💵 Vendido: <b>${money(tot)}</b></div><div>💙 Pagado: <b style="color:#1d4ed8">${money(pag)}</b> · ⏳ Pendiente: <b style="color:#92400e">${money(pen)}</b></div></div><h3 style="color:var(--g);margin:12px 0 8px">🎟️ Vendedores del día (${nombres.length})</h3>${filas}`;
 }
 const vendidosDe=n=>ventas.filter(v=>v.vendedor===n).reduce((a,v)=>a+Number(v.cantidad||0),0);
+async function cargarPagoVentaPublico(){
+  try{
+    const r=await db.rpc('listar_pagos_ventas');
+    if(r.error||!(r.data||[]).length)return;
+    pagoVenta={};r.data.forEach(f=>pagoVenta[f.venta_id]=Number(f.monto_pagado||0));pagoVentaOk=true;
+  }catch(e){}
+}
 async function cargarPagoVenta(){
   try{
     const r=await db.rpc('admin_listar_pagos_ventas',{p_clave:adminPass});
@@ -278,7 +285,7 @@ const botonesPago=v=>{
 };
 const liVenta=v=>{
   const c=Number(v.cantidad||0),x=montoPagado(v);
-  const tag=x>=c?'<span class="tag az">☑️ Pagó</span>':x>0?`<span class="tag par">Parcial B/.${x.toFixed(2)}</span>`:'<span class="tag pen">⏳ No ha pagado</span>';
+  const tag=x>=c?'<span class="tag az">☑️ Pagó</span>':x>0?`<span class="tag par">Parcial B/.${x.toFixed(2)}</span>`:'<span class="tag pen">⏳ Pendiente</span>';
   return `<li><b>${esc(v.vendedor)}</b> vendió ${c} a ${esc(v.comprador)} — ${money(c)} ${tag} ${botonesPago(v)}</li>`;
 };
 function toggleDia(k,o){diaOpen[k]=o}
