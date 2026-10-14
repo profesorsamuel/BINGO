@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Guía 2 · Ciencias Naturales 9.º · C.E.B.G. El Jiral</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--navy:#102a56;--blue:#1769e0;--bg:#f4f7fb;--ink:#17233a;--muted:#607089;--green:#16885f;--red:#c0392b}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:linear-gradient(135deg,#102a56,#1769e0);color:#fff;padding:16px 14px;text-align:center;position:sticky;top:0;z-index:5}
+header h1{font-size:19px;margin:0 0 3px}header p{font-size:13px;margin:0;opacity:.9}
+main{max-width:760px;margin:auto;padding:12px}
+.card{background:#fff;border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 3px 16px #17315b16}
+h2{font-size:20px;margin:2px 0 12px}h3{font-size:17px;margin:14px 0 6px}
+button,select{font:inherit}
+button{min-height:48px;border:0;border-radius:12px;padding:10px 16px;font-weight:700;cursor:pointer}
+.primary{background:var(--blue);color:#fff}.secondary{background:#e8eef8;color:#17315b}.good{background:var(--green);color:#fff}
+button:disabled{opacity:.45;cursor:not-allowed}
+select{width:100%;min-height:48px;border:1px solid #ccd6e4;border-radius:11px;padding:10px;background:#fff;margin:6px 0 10px}
+label{font-weight:700;font-size:14px}
+.hidden{display:none!important}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1}
+.sec{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border:2px solid #dce6f4;margin:8px 0;min-height:68px}
+.sec .n{background:#eaf3ff;color:var(--blue);font-weight:900;border-radius:10px;min-width:42px;height:42px;display:grid;place-items:center;font-size:18px}
+.sec .t{flex:1}.sec .t small{display:block;font-weight:400;color:var(--muted)}
+.sec .g{font-size:20px;font-weight:900;color:var(--green);min-width:52px;text-align:right}
+.read{background:#f2f8ff;border-left:6px solid var(--blue);border-radius:10px;padding:10px 14px;margin:10px 0}
+.read li{margin:8px 0;line-height:1.45;font-size:16px}
+.pill{display:inline-block;background:#eaf3ff;color:#175ab3;border-radius:20px;padding:5px 10px;font-size:12px;font-weight:700}
+.bar{height:9px;background:#e5ebf3;border-radius:8px;overflow:hidden;margin:8px 0}.bar i{display:block;height:100%;background:var(--blue);width:0;transition:width .3s}
+.q{font-size:19px;font-weight:700;line-height:1.35;margin:14px 0}
+.opts{display:grid;gap:9px}
+.opt{background:#f5f8fd;border:2px solid #dce5f2;text-align:left;color:#182944;font-weight:600}
+.opt.ok{background:#e4f6ec;border-color:var(--green)}.opt.bad{background:#fdeaea;border-color:var(--red)}
+.fb{padding:11px;border-radius:10px;margin-top:12px;background:#eef7ff;line-height:1.4}
+.fb.ok{background:#e4f6ec}.fb.bad{background:#fdeaea}
+.small{font-size:12px;color:var(--muted)}
+.grade{font-size:84px;font-weight:900;color:var(--blue);line-height:1;text-align:center}
+.center{text-align:center}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px;border-bottom:1px solid #e5eaf0;text-align:left}th{background:#f0f4fa;position:sticky;top:0}
+.scroll{overflow:auto;max-height:420px}
+</style></head><body>
+<header><h1>C.E.B.G. EL JIRAL · CIENCIAS NATURALES 9.º</h1><p>Guía 2 · Historia Terrestre y Exploración Cósmica · Prof. Samuel Ortega</p></header>
+<main>
+
+<section id="login" class="card">
+  <h2>👋 Estudia desde casa</h2>
+  <p>Mientras estamos fuera de la escuela, practica la Guía 2 con lecturas cortas y 5 preguntas por sección. <b>No es obligatorio</b>, pero te ayuda a estudiar. Al final de cada sección recibes una nota del <b>1 al 5</b>.</p>
+  <label for="salon">Salón</label>
+  <select id="salon"><option value="">Selecciona…</option><option>9A</option><option>9B</option><option>9C</option></select>
+  <label for="nombre">Tu nombre</label>
+  <select id="nombre" disabled><option value="">Primero elige el salón</option></select>
+  <button class="primary" id="goBtn" style="width:100%" disabled>Empezar</button>
+  <p class="small">Puedes repetir cada sección las veces que quieras. El profesor ve tu mejor nota.</p>
+  <button class="secondary" style="width:100%;margin-top:10px" onclick="openTeacher()">📊 Panel del profesor (notas y Excel)</button>
+</section>
+
+<section id="menu" class="card hidden">
+  <div class="row" style="align-items:center"><div><h2 id="hola" style="margin:0"></h2><span class="pill" id="salonPill"></span></div><button class="secondary" style="flex:0 0 auto" onclick="logout()">Cambiar</button></div>
+  <p class="small">Elige una sección: lee con calma y luego responde las 5 preguntas.</p>
+  <div id="secList"></div>
+  <p id="avg" class="center" style="font-weight:800"></p>
+</section>
+
+<section id="reading" class="card hidden">
+  <button class="secondary" onclick="showMenu()">← Secciones</button>
+  <h2 id="rTitle" style="margin-top:12px"></h2>
+  <ul id="rBody" class="read"></ul>
+  <button class="primary" style="width:100%" onclick="startQuiz()">✅ Ya leí · ir a las 5 preguntas</button>
+</section>
+
+<section id="quiz" class="card hidden">
+  <div class="row" style="align-items:center"><span class="pill" id="qSec"></span><button class="secondary" style="flex:0 0 auto" onclick="toggleRead()">📖 Ver lectura</button></div>
+  <ul id="qRead" class="read hidden"></ul>
+  <div class="bar"><i id="prog"></i></div>
+  <div class="small" id="qCount"></div>
+  <div class="q" id="qText"></div>
+  <div class="opts" id="qOpts"></div>
+  <div id="fb" class="fb hidden"></div>
+  <button class="primary" id="nextBtn" style="width:100%;margin-top:12px" onclick="nextQ()">Siguiente</button>
+</section>
+
+<section id="result" class="card hidden">
+  <div class="center"><div>🏆 ¡Sección terminada!</div><h2>Tu nota es</h2><div class="grade" id="rGrade"></div>
+  <p id="rDetail"></p><p class="small" id="saveSt"></p></div>
+  <div class="row"><button class="secondary" onclick="startQuiz()">🔁 Repetir</button><button class="primary" onclick="showMenu()">Más secciones</button></div>
+</section>
+
+<section id="teacher" class="card hidden">
+  <div class="row" style="align-items:center"><h2 style="margin:0">📊 Notas · Guía 2</h2><button class="secondary" style="flex:0 0 auto" onclick="closeTeacher()">Cerrar</button></div>
+  <select id="tSalon" onchange="renderTeacher()"><option value="">Todos los salones</option><option>9A</option><option>9B</option><option>9C</option></select>
+  <p id="tStatus" class="small"></p>
+  <div class="row"><button class="good" onclick="downloadXlsx()">⬇️ Descargar Excel</button><button class="secondary" onclick="loadTeacher()">🔄 Actualizar</button></div>
+  <h3>Resumen (mejor nota por sección)</h3>
+  <div class="scroll"><table><thead id="tHead"></thead><tbody id="tBody"></tbody></table></div>
+</section>
+</main>
+
+<script>
+/* ---------- Configuración (misma base que las otras prácticas) ---------- */
+const SUPABASE_URL='https://luewrpzgetqslxqmdcxv.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable_zJc68aiTxJs7HBgaqeHxrQ_JDcm91xG';
+let supa=null;try{supa=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY)}catch(e){}
+const CLASE=2, EJ_BASE=20;           // Lectura 1 = ejercicio 21 ... Lectura 6 = ejercicio 26
+const LS_REC='g2lect_registros', LS_PEND='g2lect_pendientes';
+
+const SALONES={
+"9A":["Arauz, Naomi","Ayarza, Marielis","Berrio, Raúl","Cedeño, Diba","Chen, Ángela","Gonel, Rigoberto","González, Dionel","González, Gisselle","Guerra, Keyli","Jaén, Gloria","Lecano, Abiran","Luzcando, Yemilis","Magallón, Aaron","Martínez, Erick","Mc Farlane, Samuel","Muñoz, Arianis","Núñez, Brianis","Quiroz, Anyelis","Torres, Tatiana","Vásquez, David","González, Elith","Vergara, José"],
+"9B":["Atherton, Eduardo","Concepción, Said","Diaz, Wilton","Cruz, Moisés","Cubilla, Marcos","Cuevas, Emily","Gomez, Jamet","Gonel, Ricardo","Gonzalez, Alisson","Guerra, Jaser","Guerra, David","Guiterrez, Elianis","Jaen, Johelys","Lara, Karol","Lobo, Arianys","Lujan, Alisson","Lopez, Maria","Montenegro, Arjan","Myrie, Johan","Pérez, Paola","Quiel, Yohanis","Rodríguez, Eduardo","Rodríguez, Ahrianys","Valdez, Yohana","Vargas, Romina","Vergara, Odalis"],
+"9C":["Adams, Alberto","De León, Emanuel","Felipe, Oleigh","González, Joseph","Gutierrez, Jean","Hernandez, Xavier","Herrera, Isaac","Jiménez, Anjalhi","Llerena, Yasir","Mendoza, Yamal","Muñoz, Johany","Muñoz, Marieth","Ortega, Aymar","Paz, Isaac","Peñuel, Cristian","Pimentel, Alexander","Pitalua, Aimary","Quiroz, Diana","Rodriguez, James","Rodriguez, Anayansi","Simion, Harry","Torres, Kevelyn","Vásquez, Tomás","Wilson, Arielis","Zambrano, Brithney"]};
+
+/* ---------- Contenido: 6 secciones, lectura corta + 5 preguntas ----------
+   Cada pregunta: [texto, [correcta, error1, error2, error3], explicación] */
+const SECCIONES=[
+{t:"Así nació la Tierra",sub:"Nebulosa, capas y atmósfera",
+ lectura:[
+  "Hace unos <b>4540 millones de años</b> la Tierra se formó a partir de la <b>teoría de la nebulosa</b>.",
+  "Los impactos de meteoritos, la contracción por gravedad y la desintegración radiactiva (uranio, torio y potasio) la calentaron hasta fundirla. Luego se enfrió poco a poco.",
+  "Los materiales pesados, <b>hierro y níquel</b>, formaron el <b>núcleo</b>. Los ligeros, como los <b>silicatos</b>, formaron el manto y la corteza.",
+  "Los gases del <b>vulcanismo</b> formaron la atmósfera y el <b>vapor de agua condensado</b> formó la hidrósfera."],
+ q:[
+  ["¿Qué teoría explica la formación de la Tierra?",["Teoría de la nebulosa","Deriva continental","Generación espontánea","Selección natural"],"La Tierra se formó a partir de la nebulosa solar hace unos 4540 millones de años."],
+  ["¿De qué está formado principalmente el núcleo terrestre?",["Hierro y níquel fundidos","Silicatos y agua","Oxígeno y carbono","Solo gases volcánicos"],"Los elementos pesados, hierro y níquel, se hundieron y formaron el núcleo."],
+  ["¿Qué elementos ligeros formaron el manto y la corteza?",["Silicatos","Hierro","Níquel","Uranio"],"Los silicatos, más ligeros, formaron las capas exteriores sólidas."],
+  ["¿De dónde salieron los gases que formaron la atmósfera primitiva?",["Del vulcanismo","De las manchas solares","De los océanos","De los cometas helados únicamente"],"El vulcanismo liberó los gases que formaron la atmósfera."],
+  ["¿Cómo se originó la hidrósfera?",["Por la condensación del vapor de agua","Por la fusión del núcleo","Por la fragmentación de Pangea","Por el impacto de un asteroide de hierro"],"Al enfriarse la Tierra, el vapor de agua se condensó y formó los océanos."]]},
+{t:"El origen de la vida y la escala del tiempo",sub:"Eón, era, periodo y época",
+ lectura:[
+  "Hace unos <b>4000 millones de años</b> aparecieron las primeras moléculas capaces de replicarse. Después surgieron los organismos unicelulares y luego los pluricelulares.",
+  "Las primeras rocas se volvían a fundir y <b>no dejaron fósiles</b> de los primeros miles de millones de años.",
+  "En los <b>últimos 541 millones de años</b> el registro fósil es abundante y muy útil para estudiar el tiempo geológico.",
+  "La escala del tiempo geológico, de la unidad mayor a la menor, es: <b>eón → era → periodo → época</b>."],
+ q:[
+  ["¿Hace cuánto aparecieron las primeras moléculas capaces de replicarse?",["Unos 4000 millones de años","Unos 541 millones de años","Unos 66 millones de años","Unos 200 000 años"],"La vida comenzó con compuestos orgánicos simples que derivaron en moléculas replicantes hace unos 4000 m.a."],
+  ["¿Por qué no hay fósiles de los primeros miles de millones de años?",["Las primeras rocas se volvían a fundir","Porque aún no existía el Sol","Porque no había atmósfera","Porque los fósiles se evaporaron"],"Las rocas antiguas se refundían, así que no conservaron restos."],
+  ["¿Desde cuándo el registro fósil es abundante?",["Últimos 541 millones de años","Últimos 4000 millones de años","Últimos 66 años","Últimos 30 millones de años"],"El registro fósil abundante corresponde a los últimos 541 m.a."],
+  ["¿Cuál es la unidad más grande del tiempo geológico?",["Eón","Era","Periodo","Época"],"El eón es la unidad mayor y se divide en eras."],
+  ["¿Cuál es la unidad más breve entre eón, era, periodo y época?",["Época","Periodo","Era","Eón"],"La época dura varios millones de años y es la más breve de las cuatro."]]},
+{t:"Precámbrico y Paleozoico",sub:"Oxígeno, células y explosión cámbrica",
+ lectura:[
+  "El <b>Precámbrico</b> va de 4570 a 541 m.a. Hace ~3700 m.a. hay primeros signos de vida y hace ~3500 m.a. aparecen cianobacterias fotosintéticas.",
+  "Hace ~<b>2800 m.a.</b> se libera oxígeno (O₂) de forma activa y transforma la atmósfera. Al final del Proterozoico aparecen las <b>células eucariotas</b>.",
+  "El <b>Paleozoico</b> (541 a 251 m.a.) inicia el eón Fanerozoico con la <b>Explosión Cámbrica</b>: surgen unos 50 grupos de organismos.",
+  "En su primera mitad dominan los invertebrados (trilobites, graptolitos). En la segunda, plantas, peces, anfibios y reptiles colonizan la tierra firme."],
+ q:[
+  ["¿Qué ocurrió hace unos 2800 millones de años?",["Se liberó oxígeno activamente y cambió la atmósfera","Aparecieron los dinosaurios","Se formó Pangea","Surgió el Homo sapiens"],"La liberación de O₂ transformó la atmósfera."],
+  ["¿Qué tipo de células aparecen al final del Proterozoico?",["Eucariotas","Solo bacterias","Células de dinosaurio","Células sin material genético"],"Al final del Proterozoico aparecen las células eucariotas."],
+  ["¿Qué fue la Explosión Cámbrica?",["Aparición de unos 50 grupos de organismos","Un impacto de meteorito","La fragmentación de Pangea","La extinción de los dinosaurios"],"Fue una gran diversificación de la vida al inicio del Paleozoico."],
+  ["¿Qué organismos dominaron en la primera mitad del Paleozoico?",["Invertebrados como los trilobites","Mamíferos","Dinosaurios","Primates"],"Predominaron invertebrados como trilobites y graptolitos."],
+  ["¿Qué ocurrió en la segunda mitad del Paleozoico?",["La vida colonizó la tierra firme","La Tierra se fundió por completo","Aparecieron los humanos","Desaparecieron los océanos"],"Plantas, peces, anfibios y reptiles colonizaron la tierra firme."]]},
+{t:"Mesozoico y Cenozoico",sub:"Dinosaurios, mamíferos y humanos",
+ lectura:[
+  "El <b>Mesozoico</b> (251 a 66 m.a.) estuvo marcado por la fragmentación del supercontinente <b>Pangea</b>.",
+  "Los <b>dinosaurios</b> dominaron la tierra; los <b>pterosaurios</b> fueron reptiles voladores y los <b>ictiosaurios</b>, reptiles acuáticos.",
+  "Hace <b>66 m.a.</b> un impacto meteorítico masivo causó una extinción. Empezó el <b>Cenozoico</b>, la «Era de los Mamíferos».",
+  "Los primeros primates surgieron hace ~<b>30 m.a.</b> y el <i>Homo sapiens sapiens</i> evolucionó hace ~<b>200 000 años</b>."],
+ q:[
+  ["¿Qué supercontinente se fragmentó durante el Mesozoico?",["Pangea","Atlántida","Eurasia","Antártida"],"Pangea se fue separando en las masas continentales actuales."],
+  ["¿Qué eran los pterosaurios?",["Reptiles voladores","Reptiles acuáticos","Mamíferos terrestres","Plantas con flores"],"Los pterosaurios eran reptiles voladores; los ictiosaurios eran acuáticos."],
+  ["¿Hace cuántos millones de años ocurrió el impacto que causó la extinción masiva?",["66","251","541","30"],"El impacto meteorítico masivo ocurrió hace 66 m.a."],
+  ["¿Cómo se conoce al Cenozoico?",["Era de los Mamíferos","Era de los Reptiles","Era de los Trilobites","Era de la Nebulosa"],"Tras la extinción, los mamíferos se diversificaron."],
+  ["¿Hace cuánto evolucionó el Homo sapiens sapiens?",["Unos 200 000 años","Unos 30 millones de años","Unos 66 millones de años","Unos 4000 millones de años"],"Los humanos modernos aparecieron hace unos 200 000 años, apenas al final de la historia de la Tierra."]]},
+{t:"Galileo y la astronomía moderna",sub:"Del primer telescopio al James Webb",
+ lectura:[
+  "La astronomía permitió predecir movimientos celestes, fijar <b>calendarios agrícolas</b> y orientar la navegación.",
+  "En <b>1610</b>, Galileo presentó en Venecia el primer telescopio astronómico. Observó cráteres en la <b>Luna</b>, las <b>fases de Venus</b>, las <b>lunas de Júpiter</b> y las <b>manchas solares</b>.",
+  "Hoy hay telescopios como el <b>James Webb</b> y el <b>Gran Telescopio Canarias</b>, que analizan luz infrarroja lejana, y supercomputadoras que simulan estrellas, agujeros negros y galaxias.",
+  "La <b>Estación Espacial Internacional (EEI)</b> permite investigar en microgravedad con cooperación de varios países."],
+ q:[
+  ["¿En qué año presentó Galileo su telescopio astronómico en Venecia?",["1610","1492","1969","2000"],"Galileo lo presentó en 1610."],
+  ["¿Qué descubrió Galileo orbitando Júpiter?",["Las lunas galileanas","Los anillos","Cráteres","Manchas solares"],"Descubrió satélites orbitando otro planeta."],
+  ["¿Qué observó Galileo en el planeta Venus?",["Sus fases","Océanos","Anillos","Volcanes activos"],"Fue la primera observación de las fases de Venus."],
+  ["¿Qué tipo de luz analizan telescopios como el James Webb?",["Infrarroja lejana","Solo luz verde","Rayos sísmicos","Sonido"],"El JWST y el GTC analizan luz infrarroja lejana."],
+  ["¿Qué permite investigar la Estación Espacial Internacional?",["Fenómenos en microgravedad","Terremotos","Fósiles marinos","Glaciares"],"La EEI es un laboratorio orbital en microgravedad."]]},
+{t:"Naves tripuladas y no tripuladas",sub:"Voyager, rovers, Soyuz y Crew Dragon",
+ lectura:[
+  "Las naves <b>no tripuladas</b> (sondas y robots) exploran sin arriesgar vidas humanas. Ejemplos: <b>Voyager 1 y 2</b> (planetas exteriores y espacio interestelar), <b>Mars Rovers</b> (Marte), <b>Cassini-Huygens</b> (Saturno y Titán) y <b>New Horizons</b> (Plutón y Cinturón de Kuiper).",
+  "Las naves <b>tripuladas</b> tienen sistemas de soporte vital para llevar humanos y traerlos de regreso. Ejemplos: <b>Soyuz</b> (Roscosmos, Rusia) y <b>Crew Dragon</b> (SpaceX).",
+  "Los confines del sistema solar se exploran con sondas por los viajes de décadas, la radiación y las limitaciones del soporte vital."],
+ q:[
+  ["¿Qué sondas exploraron los planetas exteriores y llegaron al espacio interestelar?",["Voyager 1 y 2","Crew Dragon","Soyuz","Estación Espacial Internacional"],"Las Voyager estudiaron planetas exteriores y siguieron hacia el espacio interestelar."],
+  ["¿Qué estudió la misión Cassini-Huygens?",["Saturno, sus anillos y Titán","Marte y sus volcanes","Júpiter y la Luna","Plutón únicamente"],"Cassini-Huygens investigó el sistema de Saturno."],
+  ["¿Qué reconoció la sonda New Horizons?",["Plutón y objetos del Cinturón de Kuiper","Venus y Mercurio","La Luna","El Sol"],"New Horizons exploró Plutón y objetos lejanos del Cinturón de Kuiper."],
+  ["¿Qué nave fue desarrollada por SpaceX?",["Crew Dragon","Soyuz","Voyager 2","Cassini"],"Crew Dragon es de SpaceX; Soyuz es de la agencia rusa Roscosmos."],
+  ["¿Por qué se usan sondas no tripuladas en los confines del sistema solar?",["Por los viajes de décadas, la radiación y los límites del soporte vital","Porque allí no hay planetas","Porque las sondas son más baratas que cualquier otra cosa","Porque no hay gravedad en ningún lugar"],"Las enormes distancias y la radiación hacen inviable enviar humanos."]]}
+];
+
+/* ---------- Utilidades ---------- */
+const $=id=>document.getElementById(id);
+const shuffle=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
+const norm=s=>(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+function fechaPanama(){const p=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Panama',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()),o=Object.fromEntries(p.map(x=>[x.type,x.value]));return `${o.year}-${o.month}-${o.day}`}
+const getLS=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}};
+const setLS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+function show(id){['login','menu','reading','quiz','result','teacher'].forEach(x=>$(x).classList.toggle('hidden',x!==id));window.scrollTo(0,0)}
+const notaDe=c=>Math.max(1,c);   // 0 o 1 correcta = 1; 5 correctas = 5
+
+let user=null, sec=0, qs=[], qi=0, ok=0, started='', answered=false;
+
+/* ---------- Inicio de sesión ---------- */
+$('salon').onchange=()=>{const s=$('salon').value,n=$('nombre');
+  n.innerHTML=s?'<option value="">Selecciona tu nombre…</option>'+SALONES[s].map(x=>`<option>${x}</option>`).join(''):'<option value="">Primero elige el salón</option>';
+  n.disabled=!s;$('goBtn').disabled=true};
+$('nombre').onchange=()=>$('goBtn').disabled=!$('nombre').value;
+$('goBtn').onclick=()=>{user={salon:$('salon').value,nombre:$('nombre').value};setLS('g2lect_user',user);showMenu()};
+function logout(){user=null;remoteBest={};show('login')}
+(function(){const u=getLS('g2lect_user',null);if(u&&SALONES[u.salon]&&SALONES[u.salon].includes(u.nombre)){$('salon').value=u.salon;$('salon').onchange();$('nombre').value=u.nombre;$('goBtn').disabled=false}})();
+
+/* ---------- Notas locales (mejor nota por sección) ---------- */
+let remoteBest={};
+function bestLocal(){const r=getLS(LS_REC,[]).filter(x=>x.salon===user.salon&&x.nombre===user.nombre),b={...remoteBest};
+  r.forEach(x=>{if(!b[x.sec]||x.nota>b[x.sec])b[x.sec]=x.nota});return b}
+async function fetchMine(){if(!supa||!user)return;
+  try{const {data,error}=await supa.from('practica_intentos').select('ejercicio,nota').eq('clase',CLASE).eq('salon',user.salon).eq('estudiante_nombre',user.nombre)
+      .gt('ejercicio',EJ_BASE).lte('ejercicio',EJ_BASE+SECCIONES.length).eq('estado','terminado');
+    if(error)throw error;remoteBest={};
+    (data||[]).forEach(d=>{const k=d.ejercicio-EJ_BASE-1;if(!remoteBest[k]||d.nota>remoteBest[k])remoteBest[k]=d.nota});
+    if(!$('menu').classList.contains('hidden'))renderMenu()}catch(e){}}
+function showMenu(){renderMenu();show('menu');fetchMine()}
+function renderMenu(){const b=bestLocal();
+  $('hola').textContent='Hola, '+user.nombre.split(', ').reverse().join(' ');$('salonPill').textContent='Salón '+user.salon;
+  $('secList').innerHTML=SECCIONES.map((s,i)=>`<button class="sec" onclick="openSec(${i})"><span class="n">${i+1}</span><span class="t">${s.t}<small>${s.sub}</small></span><span class="g">${b[i]?b[i]+'/5':'—'}</span></button>`).join('');
+  const v=Object.values(b);$('avg').textContent=v.length?'Promedio de tus mejores notas: '+(v.reduce((a,c)=>a+c,0)/v.length).toFixed(1)+' / 5':'';}
+
+/* ---------- Lectura y preguntas ---------- */
+function openSec(i){sec=i;$('rTitle').textContent=`${i+1}. ${SECCIONES[i].t}`;
+  $('rBody').innerHTML=SECCIONES[i].lectura.map(x=>`<li>${x}</li>`).join('');show('reading')}
+function startQuiz(){qs=shuffle(SECCIONES[sec].q).map(q=>({t:q[0],o:shuffle(q[1].map((x,k)=>({x,c:k===0}))),e:q[2]}));
+  qi=0;ok=0;started=new Date().toISOString();$('qSec').textContent=`Sección ${sec+1}`;
+  $('qRead').innerHTML=SECCIONES[sec].lectura.map(x=>`<li>${x}</li>`).join('');$('qRead').classList.add('hidden');show('quiz');renderQ()}
+function toggleRead(){$('qRead').classList.toggle('hidden')}
+function renderQ(){const q=qs[qi];answered=false;
+  $('qCount').textContent=`Pregunta ${qi+1} de ${qs.length}`;$('prog').style.width=(qi/qs.length*100)+'%';
+  $('qText').textContent=q.t;$('fb').classList.add('hidden');$('nextBtn').classList.add('hidden');
+  $('qOpts').innerHTML=q.o.map((o,k)=>`<button class="opt" onclick="pick(${k})">${String.fromCharCode(65+k)}. ${o.x}</button>`).join('')}
+function pick(k){if(answered)return;answered=true;const q=qs[qi],good=q.o[k].c;if(good)ok++;
+  [...$('qOpts').children].forEach((b,j)=>{b.disabled=true;if(q.o[j].c)b.classList.add('ok');else if(j===k)b.classList.add('bad')});
+  const f=$('fb');f.className='fb '+(good?'ok':'bad');f.innerHTML=(good?'✅ <b>¡Correcto!</b> ':'❌ <b>Casi.</b> ')+q.e;
+  $('nextBtn').textContent=qi===qs.length-1?'Ver mi nota':'Siguiente';$('nextBtn').classList.remove('hidden')}
+function nextQ(){if(qi<qs.length-1){qi++;renderQ()}else finish()}
+
+/* ---------- Resultado y guardado ---------- */
+async function finish(){const nota=notaDe(ok),fin=new Date().toISOString();
+  $('rGrade').textContent=nota;
+  $('rDetail').textContent=`Acertaste ${ok} de ${qs.length}. `+(nota>=4?'¡Muy bien!':nota===3?'Vas bien; repasa la lectura y vuelve a intentarlo.':'Lee otra vez y repite: así se aprende.');
+  show('result');
+  const rec={id:'g2-'+sec+'-'+norm(user.nombre).replace(/[^a-z0-9]/g,'').slice(0,18)+'-'+Date.now(),salon:user.salon,nombre:user.nombre,sec,nota,ok,fecha:fechaPanama(),ini:started,fin};
+  const all=getLS(LS_REC,[]);all.push(rec);setLS(LS_REC,all);
+  $('saveSt').textContent='☁️ Guardando…';
+  try{await sendRec(rec);$('saveSt').textContent='✅ Nota guardada. Tu profesor ya puede verla.'}
+  catch(e){const p=getLS(LS_PEND,[]);p.push(rec);setLS(LS_PEND,p);$('saveSt').textContent='⚠️ Sin conexión: tu nota quedó guardada en este celular y se enviará sola cuando haya internet.'}}
+async function sendRec(r){if(!supa)throw Error('sin supabase');
+  const {data,error}=await supa.from('practica_estudiantes').select('id,nombre').eq('salon',r.salon).eq('nombre',r.nombre);
+  if(error)throw error;if(!data||!data.length)throw Error('Estudiante no registrado');
+  const total=5,row={attempt_id:r.id,estudiante_id:data[0].id,salon:r.salon,estudiante_nombre:r.nombre,clase:CLASE,
+    ejercicio:EJ_BASE+r.sec+1,ejercicio_nombre:'Lectura '+(r.sec+1)+': '+SECCIONES[r.sec].t,modalidad:'individual',group_attempt_id:null,
+    fecha_panama:r.fecha,hora_inicio:r.ini,hora_final:r.fin,correctas:r.ok,incorrectas:total-r.ok,sin_responder:0,total_preguntas:total,
+    porcentaje:Math.round(r.ok/total*10000)/100,nota:r.nota,duracion_segundos:Math.max(0,Math.round((new Date(r.fin)-new Date(r.ini))/1000)),estado:'terminado'};
+  const x=await supa.from('practica_intentos').upsert(row,{onConflict:'attempt_id'});if(x.error)throw x.error}
+async function syncPending(){const p=getLS(LS_PEND,[]);if(!p.length)return;const left=[];
+  for(const r of p){try{await sendRec(r)}catch(e){left.push(r)}}setLS(LS_PEND,left)}
+window.addEventListener('online',syncPending);syncPending();
+
+/* ---------- Panel del profesor ---------- */
+let tRows=[];
+let tTimer=null;
+function openTeacher(){show('teacher');loadTeacher();clearInterval(tTimer);tTimer=setInterval(loadTeacher,30000)}
+function closeTeacher(){clearInterval(tTimer);user?showMenu():show('login')}
+async function loadTeacher(){const st=$('tStatus');st.textContent='Cargando desde Internet…';tRows=[];
+  try{if(!supa)throw Error('sin conexión');
+    const {data,error}=await supa.from('practica_intentos').select('fecha_panama,estudiante_nombre,salon,ejercicio,ejercicio_nombre,correctas,nota,created_at')
+      .eq('clase',CLASE).gt('ejercicio',EJ_BASE).lte('ejercicio',EJ_BASE+SECCIONES.length).eq('estado','terminado').order('created_at',{ascending:true}).limit(5000);
+    if(error)throw error;
+    tRows=(data||[]).map(d=>({fecha:d.fecha_panama,salon:d.salon,nombre:d.estudiante_nombre,sec:d.ejercicio-EJ_BASE-1,correctas:d.correctas,nota:d.nota}));
+    const pend=getLS(LS_PEND,[]);pend.forEach(r=>tRows.push({fecha:r.fecha,salon:r.salon,nombre:r.nombre,sec:r.sec,correctas:r.ok,nota:r.nota}));
+    st.textContent='✅ Datos en línea de todos los dispositivos: '+tRows.length+' intentos'+(pend.length?' (incluye '+pend.length+' pendientes de este dispositivo)':'')+'. Actualizado '+new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'})+'.'}
+  catch(e){tRows=getLS(LS_REC,[]).map(r=>({fecha:r.fecha,salon:r.salon,nombre:r.nombre,sec:r.sec,correctas:r.ok,nota:r.nota}));
+    st.textContent='⚠️ Sin conexión: mostrando solo lo guardado en este dispositivo ('+tRows.length+' intentos).'}
+  renderTeacher()}
+function summary(salon){const out=[];
+  Object.keys(SALONES).filter(s=>!salon||s===salon).forEach(s=>SALONES[s].forEach(n=>{
+    const best={};tRows.filter(r=>r.salon===s&&r.nombre===n).forEach(r=>{if(!best[r.sec]||r.nota>best[r.sec])best[r.sec]=r.nota});
+    const v=Object.values(best);out.push({salon:s,nombre:n,best,prom:v.length?Math.round(v.reduce((a,c)=>a+c,0)/v.length*10)/10:''})}));return out}
+function renderTeacher(){const rows=summary($('tSalon').value);
+  $('tHead').innerHTML='<tr><th>Salón</th><th>Estudiante</th>'+SECCIONES.map((_,i)=>`<th>L${i+1}</th>`).join('')+'<th>Prom.</th></tr>';
+  $('tBody').innerHTML=rows.map(r=>`<tr><td>${r.salon}</td><td>${r.nombre}</td>${SECCIONES.map((_,i)=>`<td>${r.best[i]??'—'}</td>`).join('')}<td><b>${r.prom}</b></td></tr>`).join('')}
+function downloadXlsx(){if(!window.XLSX){alert('No se pudo cargar la librería de Excel. Revisa tu conexión.');return}
+  const wb=XLSX.utils.book_new(),head=['Salón','Estudiante',...SECCIONES.map((s,i)=>`Lectura ${i+1}: ${s.t}`),'Promedio'];
+  Object.keys(SALONES).forEach(s=>{const rows=summary(s).map(r=>[r.salon,r.nombre,...SECCIONES.map((_,i)=>r.best[i]??''),r.prom]);
+    const ws=XLSX.utils.aoa_to_sheet([head,...rows]);ws['!cols']=[{wch:7},{wch:26},...SECCIONES.map(()=>({wch:16})),{wch:10}];XLSX.utils.book_append_sheet(wb,ws,'Resumen '+s)});
+  const reg=[['Fecha','Salón','Estudiante','Sección','Título','Correctas (de 5)','Nota (1-5)'],
+    ...tRows.map(r=>[r.fecha,r.salon,r.nombre,r.sec+1,SECCIONES[r.sec]?SECCIONES[r.sec].t:'',r.correctas,r.nota])];
+  const w2=XLSX.utils.aoa_to_sheet(reg);w2['!cols']=[{wch:12},{wch:7},{wch:26},{wch:9},{wch:36},{wch:16},{wch:11}];XLSX.utils.book_append_sheet(wb,w2,'Registro de intentos');
+  XLSX.writeFile(wb,'Notas_Guia2_Ciencias_9_'+fechaPanama()+'.xlsx')}
+</script></body></html>
