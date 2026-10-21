@@ -1,0 +1,665 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hoja de control — Tómbola Pro Banda</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><style>
+:root{--g:#176b3a;--y:#f2b705;--r:#b42318;--bg:#fffaf0;--ink:#17211b}*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--ink)}header{background:linear-gradient(135deg,#0e5130,#22844b);color:#fff;padding:26px 16px;text-align:center}header h1{margin:0;font-size:clamp(25px,5vw,42px)}header p{margin:7px auto;max-width:850px}.wrap{max-width:1100px;margin:auto;padding:18px}.notice{background:#fff3c4;border-left:6px solid var(--y);padding:14px;border-radius:12px;margin-bottom:16px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:760px){.grid{grid-template-columns:1fr}}.card{background:#fff;border:1px solid #e8dfcc;border-radius:16px;padding:18px;box-shadow:0 6px 20px #0001}h2{margin-top:0;color:var(--g)}label{font-weight:700;font-size:13px;display:block;margin:11px 0 5px}input,select{width:100%;padding:12px;border:1px solid #bbb;border-radius:10px;font-size:16px}button{border:0;border-radius:10px;padding:12px 15px;font-weight:800;cursor:pointer}.primary{background:var(--g);color:#fff;width:100%;margin-top:14px}.wa{background:#25D366;color:#073b18}.danger{background:#fee4e2;color:var(--r)}.admin{background:#222;color:#fff}.stats{display:flex;gap:10px;flex-wrap:wrap;margin:15px 0}.stat{background:#fff;padding:12px 15px;border-radius:12px;border:1px solid #e8dfcc;font-weight:700}.table{overflow:auto}.table table{border-collapse:collapse;width:100%;min-width:760px;background:#fff}.table th,.table td{padding:10px;border-bottom:1px solid #eee;text-align:left}.table th{background:#f4f7f4}.tag{padding:4px 8px;border-radius:20px;background:#e5f5eb;color:var(--g);font-size:12px;font-weight:700}.small{font-size:12px;color:#666}.hidden{display:none}.seller{font-weight:700}.progress{height:9px;background:#eee;border-radius:20px;overflow:hidden}.progress i{display:block;height:100%;background:var(--g)}.pay{font-size:13px;margin:3px 0 2px;color:#1d4ed8;font-weight:700}.pay .pend{color:#8a6d00;font-weight:700}.pay button{padding:4px 8px;font-size:12px;margin-left:4px;background:#dbeafe;color:#1d4ed8}.progress.pg{height:5px;margin-top:3px;background:#e5e7eb}.progress.pg i{background:#2563eb}.bluestat{border-color:#93c5fd;color:#1d4ed8;background:#eff6ff}.dia{border:1px solid #e8dfcc;border-radius:12px;margin:8px 0;background:#fff}.dia summary{cursor:pointer;padding:11px 14px;font-weight:700;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center}.dia.hoy{border-color:#2563eb;background:#eff6ff}.dia .b{padding:0 14px 12px;font-size:14px}.dia .b h4{margin:10px 0 5px;color:var(--g)}.dia .b li{margin:3px 0}.chip{padding:3px 9px;border-radius:20px;font-size:12px;background:#e5f5eb;color:var(--g)}.chip.az{background:#dbeafe;color:#1d4ed8}.hoyTag{background:#2563eb;color:#fff;border-radius:20px;padding:2px 9px;font-size:12px}.tag.az{background:#dbeafe;color:#1d4ed8}.tag.pen{background:#fef3c7;color:#92400e}.tag.par{background:#e0e7ff;color:#3730a3}.pagoCell{white-space:nowrap}.btnpay{background:#dbeafe;color:#1d4ed8;padding:4px 8px;font-size:12px;margin-left:6px}.btnundo{background:#f3f4f6;color:#444;padding:4px 8px;font-size:12px;margin-left:6px}.dia li{line-height:1.9}#vistaFull{position:fixed;inset:0;background:#fffaf0;z-index:100;overflow:auto;padding:16px}#vistaFull.hidden{display:none}.vfwrap{max-width:1050px;margin:auto}#vistaFull .bar{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:center;margin-bottom:12px}#vistaFull h2{margin:0;font-size:24px;color:var(--g)}#vistaFull .tot{display:flex;flex-wrap:wrap;gap:8px}#vistaFull .tot span{background:#fff;border:1px solid #e8dfcc;border-radius:12px;padding:8px 12px;font-size:15px;font-weight:700}.vf{width:100%;border-collapse:separate;border-spacing:0;font-size:15px;background:#fff;border:1px solid #e8dfcc;border-radius:12px}.vf th{position:sticky;top:0;background:#176b3a;color:#fff;text-align:left;padding:10px;font-size:14px;z-index:1}.vf td{padding:8px 10px;border-bottom:1px solid #eee}.vf tr.dh td{background:#e5f5eb;color:#0e5130;font-weight:800;padding:10px;border-top:2px solid #b7dcc4}.vf tr.ok td{background:#f3f8ff}.vf tr.pen td{background:#fffbeb}.vf tr.par td{background:#eef2ff}.vf td.pg{font-weight:800;white-space:nowrap}.vf tr.ok td.pg{color:#1d4ed8}.vf tr.pen td.pg{color:#92400e}.vf tr.par td.pg{color:#3730a3}.vf td.n{color:#777;width:40px}@media(max-width:700px){.vf{font-size:13px}.vf td,.vf th{padding:6px}}
+@media print{body>*:not(#vistaFull){display:none!important}#vistaFull{position:static;overflow:visible;padding:0;background:#fff}#vistaFull .noprint{display:none!important}.vfwrap{max-width:none}.vf{font-size:11px;border:0}.vf td{padding:3px 6px}.vf th{position:static;padding:5px 6px}.vf tr{break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}thead{display:table-header-group}@page{size:portrait;margin:10mm}}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#17211b;color:white;padding:11px 18px;border-radius:30px;display:none;z-index:99}/* ====== MEJORAS VISUALES + HOJA DE CONTROL ====== */
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.45}
+header{background:radial-gradient(circle at 85% 0,#2fa05f 0,transparent 45%),linear-gradient(135deg,#0b4a2c,#1d8049);box-shadow:0 4px 18px #0b4a2c55}
+header h1{letter-spacing:-.5px}
+.card{box-shadow:0 2px 6px #0000000d,0 10px 28px #00000010}
+button{transition:filter .15s,transform .05s}button:hover{filter:brightness(.95)}button:active{transform:translateY(1px)}
+select,input{background:#fff;font-family:inherit}input:focus,select:focus{outline:3px solid #f2b70566;border-color:#c99700}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:18px 0 10px}
+.stat{display:flex;flex-direction:column;gap:2px;padding:14px 16px;border-radius:14px;box-shadow:0 2px 8px #0000000a}
+.stat small{font-size:12px;font-weight:700;color:#5b6b62}
+.stat b{font-size:24px;letter-spacing:-.5px}
+.stat.bluestat b{color:#1d4ed8}.stat.pendstat{background:#fffbeb;border-color:#fcd34d}.stat.pendstat b{color:#92400e}
+.gprog{margin:0 0 18px}.gbar{height:14px;background:#e5e7eb;border-radius:20px;overflow:hidden}
+.gbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2563eb,#60a5fa);border-radius:20px;transition:width .6s}
+#gbarTxt{display:block;font-size:13px;font-weight:700;color:#1d4ed8;margin-top:5px}
+.hojaHead{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.hojaHead h2{margin-bottom:4px}.hojaHead p{margin:0;max-width:560px}
+.hojaBtns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.hojaBtns>span{display:flex;flex-wrap:wrap;gap:8px}
+button.xl{background:#107c41;color:#fff}
+button.ghost{background:#f3f4f6;color:#374151}
+.hojaBar{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0}.hojaBar input{flex:1;min-width:230px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px}.chips.hidden{display:none}
+.chip2{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;border-radius:20px;padding:8px 13px;font-size:13px}
+.chip2 b{background:#fff;border-radius:12px;padding:1px 8px;margin-left:4px}
+.chip2.on{background:#176b3a;color:#fff;border-color:#176b3a}.chip2.on b{color:#176b3a}
+.bulk{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#e5f5eb;border:1px solid #9bd3b0;border-radius:12px;padding:10px 12px;margin:0 0 10px}
+.bulk .bSi{background:#1d4ed8;color:#fff}.bulk .bNo{background:#fef3c7;color:#92400e}
+.sheetScroll{overflow-x:auto;border:1px solid #cfd8cf;border-radius:12px;background:#fff}
+table.sheet{border-collapse:separate;border-spacing:0;width:100%;min-width:900px;font-size:14px}
+.sheet th,.sheet td{padding:8px 10px;border-bottom:1px solid #e6ebe6;border-right:1px solid #f0f3f0;text-align:left;vertical-align:middle}
+.sheet th:last-child,.sheet td:last-child{border-right:0}
+.sheet thead th{position:sticky;background:#176b3a;color:#fff;z-index:2;white-space:nowrap}
+.sheet thead tr.hd th{top:0;height:40px}
+.sheet thead tr.fl th{top:40px;background:#e8f3ec;padding:5px 6px}
+.sheet thead th.sortable{cursor:pointer;user-select:none}.sheet thead th.sortable:hover{background:#1f8049}.sheet thead th.on{background:#0e5130}
+.sheet thead tr.fl select,.sheet thead tr.fl input{padding:6px 8px;font-size:13px;border-radius:8px;min-width:110px}
+.sheet .num{text-align:right;white-space:nowrap}.sheet .n{color:#7a857d;width:36px}.sheet .ck{width:36px;text-align:center}
+.sheet .ck input{width:18px;height:18px;padding:0;accent-color:#176b3a}
+.sheet tbody tr:hover td{background:#f5faf6}
+.sheet tbody tr.e-entregado td{background:#f3f8ff}.sheet tbody tr.e-parcial td{background:#f1f0ff}.sheet tbody tr.e-pendiente td{background:#fffdf3}
+.sheet tbody tr.sel td{background:#d9f0e1!important}
+.sheet td.seller{font-weight:700}.sheet td.vacio{text-align:center;padding:30px;color:#777}
+.sheet td.est{white-space:nowrap}
+.selEst{width:auto;min-width:210px;padding:7px 9px;font-size:13px;font-weight:700;border-radius:20px;cursor:pointer}
+.selEst.pendiente{background:#fef3c7;color:#92400e;border-color:#fcd34d}
+.selEst.parcial{background:#e0e7ff;color:#3730a3;border-color:#a5b4fc}
+.selEst.entregado{background:#dbeafe;color:#1d4ed8;border-color:#93c5fd}
+.sheet tfoot td{position:sticky;bottom:0;background:#f4f7f4;border-top:2px solid #b7dcc4;padding:10px;z-index:2}
+.okTxt{color:#1d4ed8;font-weight:700}.pendTxt{color:#92400e;font-weight:700}
+@media(max-width:700px){.stat b{font-size:20px}.selEst{min-width:170px}.hojaBtns button{flex:1}}
+.topAdmin{display:flex;justify-content:flex-end;margin:-10px 0 8px}.topAdmin button{padding:9px 14px;font-size:14px;box-shadow:0 2px 8px #0004}.topAdmin .admin{background:#fff;color:#0e5130}.topAdmin .danger{background:#fee4e2;color:#b42318}</style><style id="soloHoja">
+.wrap>.notice,.wrap>.grid,.wrap>.stats,.wrap>.gprog,#resumenDia,#listasCompartir,header p{display:none!important}
+header{padding:14px 16px}header h1{font-size:clamp(20px,4vw,30px)}
+.wrap{max-width:1400px}
+.volver{display:inline-block;margin:0 0 10px;color:#fff;font-weight:700;text-decoration:none;background:#ffffff26;padding:7px 12px;border-radius:10px;font-size:14px}
+</style></head><body>
+<header><div class="topAdmin"><button id="loginAdminTop" class="admin">🔐 Administrador</button><button id="logoutAdminTop" class="danger hidden">🔓 Cerrar administrador</button></div><a class="volver" href="canastas.html">← Volver a la página principal</a><h1>📊 Hoja de control de ventas — Tómbola Pro Banda</h1><p><b>Banda Yadira Jiral — C.E.B.G. El Jiral</b></p><p>Boleto: <b>B/.1.00</b> · Sorteo: <b>30 de octubre de 2026</b> · Cada integrante debe vender mínimo <b>3 boletos</b>.</p></header>
+<div class="wrap"><div class="notice"><b>🥫 Aporte de alimentos:</b> entregar el <b>sábado 24 de octubre de 2026</b> a <b>Alina Guerra</b>, WhatsApp <b>6265-1238</b>. El objetivo es preparar <b>dos canastas básicas</b>.</div>
+<div class="grid"><section class="card"><h2>Registrar venta</h2><label>Integrante que vende</label><select id="vendedor"></select><label>Nombre de quien compra</label><input id="comprador" placeholder="Nombre y apellido"><label>Teléfono / WhatsApp del comprador</label><input id="telefono" inputmode="tel" placeholder="Ej. 6123-4567"><label>Cantidad de boletos</label><input id="cantidad" type="number" min="1" value="1"><button class="primary" id="guardar">Guardar venta y enviar agradecimiento</button><p class="small">El teléfono se guarda de forma privada y nunca aparece en la lista pública.</p></section>
+<section class="card"><h2>Avance de la banda</h2><div style="margin:6px 0"><b style="font-size:13px">↕️ Ordenar:</b> <select id="ordenResumen" style="width:auto;max-width:100%;padding:8px"><option value="ventas">Más boletos vendidos primero</option><option value="nombre">Por nombre (A–Z)</option><option value="pendiente">Con más pendiente primero</option></select></div><div id="filtroDiaBox" class="hidden" style="margin:6px 0 10px"><b style="font-size:13px">📅 Ver por día:</b> <select id="filtroDia" style="width:auto;max-width:100%;padding:8px"></select></div><div id="resumen"></div><hr><button class="admin" id="loginAdmin">🔐 Administrador</button><button class="danger hidden" id="logoutAdmin">Cerrar administrador</button><p class="small">Solo el administrador puede modificar o eliminar una venta ya registrada.</p></section></div>
+<div class="stats"><div class="stat"><small>🎟️ Boletos vendidos</small><b id="totalBoletos">0</b></div><div class="stat"><small>💵 Recaudado</small><b>B/.<span id="totalDinero">0.00</span></b></div><div class="stat"><small>👥 Ventas registradas</small><b id="totalVentas">0</b></div><div class="stat bluestat"><small>💙 Entregado al administrador</small><b>B/.<span id="totalPagado">0.00</span></b></div><div class="stat pendstat"><small>⏳ Pendiente de entregar</small><b>B/.<span id="totalPendiente">0.00</span></b></div></div><div class="gprog"><div class="gbar"><i id="gbarFill"></i></div><span id="gbarTxt"></span></div>
+<section class="card hidden" id="resumenDia" style="margin-bottom:16px"><h2>📅 Resumen por día (solo administrador)</h2><div id="diasBody"></div></section>
+<section class="card hidden noprint" id="listasCompartir" style="margin-bottom:16px"></section><section class="card" id="hojaWrap">
+<div class="hojaHead"><div><h2>📊 Hoja de control de ventas</h2><p class="small">Escribe para buscar, filtra por cualquier columna y toca los encabezados para ordenar. El administrador cambia el estado de cada venta con la lista desplegable.</p></div>
+<div class="hojaBtns"><button class="admin" id="btnVistaFull">🖥️ Ver todo en una página</button><span id="adminTools" class="hidden"><button class="xl" id="btnExcel">📥 Descargar Excel</button><button class="wa" id="pdfSi">📄 PDF: ya entregaron</button><button class="danger" id="pdfNo">📄 PDF: no han entregado</button></span></div></div>
+<div class="hidden"><select id="orden"><option value="asc">Más antiguas primero</option><option value="desc">Más recientes primero</option><option value="vend">Por vendedor (A–Z)</option><option value="comp">Por comprador (A–Z)</option></select><select id="filtroPago"><option value="todos">Todas</option><option value="pendiente">pendiente</option><option value="parcial">parcial</option><option value="pagado">pagado</option><option value="nopagado">nopagado</option></select></div>
+<div class="hojaBar"><input id="hQ" type="search" placeholder="🔍 Buscar vendedor, comprador o N.º de boleto…" autocomplete="off"><button id="hLimpiar" class="ghost">✖ Limpiar filtros</button></div>
+<div class="chips hidden" id="hChips"></div>
+<div id="hBulk" class="bulk hidden"></div>
+<div class="sheetScroll"><table class="sheet" id="hojaTabla"><thead id="hThead"></thead><tbody id="ventasBody"></tbody><tfoot id="hTfoot"></tfoot></table></div>
+<p class="small" id="hojaInfo"></p>
+</section></div><div id="vistaFull" class="hidden"><div class="vfwrap"><div class="bar"><h2 id="vfTitulo">🎁 Tómbola Pro Banda — Ventas</h2><span class="tot" id="vfTot"></span></div><div class="bar noprint"><b style="font-size:13px">↕️ Orden:</b><select id="ordenFull" style="width:auto;padding:6px"><option value="asc">Más antiguas primero</option><option value="desc">Más recientes primero</option><option value="vend">Por vendedor (A–Z)</option><option value="comp">Por comprador (A–Z)</option></select><span id="vfFiltroBox" class="hidden"><b style="font-size:13px">💙 Mostrar:</b> <select id="filtroPagoFull" style="width:auto;padding:6px"><option value="todos">Todas</option><option value="pagado">Ya entregaron</option><option value="nopagado">No han entregado todo</option><option value="pendiente">Nada entregado</option><option value="parcial">Entrega parcial</option></select></span><button class="primary" id="vfPrint" style="width:auto;margin:0">🖨️ Imprimir / guardar PDF</button><button class="wa" id="vfLink">🔗 Copiar enlace de esta vista</button><button class="danger" id="vfClose">✖ Cerrar</button></div><section class="card hidden noprint" id="listasCompartirFull" style="margin-bottom:16px"></section><div id="vfBody"></div></div></div><div id="toast"></div>
+<script>
+const SUPABASE_URL='https://luewrpzgetqslxqmdcxv.supabase.co';const SUPABASE_ANON_KEY='sb_publishable_zJc68aiTxJs7HBgaqeHxrQ_JDcm91xG';const db=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const integrantes=`Abdel Edwin Chiru|Abdías Guevara|Alberto Adams|Aldair López|Alina Guerra|Ameth Ortega|Amy Betancur|Ashley Austin|Brittany Guevara|César Jordan|Daniel Urieta|Edgar Ortega|Ehimar Macías|Emmanuel Charris|Erick Wright|Erubiel Leones|Eymeleth Wright|Francisco Betancur|Francisco Macías|Glorielis Ruiz|Hellen Flores|Hilma Guerra|Itzel López|Jesuanis Solís|Jeyco Cortés|Johelys Jaén|Josafat Peralta|José Mitre|Keiyanis Moreno|Kenneth Ramos|Luis Herrera|Magdiel Guevara|Maily Solís|Maritzelis López|Mía Jiménez|Mía Sánchez|Milagros Hernández|Moisés Ortega|Nathaly Díaz|Noemy Valdez|Otoniel Rodríguez|Rosa Martínez|Rosalín Guerra|Samuel Ortega|Tomás Gutiérrez|Tomás Vásquez|Víctor Ramos|Yahidelis Rodríguez|Yahirianis Rodríguez|Yamilka González|Yanki Moreno|Yeily López|Yenifer Cruz|Yibellys Toribio|Yisaac Toribio|Zair Urrieta|Yan Carlos|Jennifer Meneses|Joel Rodríguez|Moisés Corales|Alvin Urieta|Amy Jiménez|Daneth Acevedo|Isabel Toribio|Josmar López|Kairianys Víquez|Kathlyn Victoria|Lineth Guerra|Osmar López|Sofía Moreno|Lucas Vera`.split('|');
+const vendedor=document.querySelector('#vendedor');
+function actualizarListaVendedores(){
+ const seleccionado=vendedor.value;
+ const conteos=new Map(integrantes.map(n=>[n,0]));
+ ventas.forEach(v=>{const nombre=String(v.vendedor||'');conteos.set(nombre,(conteos.get(nombre)||0)+Number(v.cantidad||0));});
+ const nombres=[...new Set([...integrantes,...ventas.map(v=>v.vendedor).filter(Boolean)])].sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}));
+ vendedor.replaceChildren();
+ nombres.forEach(n=>vendedor.add(new Option(`${n} (${conteos.get(n)||0})`,n)));
+ if(nombres.includes(seleccionado))vendedor.value=seleccionado;
+}
+let isAdmin=sessionStorage.getItem('canastaAdmin')==='1';let adminPass=sessionStorage.getItem('canastaAdminPass')||'';let ventas=[];let pagos={};let pagosHist=[];let filtroDia='todos';let ordenResumen='ventas';let pagoVenta={},pagoVentaOk=false,migrando=false,diaOpen={};actualizarListaVendedores();const toast=t=>{let x=document.querySelector('#toast');x.textContent=t;x.style.display='block';setTimeout(()=>x.style.display='none',2600)};const cleanPhone=s=>(s||'').replace(/\D/g,'');const waPhone=s=>{let n=cleanPhone(s);return n.length===8?'507'+n:n};
+async function load(){
+  let respuesta;
+  if(isAdmin && adminPass){
+    respuesta=await db.rpc('listar_ventas_canasta_admin',{p_clave:adminPass});
+  }else{
+    respuesta=await db.rpc('listar_ventas_canasta');
+  }
+  const {data,error}=respuesta;
+  if(error){console.error(error);toast('Error cargando las ventas: '+error.message);return}
+  ventas=data||[];
+  try{
+    const rp=await db.rpc('listar_pagos_canasta');
+    if(rp.error){console.warn('Pagos:',rp.error.message);pagos={}}
+    else{pagos={};(rp.data||[]).forEach(x=>pagos[x.vendedor]=Number(x.monto_pagado||0))}
+  }catch(e){pagos={}}
+  pagosHist=[];
+  if(isAdmin&&adminPass){
+    try{
+      const rh=await db.rpc('admin_listar_historial_pagos_canasta',{p_clave:adminPass});
+      if(rh.error)console.warn('Historial:',rh.error.message);else pagosHist=rh.data||[];
+    }catch(e){}
+  }
+  pagoVenta={};pagoVentaOk=false;
+  if(isAdmin&&adminPass)await cargarPagoVenta();else await cargarPagoVentaPublico();
+  actualizarListaVendedores();
+  render();
+}
+function rangoBoletos(v){
+  if(v.boleto_desde==null) return '—';
+  const a=Number(v.boleto_desde), b=Number(v.boleto_hasta ?? v.boleto_desde);
+  return a===b ? `#${a}` : `#${a} al #${b}`;
+}
+function render(){calcularAsignacion();renderListasCompartir();let boletos=0;ventas.forEach(v=>{boletos+=Number(v.cantidad||0)});renderHoja();document.querySelector('#totalBoletos').textContent=boletos;document.querySelector('#totalDinero').textContent=boletos.toFixed(2);document.querySelector('#totalVentas').textContent=ventas.length;renderDias();actualizarFiltroDias();renderVistaFull();if(!isAdmin)document.querySelector('#filtroPago').value='todos';document.querySelector('#logoutAdmin').classList.toggle('hidden',!isAdmin);document.querySelector('#loginAdmin').classList.toggle('hidden',isAdmin);document.querySelector('#logoutAdminTop').classList.toggle('hidden',!isAdmin);document.querySelector('#loginAdminTop').classList.toggle('hidden',isAdmin);let counts={};integrantes.forEach(n=>counts[n]=0);ventas.forEach(v=>counts[v.vendedor]=(counts[v.vendedor]||0)+v.cantidad);const conVentas=integrantes.filter(n=>(counts[n]||0)>0).sort((a,b)=>cmpResumen(a,b,n=>counts[n]||0));const sinVentas=integrantes.filter(n=>(counts[n]||0)===0).sort((a,b)=>a.localeCompare(b,'es'));const fila=n=>{let c=counts[n]||0,p=Math.min(100,c/3*100);let estado=c>=3?' ✅ Meta cumplida':' — faltan '+(3-c);
+let pagado=pagos[n]||0,pend=Math.max(0,c-pagado),pp=c>0?Math.min(100,pagado/c*100):0;let pagoHtml='';
+if(c>0){
+ const completo=pagado>=c;
+ pagoHtml=`<div class="pay">${completo?'☑️ Pagado completo':'💙 Pagado'}: B/.${pagado.toFixed(2)} de B/.${c.toFixed(2)}${completo?'':` · <span class="pend">Pendiente B/.${pend.toFixed(2)}</span>`}${isAdmin?` <button onclick="pagoTodo(decodeURIComponent('${encodeURIComponent(n)}'))">✔ Pagó todo</button><button onclick="pagoAbono(decodeURIComponent('${encodeURIComponent(n)}'))">+ Abono</button><button onclick="pagoCorregir(decodeURIComponent('${encodeURIComponent(n)}'))">Corregir</button>`:''}</div><div class="progress pg"><i style="width:${pp}%"></i></div>`;
+}
+return `<div style="margin:9px 0"><span>${esc(n)} — <b>${c} vendidos</b>${estado}</span><div class="progress"><i style="width:${p}%"></i></div>${pagoHtml}</div>`};const sumPag=Object.values(pagos).reduce((a,b)=>a+b,0);document.querySelector('#totalPagado').textContent=sumPag.toFixed(2);document.querySelector('#totalPendiente').textContent=Math.max(0,boletos-sumPag).toFixed(2);actualizarProgreso(boletos,sumPag);if(isAdmin&&filtroDia!=='todos'){renderResumenDia();return}
+if(ordenResumen==='nombre'){const todos=integrantes.slice().sort((a,b)=>a.localeCompare(b,'es'));document.querySelector('#resumen').innerHTML=`<h3 style="color:var(--g);margin:12px 0 8px">🔤 Todos los integrantes — A–Z (${todos.length})</h3>${todos.map(fila).join('')}`;return}document.querySelector('#resumen').innerHTML=`<h3 style="color:var(--g);margin:12px 0 8px">🎟️ Integrantes con ventas (${conVentas.length})</h3>${conVentas.map(fila).join('')||'<p>Aún no se han registrado ventas.</p>'}<hr style="margin:22px 0"><h3 style="color:var(--g);margin:12px 0 8px">📋 Sin ventas todavía — orden alfabético (${sinVentas.length})</h3>${sinVentas.map(fila).join('')||'<p>¡Todos han vendido al menos un boleto!</p>'}`}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+async function save(){
+  let comprador=document.querySelector('#comprador').value.trim(),
+      telefono=document.querySelector('#telefono').value.trim(),
+      cantidad=+document.querySelector('#cantidad').value;
+  if(!comprador||cleanPhone(telefono).length<8||cantidad<1) return toast('Complete comprador, teléfono y cantidad.');
+
+  document.querySelector('#guardar').disabled=true;
+  const {data,error}=await db.rpc('registrar_venta_canasta_numerada',{
+    p_vendedor:vendedor.value,
+    p_comprador:comprador,
+    p_telefono:telefono,
+    p_cantidad:cantidad
+  });
+  document.querySelector('#guardar').disabled=false;
+  if(error) return toast('No se pudo guardar: '+error.message);
+
+  const r=Array.isArray(data)?data[0]:data;
+  const desde=Number(r.boleto_desde), hasta=Number(r.boleto_hasta);
+  const numeros=desde===hasta ? `#${desde}` : `#${desde} al #${hasta}`;
+  let fechaCompra=new Date().toLocaleString('es-PA',{
+    day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'
+  });
+
+  let msg=`🎟️ *CONFIRMACIÓN DE PARTICIPACIÓN*
+
+Hola *${comprador}*. Gracias por su apoyo.
+
+✅ *Comprador:* ${comprador}
+👤 *Vendido por:* ${vendedor.value}
+🎫 *Cantidad de boletos:* ${cantidad}
+🔢 *Número(s) de boleto:* ${numeros}
+💵 *Valor por boleto:* B/.1.00
+💰 *Total:* B/.${cantidad.toFixed(2)}
+📅 *Fecha de compra:* ${fechaCompra}
+
+💳 *Pago por Yappy:* 6010-3047
+👤 *A nombre de:* Samuel Ortega
+
+Usted está participando en la *Tómbola de 2 Canastas de Comida* y apoyando a la *Banda Yadira Jiral del C.E.B.G. El Jiral*.
+
+🎁 *Premios:* 2 canastas de comida
+📅 *Sorteo:* 30 de octubre de 2026
+
+🏆 Puede consultar las ventas y ver quién resulte ganador en:
+https://profesorsamuel.github.io/BINGO/canastas.html
+
+🙏 *¡Muchas gracias por su colaboración y por apoyar a nuestra banda!*`;
+
+  document.querySelector('#comprador').value='';
+  document.querySelector('#telefono').value='';
+  document.querySelector('#cantidad').value=1;
+  await load();
+  toast(`Venta guardada. Boletos ${numeros}. Abriendo WhatsApp…`);
+  window.open(`https://wa.me/${waPhone(telefono)}?text=${encodeURIComponent(msg)}`,'_blank');
+}
+async function adminLogin(){
+  let p=prompt('Clave de administrador:');
+  if(!p)return;
+  const {data,error}=await db.rpc('verificar_admin_canasta',{p_clave:p});
+  if(error||!data)return alert('Clave incorrecta.');
+  isAdmin=true;adminPass=p;
+  sessionStorage.setItem('canastaAdmin','1');
+  sessionStorage.setItem('canastaAdminPass',p);
+  await load();toast('Modo administrador activado. Teléfonos visibles.');
+}
+async function editar(id){if(!isAdmin)return;let v=ventas.find(x=>x.id===id);let comprador=prompt('Comprador:',v.comprador);if(comprador===null)return;let cantidad=+prompt('Cantidad de boletos:',v.cantidad);if(!comprador.trim()||cantidad<1)return;let {error}=await db.rpc('admin_actualizar_venta_canasta',{p_id:id,p_comprador:comprador.trim(),p_cantidad:cantidad,p_clave:adminPass});if(error)return alert(error.message);if((pagoVenta[id]||0)>cantidad)await enviarPagos([{venta_id:String(id),vendedor:v.vendedor,monto:cantidad}]);load()}
+const TZ='America/Panama';
+const fmtKey=d=>new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
+const diaKey=f=>{
+  if(!f)return 'sin-fecha';const str=String(f).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(str))return str;
+  const m=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  const d=new Date(str);return isNaN(d)?'sin-fecha':fmtKey(d);
+};
+const labelDia=k=>k==='sin-fecha'?'Sin fecha':new Date(k+'T12:00:00').toLocaleDateString('es-PA',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+const money=n=>'B/.'+Number(n).toFixed(2);
+function renderDias(){
+  const sec=document.querySelector('#resumenDia');
+  sec.classList.toggle('hidden',!isAdmin);
+  if(!isAdmin)return;
+  const dias={};
+  const get=k=>dias[k]||(dias[k]={ventas:[],pagos:[]});
+  ventas.forEach(v=>get(diaKey(v.fecha)).ventas.push(v));
+  pagosHist.forEach(p=>get(diaKey(p.fecha)).pagos.push(p));
+  const hoy=fmtKey(new Date());
+  if(!dias[hoy])get(hoy);
+  const keys=Object.keys(dias).sort((a,b)=>a==='sin-fecha'?1:b==='sin-fecha'?-1:b.localeCompare(a));
+  const html=keys.map(k=>{
+    const d=dias[k];
+    const bol=d.ventas.reduce((a,v)=>a+Number(v.cantidad||0),0);
+    const rec=d.pagos.reduce((a,p)=>a+Number(p.monto||0),0);
+    const esHoy=k===hoy;const pagV=d.ventas.reduce((a,v)=>a+montoPagado(v),0);const abierto=(k in diaOpen)?diaOpen[k]:esHoy;
+    const alf=(x,y)=>String(x.vendedor||'').localeCompare(String(y.vendedor||''),'es',{sensitivity:'base'});
+    d.ventas.sort((x,y)=>alf(x,y)||String(x.comprador||'').localeCompare(String(y.comprador||''),'es',{sensitivity:'base'})||new Date(x.fecha)-new Date(y.fecha));
+    d.pagos.sort((x,y)=>alf(x,y)||new Date(x.fecha)-new Date(y.fecha));
+    const lv=d.ventas.map(v=>liVenta(v)).join('')||'<li class="small">Sin ventas este día.</li>';
+    const lp=d.pagos.map(p=>{const m=Number(p.monto);const h=new Date(p.fecha).toLocaleTimeString('es-PA',{timeZone:TZ,hour:'2-digit',minute:'2-digit'});return `<li><b>${esc(p.vendedor)}</b> ${m>=0?'te entregó':'pago deshecho'} <span style="color:#1d4ed8;font-weight:700">${m>=0?'':'-'}${money(Math.abs(m))}</span> <span class="small">(${h})</span></li>`}).join('')||'<li class="small">Sin pagos recibidos este día.</li>';
+    return `<details class="dia${esHoy?' hoy':''}"${abierto?' open':''} ontoggle="toggleDia('${k}',this.open)"><summary>${esHoy?'<span class="hoyTag">HOY</span>':''}<span style="text-transform:capitalize">${labelDia(k)}</span><span class="chip">🎟️ ${bol} boletos · ${money(bol)} vendidos</span><span class="chip az">☑️ Pagado de lo vendido: ${money(pagV)} de ${money(bol)}</span><span class="chip az">💙 Recibido ese día: ${money(rec)}</span></summary><div class="b"><h4>🛒 Ventas del día (${d.ventas.length})</h4><ul>${lv}</ul><h4>💙 Pagos recibidos del día (${d.pagos.length})</h4><ul>${lp}</ul></div></details>`;
+  }).join('');
+  document.querySelector('#diasBody').innerHTML=html;
+}
+const fechaBonita=f=>{const d=new Date(f);return isNaN(d)?String(f??''):d.toLocaleString('es-PA',{timeZone:TZ,day:'2-digit',month:'2-digit',year:'numeric',hour:'numeric',minute:'2-digit'})};
+const ventasOrdenadas=()=>{
+  const modo=(document.querySelector('#orden')||{}).value||'asc';
+  const dir=modo==='desc'?-1:1;
+  return ventas.slice().sort((a,b)=>{
+    if(modo==='vend'||modo==='comp'){
+      const c=modo==='vend'?'vendedor':'comprador';
+      const n=String(a[c]||'').localeCompare(String(b[c]||''),'es',{sensitivity:'base'});
+      if(n)return n;
+    }
+    const d=new Date(a.fecha)-new Date(b.fecha);
+    if(d)return d*dir;
+    return (Number(a.boleto_desde||0)-Number(b.boleto_desde||0))*dir;
+  });
+};
+let asign={};
+function calcularAsignacion(){
+  if(!pagoVentaOk){calcularAsignacionFIFO();return}
+  asign={};const tot={};
+  ventas.forEach(v=>{const x=Math.min(Number(v.cantidad||0),Number(pagoVenta[v.id]||0));asign[v.id]=x;tot[v.vendedor]=(tot[v.vendedor]||0)+x});
+  pagos=tot;
+}
+function calcularAsignacionFIFO(){
+  // El dinero que ha pagado cada vendedor se aplica a sus ventas de la más antigua a la más nueva
+  asign={};const porV={};
+  ventas.forEach(v=>(porV[v.vendedor]=porV[v.vendedor]||[]).push(v));
+  Object.keys(porV).forEach(n=>{
+    let resto=pagos[n]||0;
+    porV[n].slice().sort((a,b)=>new Date(a.fecha)-new Date(b.fecha)).forEach(v=>{
+      const c=Number(v.cantidad||0),x=Math.min(c,resto);asign[v.id]=x;resto-=x;
+    });
+  });
+}
+const pagoCell=v=>{
+  const c=Number(v.cantidad||0),x=asign[v.id]||0;
+  const tag=x>=c?'<span class="tag az">☑️ Pagó</span>':x<=0?'<span class="tag pen">⏳ Pendiente</span>':'<span class="tag par">Pago parcial</span>';
+  return `<td class="pagoCell">${tag}<br><b style="color:#1d4ed8">B/.${x.toFixed(2)}</b> <span class="small">de B/.${c.toFixed(2)}</span>${isAdmin?'<br>'+botonesPago(v):''}</td>`;
+};
+function cmpResumen(a,b,vend,pend){
+  const nom=a.localeCompare(b,'es');
+  if(ordenResumen==='nombre')return nom;
+  const pe=pend||(n=>Math.max(0,vend(n)-(pagos[n]||0)));
+  if(ordenResumen==='pendiente')return (pe(b)-pe(a))||nom;
+  return (vend(b)-vend(a))||nom;
+}
+function actualizarFiltroDias(){
+  const box=document.querySelector('#filtroDiaBox'),sel=document.querySelector('#filtroDia');
+  box.classList.toggle('hidden',!isAdmin);
+  if(!isAdmin){filtroDia='todos';return}
+  const hoy=fmtKey(new Date());
+  const porDia={};
+  ventas.forEach(v=>{const k=diaKey(v.fecha);if(k!=='sin-fecha')porDia[k]=(porDia[k]||0)+Number(v.cantidad||0)});
+  if(!(hoy in porDia))porDia[hoy]=0;
+  const keys=Object.keys(porDia).sort((a,b)=>b.localeCompare(a));
+  if(filtroDia!=='todos'&&!keys.includes(filtroDia))filtroDia='todos';
+  sel.replaceChildren(new Option('Todos los días','todos'));
+  keys.forEach(k=>{
+    const f=new Date(k+'T12:00:00').toLocaleDateString('es-PA',{weekday:'short',day:'numeric',month:'short'});
+    sel.add(new Option(`${k===hoy?'HOY — ':''}${f} (${porDia[k]} boletos)`,k));
+  });
+  sel.value=filtroDia;
+}
+function renderResumenDia(){
+  const del=ventas.filter(v=>diaKey(v.fecha)===filtroDia);
+  const por={};
+  del.forEach(v=>{const o=por[v.vendedor]||(por[v.vendedor]={c:0,pag:0});o.c+=Number(v.cantidad||0);o.pag+=(asign[v.id]||0)});
+  const nombres=Object.keys(por);
+  const tot=nombres.reduce((a,n)=>a+por[n].c,0),pag=nombres.reduce((a,n)=>a+por[n].pag,0),pen=Math.max(0,tot-pag);
+  nombres.sort((a,b)=>cmpResumen(a,b,n=>por[n].c,n=>por[n].c-Math.min(por[n].c,por[n].pag)));
+  const hoy=fmtKey(new Date());
+  const filas=nombres.map(n=>{
+    const o=por[n],c=o.c,x=Math.min(c,o.pag),pp=c>0?Math.min(100,x/c*100):0;
+    const tag=x>=c?'<span class="tag az">☑️ Pagó</span>':x<=0?'<span class="tag pen">⏳ Pendiente</span>':'<span class="tag par">Pago parcial</span>';
+    const q=encodeURIComponent(n);
+    return `<div style="margin:10px 0"><span>${esc(n)} — <b>${c} vendidos</b> este día <span class="small">(en total: ${vendidosDe(n)})</span></span><div class="pay">${tag} <span style="color:#1d4ed8">B/.${x.toFixed(2)} de B/.${c.toFixed(2)}</span>${x>=c?'':` · <span class="pend">Pendiente B/.${(c-x).toFixed(2)}</span>`} ${x>=c?`<button onclick="pagoDia(decodeURIComponent('${q}'),'${filtroDia}',false)">↩ Deshacer día</button>`:`<button onclick="pagoDia(decodeURIComponent('${q}'),'${filtroDia}',true)">✔ Pagó este día</button>`}<button onclick="pagoAbono(decodeURIComponent('${q}'))">+ Abono</button><button onclick="pagoCorregir(decodeURIComponent('${q}'))">Corregir</button></div><div class="progress pg"><i style="width:${pp}%"></i></div></div>`;
+  }).join('')||'<p>No hay ventas en este día.</p>';
+  document.querySelector('#resumen').innerHTML=`<div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:12px;padding:12px;margin-bottom:10px"><b>${filtroDia===hoy?'HOY — ':''}<span style="text-transform:capitalize">${labelDia(filtroDia)}</span></b><div style="margin-top:6px">🎟️ <b>${tot}</b> boletos · 💵 Vendido: <b>${money(tot)}</b></div><div>💙 Pagado: <b style="color:#1d4ed8">${money(pag)}</b> · ⏳ Pendiente: <b style="color:#92400e">${money(pen)}</b></div></div><h3 style="color:var(--g);margin:12px 0 8px">🎟️ Vendedores del día (${nombres.length})</h3>${filas}`;
+}
+const vendidosDe=n=>ventas.filter(v=>v.vendedor===n).reduce((a,v)=>a+Number(v.cantidad||0),0);
+async function cargarPagoVentaPublico(){
+  try{
+    const r=await db.rpc('listar_pagos_ventas');
+    if(r.error||!(r.data||[]).length)return;
+    pagoVenta={};r.data.forEach(f=>pagoVenta[f.venta_id]=Number(f.monto_pagado||0));pagoVentaOk=true;
+  }catch(e){}
+}
+async function cargarPagoVenta(){
+  try{
+    const r=await db.rpc('admin_listar_pagos_ventas',{p_clave:adminPass});
+    if(r.error){console.warn('Pagos por venta:',r.error.message);toast('Falta ejecutar el SQL de pagos por venta.');return}
+    const filas=r.data||[];
+    const hayPagosViejos=Object.values(pagos).some(x=>x>0);
+    if(!filas.length&&hayPagosViejos&&!migrando){await migrarPagosViejos();return cargarPagoVenta()}
+    pagoVenta={};filas.forEach(f=>pagoVenta[f.venta_id]=Number(f.monto_pagado||0));pagoVentaOk=true;
+  }catch(e){console.warn(e)}
+}
+async function migrarPagosViejos(){
+  // Pasa los totales anteriores por vendedor a pagos por venta (de la más antigua a la más nueva), una sola vez
+  migrando=true;const items=[];
+  Object.keys(pagos).forEach(n=>{
+    let resto=pagos[n]||0;
+    ventas.filter(v=>v.vendedor===n).sort((a,b)=>new Date(a.fecha)-new Date(b.fecha)).forEach(v=>{
+      const x=Math.min(Number(v.cantidad||0),resto);resto-=x;
+      if(x>0)items.push({venta_id:String(v.id),vendedor:n,monto:x});
+    });
+  });
+  if(items.length)await enviarPagos(items,false);
+}
+async function enviarPagos(items,hist=true){
+  const {error}=await db.rpc('admin_fijar_pagos_ventas',{p_clave:adminPass,p_items:items,p_historial:hist});
+  if(error){alert('No se pudo guardar el pago: '+error.message);return false}
+  return true;
+}
+const montoPagado=v=>Math.min(Number(v.cantidad||0),Number(asign[v.id]||0));
+const botonesPago=v=>{
+  const c=Number(v.cantidad||0),x=montoPagado(v),id=esc(v.id);
+  return (x>=c?'':`<button class="btnpay" onclick="pagarVenta('${id}',true)">💙 Marcar pagado</button>`)+(x>0?`<button class="btnundo" onclick="pagarVenta('${id}',false)">↩ Deshacer</button>`:'');
+};
+const liVenta=v=>{
+  const c=Number(v.cantidad||0),x=montoPagado(v);
+  const tag=x>=c?'<span class="tag az">☑️ Pagó</span>':x>0?`<span class="tag par">Parcial B/.${x.toFixed(2)}</span>`:'<span class="tag pen">⏳ Pendiente</span>';
+  return `<li><b>${esc(v.vendedor)}</b> vendió ${c} a ${esc(v.comprador)} — ${money(c)} ${tag} ${botonesPago(v)}</li>`;
+};
+function toggleDia(k,o){diaOpen[k]=o}
+const fechaCorta=f=>{const d=new Date(f);return isNaN(d)?'':d.toLocaleString('es-PA',{timeZone:TZ,day:'2-digit',month:'2-digit',hour:'numeric',minute:'2-digit'})};
+function renderVistaFull(){
+  const box=document.querySelector('#vistaFull');
+  if(box.classList.contains('hidden'))return;
+  const modo=document.querySelector('#orden').value;
+  document.querySelector('#ordenFull').value=modo;
+  const fp=(isAdmin&&(document.querySelector('#filtroPago')||{}).value)||'todos';
+  const tit={todos:'Ventas',pagado:'Ventas — YA ENTREGARON el dinero al administrador',nopagado:'Ventas — NO HAN ENTREGADO todo el dinero',pendiente:'Ventas — NO HAN ENTREGADO nada',parcial:'Ventas — ENTREGA PARCIAL'}[fp]||'Ventas';
+  document.querySelector('#vfTitulo').textContent='🎁 Tómbola Pro Banda — '+tit;
+  document.querySelector('#vfFiltroBox').classList.toggle('hidden',!isAdmin);
+  document.querySelector('#filtroPagoFull').value=fp;
+  const lista=ventasOrdenadas().filter(pasaFiltroPago);
+  const porFecha=modo==='asc'||modo==='desc';
+  const tot=lista.reduce((a,v)=>a+Number(v.cantidad||0),0),pag=lista.reduce((a,v)=>a+montoPagado(v),0);
+  document.querySelector('#vfTot').innerHTML=`<span>🎟️ ${tot} boletos · ${lista.length} ventas</span><span>💵 ${money(tot)}</span><span style="color:#1d4ed8">💙 Pagado: ${money(pag)}</span><span style="color:#92400e">⏳ Pendiente: ${money(Math.max(0,tot-pag))}</span>`;
+  const dias={};
+  lista.forEach(v=>{const k=diaKey(v.fecha),d=dias[k]||(dias[k]={b:0,p:0});d.b+=Number(v.cantidad||0);d.p+=montoPagado(v)});
+  const hora=f=>{const d=new Date(f);return isNaN(d)?'':d.toLocaleTimeString('es-PA',{timeZone:TZ,hour:'numeric',minute:'2-digit'})};
+  let n=0,actual=null,rows='';
+  lista.forEach(v=>{
+    const k=diaKey(v.fecha);
+    if(porFecha&&k!==actual){
+      actual=k;const d=dias[k],lb=labelDia(k);
+      rows+=`<tr class="dh"><td colspan="7">📅 ${lb.charAt(0).toUpperCase()+lb.slice(1)} &nbsp;·&nbsp; ${d.b} boletos · ${money(d.b)} &nbsp;·&nbsp; <span style="color:#1d4ed8">💙 Pagado ${money(d.p)}</span> &nbsp;·&nbsp; <span style="color:#92400e">⏳ Pendiente ${money(Math.max(0,d.b-d.p))}</span></td></tr>`;
+    }
+    const c=Number(v.cantidad||0),x=montoPagado(v);
+    const cls=x>=c?'ok':x>0?'par':'pen';
+    const est=x>=c?`☑️ Pagó ${money(c)}`:x>0?`Parcial ${money(x)} de ${money(c)}`:`⏳ Pendiente ${money(c)}`;
+    rows+=`<tr class="${cls}"><td class="n">${++n}</td><td><b>${rangoBoletos(v)}</b></td><td><b>${esc(v.vendedor)}</b></td><td>${esc(v.comprador)}</td><td>${c}</td><td>${porFecha?hora(v.fecha):fechaCorta(v.fecha)}</td><td class="pg">${est}</td></tr>`;
+  });
+  document.querySelector('#vfBody').innerHTML=`<table class="vf"><thead><tr><th>#</th><th>Boleto(s)</th><th>Vendedor</th><th>Comprador</th><th>Cant.</th><th>${porFecha?'Hora':'Fecha'}</th><th>Pago</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+function abrirVista(){document.querySelector('#vistaFull').classList.remove('hidden');document.body.style.overflow='hidden';renderVistaFull()}
+function cerrarVista(){document.querySelector('#vistaFull').classList.add('hidden');document.body.style.overflow=''}
+async function pagarVenta(id,pagar){
+  if(!isAdmin)return;
+  const v=ventas.find(x=>String(x.id)===String(id));if(!v)return;
+  const ok=await enviarPagos([{venta_id:String(v.id),vendedor:v.vendedor,monto:pagar?Number(v.cantidad):0}]);
+  if(ok){toast(pagar?`💙 ${v.vendedor}: marcado como pagado`:'↩ Pago deshecho');await load()}
+}
+const ventasDe=n=>ventas.filter(v=>v.vendedor===n).sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
+async function pagoTodo(n){
+  const items=ventasDe(n).filter(v=>montoPagado(v)<Number(v.cantidad)).map(v=>({venta_id:String(v.id),vendedor:n,monto:Number(v.cantidad)}));
+  if(!items.length)return toast(`${n} ya tiene todo pagado.`);
+  if(await enviarPagos(items)){toast(`💙 ${n}: pagó todo`);await load()}
+}
+async function pagoAbono(n){
+  const a=prompt(`¿Cuánto te entregó ${n}? (B/.)\nYa había pagado B/.${(pagos[n]||0).toFixed(2)} de B/.${vendidosDe(n).toFixed(2)}\n(Se aplica a sus ventas pendientes, de la más antigua a la más nueva)`);
+  if(a===null)return;const m=parseFloat(String(a).replace(',','.'));
+  if(isNaN(m)||m<=0)return alert('Monto inválido.');
+  let resto=m;const items=[];
+  ventasDe(n).forEach(v=>{
+    const c=Number(v.cantidad),x=montoPagado(v),falta=c-x;
+    if(falta>0&&resto>0){const add=Math.min(falta,resto);resto-=add;items.push({venta_id:String(v.id),vendedor:n,monto:x+add})}
+  });
+  if(!items.length)return toast(`${n} ya tiene todo pagado.`);
+  if(await enviarPagos(items)){toast(`💙 ${n}: abono registrado`+(resto>0?` (sobraron B/.${resto.toFixed(2)})`:''));await load()}
+}
+async function pagoCorregir(n){
+  const a=prompt(`Total pagado por ${n} (B/.):\n(Se recalcula de la venta más antigua a la más nueva)`,(pagos[n]||0).toFixed(2));
+  if(a===null)return;const m=parseFloat(String(a).replace(',','.'));
+  if(isNaN(m)||m<0)return alert('Monto inválido.');
+  let resto=m;const items=[];
+  ventasDe(n).forEach(v=>{
+    const c=Number(v.cantidad),x=Math.min(c,resto);resto-=x;
+    if(Math.abs(x-montoPagado(v))>0.001)items.push({venta_id:String(v.id),vendedor:n,monto:x});
+  });
+  if(!items.length)return toast('Sin cambios.');
+  if(await enviarPagos(items)){toast(`${n}: pago corregido`);await load()}
+}
+async function pagoDia(n,key,pagar=true){
+  if(!isAdmin)return;
+  const items=ventasDe(n).filter(v=>diaKey(v.fecha)===key).filter(v=>pagar?montoPagado(v)<Number(v.cantidad):montoPagado(v)>0)
+    .map(v=>({venta_id:String(v.id),vendedor:n,monto:pagar?Number(v.cantidad):0}));
+  if(!items.length)return toast('Sin cambios.');
+  if(await enviarPagos(items)){toast(pagar?`💙 ${n}: pagó este día`:`↩ ${n}: pago del día deshecho`);await load()}
+}
+async function borrar(id){if(!isAdmin||!confirm('¿Eliminar esta venta?'))return;const v=ventas.find(x=>x.id===id);let {error}=await db.rpc('admin_eliminar_venta_canasta',{p_id:id,p_clave:adminPass});if(error)return alert(error.message);if(v&&(pagoVenta[id]||0)>0)await enviarPagos([{venta_id:String(id),vendedor:v.vendedor,monto:0}]);load()}
+// Listas acumuladas por vendedor, independientes de los filtros diarios.
+let ordenListas='nombre';
+function datosListas(){
+  const resumen=new Map(integrantes.map(n=>[n,{nombre:n,vendidos:0,entregado:0}]));
+  ventas.forEach(v=>{
+    const n=String(v.vendedor||'Sin vendedor');
+    if(!resumen.has(n))resumen.set(n,{nombre:n,vendidos:0,entregado:0});
+    const r=resumen.get(n);r.vendidos+=Number(v.cantidad||0);r.entregado+=montoPagado(v);
+  });
+  const todos=[...resumen.values()].map(r=>({...r,pendiente:Math.max(0,r.vendidos-r.entregado)}));
+  const ordenar=(lista,campo)=>lista.sort((a,b)=>(ordenListas==='monto'?b[campo]-a[campo]:0)||a.nombre.localeCompare(b.nombre,'es',{sensitivity:'base'}));
+  return {pendientes:ordenar(todos.filter(r=>r.pendiente>0.001),'pendiente'),entregados:ordenar(todos.filter(r=>r.entregado>0.001),'entregado'),sinventas:ordenar(todos.filter(r=>r.vendidos===0),'vendidos')};
+}
+const titulosListas={pendientes:'PENDIENTES DE ENTREGAR AL ADMINISTRADOR',entregados:'DINERO ENTREGADO AL ADMINISTRADOR',sinventas:'SIN VENTAS REGISTRADAS'};
+function textoLista(tipo){
+  const filas=datosListas()[tipo];
+  const linea=(r,i)=>`${i+1}. ${r.nombre}`+(tipo==='sinventas'?' — 0 boletos':tipo==='pendientes'?` — Pendiente: ${money(r.pendiente)} | Entregado: ${money(r.entregado)} | Vendido: ${money(r.vendidos)}`:` — Entregado: ${money(r.entregado)}${r.pendiente>0.001?' | Aún pendiente: '+money(r.pendiente):' | Entrega completa'}`);
+  let total=tipo==='sinventas'?'':`\nTotal ${tipo==='pendientes'?'pendiente':'entregado'}: ${money(filas.reduce((a,r)=>a+r[tipo==='pendientes'?'pendiente':'entregado'],0))}`;
+  return `*TÓMBOLA PRO BANDA*\n*${titulosListas[tipo]}*\n${new Date().toLocaleString('es-PA',{timeZone:TZ})}\n\n${filas.map(linea).join('\n')||'Ninguno.'}\n\nIntegrantes: ${filas.length}${total}`;
+}
+async function copiarLista(tipo){
+  if(!isAdmin)return;
+  const texto=textoLista(tipo);
+  try{await navigator.clipboard.writeText(texto);toast('Lista copiada. Péguela en WhatsApp.')}catch(e){prompt('Copie esta lista y péguela en WhatsApp:',texto)}
+}
+function cambiarOrdenListas(valor){ordenListas=valor;renderListasCompartir()}
+function renderListasCompartir(){
+  const datos=datosListas();
+  ['listasCompartir','listasCompartirFull'].forEach(id=>{
+    const box=document.getElementById(id);box.classList.toggle('hidden',!isAdmin);if(!isAdmin){box.innerHTML='';return}
+    box.innerHTML=`<h2>📋 Listas para WhatsApp</h2><p class="small">Totales acumulados por vendedor. Quienes entregaron una parte aparecen en entregados y también en pendientes por el saldo restante. Sin ventas significa que no hay ventas registradas en el sistema.</p><label>Ordenar listas</label><select style="max-width:320px" onchange="cambiarOrdenListas(this.value)"><option value="nombre" ${ordenListas==='nombre'?'selected':''}>Nombre (A–Z)</option><option value="monto" ${ordenListas==='monto'?'selected':''}>Mayor monto primero</option></select><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:14px">${Object.keys(titulosListas).map(tipo=>`<details class="card" style="padding:12px"><summary style="cursor:pointer;font-weight:bold">${titulosListas[tipo]} (${datos[tipo].length})</summary><button class="wa" style="width:100%;margin:12px 0" onclick="copiarLista('${tipo}')">📋 Copiar esta lista para WhatsApp</button><pre style="white-space:pre-wrap;font:14px Arial;line-height:1.6;max-height:300px;overflow:auto">${esc(textoLista(tipo))}</pre></details>`).join('')}</div>`;
+  });
+}
+function pasaFiltroPago(v){
+  if(!isAdmin)return true;
+  const f=(document.querySelector('#filtroPago')||{}).value||'todos';
+  if(f==='todos')return true;
+  const c=Number(v.cantidad||0),x=asign[v.id]||0;
+  if(f==='pagado')return x>=c;
+  if(f==='nopagado')return x<c;
+  if(f==='pendiente')return x<=0;
+  return x>0&&x<c;
+}
+// ===================== HOJA DE CONTROL (tipo Excel) =====================
+const hoja={q:'',vend:'',comp:'',dia:'',estado:'',sort:'fecha',dir:1,sel:new Set(),adminCab:null};
+const ESTADOS={pendiente:'⏳ Pendiente',parcial:'🟣 Parcial',entregado:'☑️ Entregado al administrador'};
+const estadoDe=v=>{const c=Number(v.cantidad||0),x=montoPagado(v);return x>=c?'entregado':x>0?'parcial':'pendiente'};
+const normaliza=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const contieneBoleto=(v,n)=>{if(v.boleto_desde==null)return false;const a=Number(v.boleto_desde),b=Number(v.boleto_hasta??v.boleto_desde);return n>=a&&n<=b};
+const diaCorto=k=>new Date(k+'T12:00:00').toLocaleDateString('es-PA',{weekday:'short',day:'numeric',month:'short'});
+function filasHoja(){
+  const q=normaliza(hoja.q).trim(),comp=normaliza(hoja.comp).trim();
+  const lista=ventas.filter(v=>{
+    if(hoja.vend&&v.vendedor!==hoja.vend)return false;
+    if(comp&&!normaliza(v.comprador).includes(comp))return false;
+    if(hoja.dia&&diaKey(v.fecha)!==hoja.dia)return false;
+    if(isAdmin&&hoja.estado){const e=estadoDe(v);if(hoja.estado==='nopagado'){if(e==='entregado')return false}else if(e!==hoja.estado)return false}
+    if(q){
+      const num=q.match(/^#?(\d+)$/);
+      const t=normaliza(`${v.vendedor} ${v.comprador} ${rangoBoletos(v)}${isAdmin?' '+(v.telefono||''):''}`);
+      const okTxt=q.split(/\s+/).every(w=>t.includes(w));
+      if(!okTxt&&!(num&&contieneBoleto(v,Number(num[1]))))return false;
+    }
+    return true;
+  });
+  const txt=(a,b)=>String(a||'').localeCompare(String(b||''),'es',{sensitivity:'base'});
+  const prog=v=>montoPagado(v)/(Number(v.cantidad)||1);
+  const cmp={
+    fecha:(a,b)=>new Date(a.fecha)-new Date(b.fecha),
+    boletos:(a,b)=>Number(a.boleto_desde||0)-Number(b.boleto_desde||0),
+    vendedor:(a,b)=>txt(a.vendedor,b.vendedor),
+    comprador:(a,b)=>txt(a.comprador,b.comprador),
+    cantidad:(a,b)=>Number(a.cantidad)-Number(b.cantidad),
+    estado:(a,b)=>prog(a)-prog(b)
+  }[hoja.sort]||((a,b)=>0);
+  return lista.sort((a,b)=>(cmp(a,b)*hoja.dir)||(new Date(a.fecha)-new Date(b.fecha))||(Number(a.boleto_desde||0)-Number(b.boleto_desde||0)));
+}
+function poblarSel(id,items,valor,todos){
+  const s=document.getElementById(id);if(!s)return '';
+  const firma=JSON.stringify(items);
+  if(s.dataset.firma!==firma){s.replaceChildren(new Option(todos,''));items.forEach(([v,t])=>s.add(new Option(t,v)));s.dataset.firma=firma}
+  const ok=items.some(([v])=>v===valor);s.value=ok?valor:'';return ok?valor:'';
+}
+function construirCabecera(){
+  const a=isAdmin;
+  const th=(k,t,cls='')=>`<th class="sortable ${cls}" data-sort="${k}">${t}<span class="arr"></span></th>`;
+  document.querySelector('#hThead').innerHTML=
+   `<tr class="hd">${a?'<th class="ck"><input type="checkbox" id="hAll" title="Seleccionar todas las filas filtradas"></th>':''}<th class="n">#</th>${th('boletos','Boleto(s)')}${th('vendedor','Vendedor')}${th('comprador','Comprador')}${a?'<th>Teléfono</th>':''}${th('cantidad','Cant.','num')}<th class="num">Aporte</th>${th('fecha','Fecha')}${th('estado',a?'Estado de entrega':'Entrega al administrador')}</tr>`+
+   `<tr class="fl">${a?'<th></th>':''}<th></th><th></th><th><select id="hVend"></select></th><th><input id="hComp" type="search" placeholder="Filtrar…" value="${esc(hoja.comp)}"></th>${a?'<th></th>':''}<th></th><th></th><th><select id="hDia"></select></th><th>${a?'<select id="hEst"><option value="">Todos los estados</option><option value="nopagado">No han entregado todo</option><option value="pendiente">⏳ Pendiente</option><option value="parcial">🟣 Parcial</option><option value="entregado">☑️ Entregado</option></select>':''}</th></tr>`;
+  hoja.adminCab=a;
+}
+function renderHoja(){
+  if(hoja.adminCab!==isAdmin){construirCabecera();if(!isAdmin){hoja.estado='';hoja.sel.clear()}}
+  const a=isAdmin;
+  const vc={},dc={};
+  ventas.forEach(v=>{vc[v.vendedor]=(vc[v.vendedor]||0)+1;const k=diaKey(v.fecha);dc[k]=(dc[k]||0)+1});
+  const vend=Object.keys(vc).filter(Boolean).sort((x,y)=>x.localeCompare(y,'es',{sensitivity:'base'})).map(n=>[n,`${n} (${vc[n]})`]);
+  const dias=Object.keys(dc).sort((x,y)=>y.localeCompare(x)).map(k=>[k,k==='sin-fecha'?`Sin fecha (${dc[k]})`:`${diaCorto(k)} (${dc[k]})`]);
+  hoja.vend=poblarSel('hVend',vend,hoja.vend,'Todos los vendedores');
+  hoja.dia=poblarSel('hDia',dias,hoja.dia,'Todos los días');
+  const he=document.getElementById('hEst');if(he)he.value=hoja.estado;
+  // chips de estado (solo administrador)
+  const cnt={todas:ventas.length,pendiente:0,parcial:0,entregado:0};ventas.forEach(v=>cnt[estadoDe(v)]++);cnt.nopagado=cnt.pendiente+cnt.parcial;
+  const chips=document.getElementById('hChips');chips.classList.toggle('hidden',!a);
+  if(a)chips.innerHTML=[['','Todas',cnt.todas],['nopagado','⏳ No han entregado todo',cnt.nopagado],['pendiente','Nada entregado',cnt.pendiente],['parcial','Entrega parcial',cnt.parcial],['entregado','☑️ Entregadas',cnt.entregado]].map(([k,t,n])=>`<button class="chip2${hoja.estado===k?' on':''}" data-est="${k}">${t} <b>${n}</b></button>`).join('');
+  document.getElementById('adminTools').classList.toggle('hidden',!a);
+  // selección
+  const ids=new Set(ventas.map(v=>String(v.id)));[...hoja.sel].forEach(i=>{if(!ids.has(i))hoja.sel.delete(i)});
+  const lista=filasHoja();
+  const cols=(a?2:0)+8;
+  const fila=(v,i)=>{
+    const c=Number(v.cantidad||0),x=montoPagado(v),e=estadoDe(v),id=esc(v.id);
+    const celdaEstado=a
+      ?`<select class="selEst ${e}" data-id="${id}" aria-label="Estado de entrega">${['pendiente','parcial','entregado'].map(k=>`<option value="${k}"${k===e?' selected':''}>${ESTADOS[k]}</option>`).join('')}</select>${e==='parcial'?`<div class="small">B/.${x.toFixed(2)} de B/.${c.toFixed(2)}</div>`:''}`
+      :(e==='entregado'?'<span class="tag az">☑️ Entregado</span>':'<span class="tag pen">⏳ Pendiente de entregar</span>');
+    return `<tr class="e-${e}${hoja.sel.has(String(v.id))?' sel':''}">${a?`<td class="ck"><input type="checkbox" class="rowck" data-id="${id}"${hoja.sel.has(String(v.id))?' checked':''}></td>`:''}<td class="n">${i+1}</td><td><b>${rangoBoletos(v)}</b></td><td class="seller">${esc(v.vendedor)}</td><td>${esc(v.comprador)}</td>${a?`<td>${esc(v.telefono||'—')}</td>`:''}<td class="num">${c}</td><td class="num">B/.${c.toFixed(2)}</td><td>${fechaBonita(v.fecha)}</td><td class="est">${celdaEstado}</td></tr>`;
+  };
+  document.querySelector('#ventasBody').innerHTML=lista.map(fila).join('')||`<tr><td colspan="${cols}" class="vacio">No hay ventas con esos filtros.</td></tr>`;
+  // totales de lo filtrado
+  const tc=lista.reduce((s,v)=>s+Number(v.cantidad||0),0),te=lista.reduce((s,v)=>s+montoPagado(v),0);
+  document.querySelector('#hTfoot').innerHTML=`<tr><td colspan="${4+(a?2:0)}"><b>Total de lo que se ve (${lista.length} ventas)</b></td><td class="num"><b>${tc}</b></td><td class="num"><b>${money(tc)}</b></td><td colspan="2"><span class="okTxt">💙 Entregado ${money(te)}</span> · <span class="pendTxt">⏳ Pendiente ${money(Math.max(0,tc-te))}</span></td></tr>`;
+  // encabezados: flechas de orden y casilla "todas"
+  document.querySelectorAll('#hThead th.sortable').forEach(t=>{const on=t.dataset.sort===hoja.sort;t.classList.toggle('on',on);t.querySelector('.arr').textContent=on?(hoja.dir>0?' ▲':' ▼'):''});
+  const all=document.getElementById('hAll');
+  if(all){const n=lista.filter(v=>hoja.sel.has(String(v.id))).length;all.checked=lista.length>0&&n===lista.length;all.indeterminate=n>0&&n<lista.length}
+  // barra de acciones para lo seleccionado
+  const bulk=document.getElementById('hBulk');bulk.classList.toggle('hidden',!(a&&hoja.sel.size));
+  if(a&&hoja.sel.size)bulk.innerHTML=`<b>${hoja.sel.size} seleccionada(s)</b><button class="bSi" id="hBulkSi">☑️ Marcar como entregado al administrador</button><button class="bNo" id="hBulkNo">⏳ Marcar como pendiente</button><button class="ghost" id="hBulkClr">Quitar selección</button>`;
+  document.getElementById('hojaInfo').textContent=a?'Tip: marca varias casillas y usa la barra verde para cambiar muchas ventas a la vez.':'';
+}
+async function cambiarEstado(id,val,selEl){
+  if(!isAdmin)return;
+  const v=ventas.find(x=>String(x.id)===String(id));if(!v)return;
+  const c=Number(v.cantidad||0),x=montoPagado(v);let monto;
+  if(val==='entregado')monto=c;else if(val==='pendiente')monto=0;
+  else{
+    const r=prompt(`¿Cuánto ha entregado ${v.vendedor} de esta venta?\n(Total de la venta: B/.${c.toFixed(2)})`,x>0&&x<c?x.toFixed(2):'');
+    const m=parseFloat(String(r??'').replace(',','.'));
+    if(r===null||isNaN(m)||m<=0||m>=c){if(r!==null)alert(`Escriba un monto mayor que 0 y menor que B/.${c.toFixed(2)}. Para el total use "Entregado".`);renderHoja();return}
+    monto=m;
+  }
+  if(Math.abs(monto-x)<0.001){renderHoja();return}
+  if(selEl)selEl.disabled=true;
+  const ok=await enviarPagos([{venta_id:String(v.id),vendedor:v.vendedor,monto}]);
+  if(ok){toast(val==='entregado'?`☑️ ${v.vendedor}: entregado al administrador`:val==='pendiente'?`⏳ ${v.vendedor}: marcado como pendiente`:`🟣 ${v.vendedor}: entrega parcial registrada`);await load()}else renderHoja();
+}
+async function bulkEstado(modo){
+  if(!isAdmin)return;
+  const items=ventas.filter(v=>hoja.sel.has(String(v.id))).map(v=>({venta_id:String(v.id),vendedor:v.vendedor,monto:modo==='entregado'?Number(v.cantidad):0,_x:montoPagado(v)})).filter(i=>Math.abs(i.monto-i._x)>0.001).map(({_x,...r})=>r);
+  if(!items.length){toast('Sin cambios: ya tenían ese estado.');return}
+  if(!confirm(`¿Marcar ${items.length} venta(s) como ${modo==='entregado'?'ENTREGADAS al administrador':'PENDIENTES'}?`))return;
+  if(await enviarPagos(items)){toast(`${items.length} venta(s) actualizadas`);hoja.sel.clear();await load()}
+}
+function exportarHoja(){
+  const lista=filasHoja();
+  const rows=lista.map((v,i)=>{
+    const c=Number(v.cantidad||0),x=montoPagado(v),e=estadoDe(v);
+    const o={'#':i+1,'Boleto(s)':rangoBoletos(v),'Vendedor':v.vendedor,'Comprador':v.comprador};
+    if(isAdmin)o['Teléfono']=v.telefono||'';
+    Object.assign(o,{'Cantidad':c,'Aporte (B/.)':c,'Fecha':fechaBonita(v.fecha),'Estado':{pendiente:'Pendiente',parcial:'Parcial',entregado:'Entregado al administrador'}[e],'Entregado (B/.)':x,'Pendiente (B/.)':Math.max(0,c-x)});
+    return o;
+  });
+  if(!rows.length)return toast('No hay filas para exportar.');
+  const nombre='ventas-tombola-'+fmtKey(new Date());
+  if(window.XLSX){
+    const ws=XLSX.utils.json_to_sheet(rows);ws['!cols']=Object.keys(rows[0]).map(k=>({wch:Math.max(k.length+2,k==='Comprador'||k==='Vendedor'?22:14)}));
+    ws['!autofilter']={ref:ws['!ref']};
+    const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Ventas');XLSX.writeFile(wb,nombre+'.xlsx');
+  }else{
+    const cab=Object.keys(rows[0]);const csv=[cab.join(';'),...rows.map(r=>cab.map(k=>`"${String(r[k]).replace(/"/g,'""')}"`).join(';'))].join('\r\n');
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));a.download=nombre+'.csv';a.click();
+  }
+  toast('📥 Archivo descargado ('+rows.length+' filas)');
+}
+function actualizarProgreso(total,pag){
+  const p=total>0?Math.min(100,pag/total*100):0;
+  const f=document.getElementById('gbarFill');if(f)f.style.width=p+'%';
+  const t=document.getElementById('gbarTxt');if(t)t.textContent=`${p.toFixed(0)}% del dinero ya fue entregado al administrador`;
+}
+(function(){
+  const w=document.getElementById('hojaWrap');
+  w.addEventListener('input',e=>{
+    if(e.target.id==='hQ'){hoja.q=e.target.value;renderHoja()}
+    else if(e.target.id==='hComp'){hoja.comp=e.target.value;renderHoja()}
+  });
+  w.addEventListener('change',e=>{
+    const t=e.target;
+    if(t.id==='hVend'){hoja.vend=t.value;renderHoja()}
+    else if(t.id==='hDia'){hoja.dia=t.value;renderHoja()}
+    else if(t.id==='hEst'){hoja.estado=t.value;renderHoja()}
+    else if(t.classList.contains('selEst'))cambiarEstado(t.dataset.id,t.value,t);
+    else if(t.classList.contains('rowck')){t.checked?hoja.sel.add(String(t.dataset.id)):hoja.sel.delete(String(t.dataset.id));renderHoja()}
+    else if(t.id==='hAll'){filasHoja().forEach(v=>t.checked?hoja.sel.add(String(v.id)):hoja.sel.delete(String(v.id)));renderHoja()}
+  });
+  w.addEventListener('click',e=>{
+    const t=e.target;
+    const th=t.closest&&t.closest('th.sortable');
+    if(th){const k=th.dataset.sort;if(hoja.sort===k)hoja.dir*=-1;else{hoja.sort=k;hoja.dir=1}renderHoja();return}
+    const ch=t.closest&&t.closest('.chip2');if(ch){hoja.estado=ch.dataset.est;renderHoja();return}
+    if(t.id==='hLimpiar'){Object.assign(hoja,{q:'',vend:'',comp:'',dia:'',estado:''});document.getElementById('hQ').value='';const c=document.getElementById('hComp');if(c)c.value='';renderHoja()}
+    else if(t.id==='hBulkSi')bulkEstado('entregado');
+    else if(t.id==='hBulkNo')bulkEstado('pendiente');
+    else if(t.id==='hBulkClr'){hoja.sel.clear();renderHoja()}
+    else if(t.id==='btnExcel')exportarHoja();
+  });
+})();
+
+document.querySelector('#filtroPago').onchange=render;
+document.querySelector('#filtroPagoFull').onchange=function(){document.querySelector('#filtroPago').value=this.value;render()};
+function pdfPago(modo){
+  if(!isAdmin)return;
+  document.querySelector('#filtroPago').value=modo;
+  document.querySelector('#orden').value='vend';
+  render();abrirVista();
+  setTimeout(()=>window.print(),400);
+}
+document.querySelector('#pdfSi').onclick=()=>pdfPago('pagado');
+document.querySelector('#pdfNo').onclick=()=>pdfPago('nopagado');
+document.querySelector('#orden').onchange=render;
+document.querySelector('#btnVistaFull').onclick=abrirVista;document.querySelector('#vfClose').onclick=cerrarVista;document.querySelector('#vfPrint').onclick=()=>window.print();
+document.querySelector('#vfLink').onclick=async()=>{const u=location.origin+location.pathname+'?vista=todo';try{await navigator.clipboard.writeText(u);toast('Enlace copiado')}catch(e){prompt('Copia este enlace:',u)}};
+document.querySelector('#ordenFull').onchange=function(){document.querySelector('#orden').value=this.value;render()};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')cerrarVista()});document.querySelector('#ordenResumen').onchange=function(){ordenResumen=this.value;render()};document.querySelector('#filtroDia').onchange=function(){filtroDia=this.value;render()};document.querySelector('#guardar').onclick=save;document.querySelector('#loginAdmin').onclick=adminLogin;document.querySelector('#logoutAdmin').onclick=async()=>{
+  isAdmin=false;adminPass='';
+  sessionStorage.removeItem('canastaAdmin');
+  sessionStorage.removeItem('canastaAdminPass');
+  location.href='canastas.html';
+};document.querySelector('#loginAdminTop').onclick=()=>document.querySelector('#loginAdmin').click();document.querySelector('#logoutAdminTop').onclick=()=>document.querySelector('#logoutAdmin').click();
+load();setInterval(()=>{const a=document.activeElement;if(a&&a.closest&&a.closest('#hojaWrap')&&['SELECT','INPUT'].includes(a.tagName))return;load()},15000);
+if(new URLSearchParams(location.search).get('vista')==='todo'){document.querySelector('#vfClose').textContent='← Ir a la página principal';abrirVista()}
+</script></body></html>

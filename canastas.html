@@ -186,8 +186,7 @@ async function adminLogin(){
   isAdmin=true;adminPass=p;
   sessionStorage.setItem('canastaAdmin','1');
   sessionStorage.setItem('canastaAdminPass',p);
-  await load();
-  toast('Modo administrador activado. Teléfonos visibles.');
+  location.href='admin.html';
 }
 async function editar(id){if(!isAdmin)return;let v=ventas.find(x=>x.id===id);let comprador=prompt('Comprador:',v.comprador);if(comprador===null)return;let cantidad=+prompt('Cantidad de boletos:',v.cantidad);if(!comprador.trim()||cantidad<1)return;let {error}=await db.rpc('admin_actualizar_venta_canasta',{p_id:id,p_comprador:comprador.trim(),p_cantidad:cantidad,p_clave:adminPass});if(error)return alert(error.message);if((pagoVenta[id]||0)>cantidad)await enviarPagos([{venta_id:String(id),vendedor:v.vendedor,monto:cantidad}]);load()}
 const TZ='America/Panama';
