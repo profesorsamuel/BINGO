@@ -51,13 +51,40 @@ table.sheet{border-collapse:separate;border-spacing:0;width:100%;min-width:900px
 .sheet tfoot td{position:sticky;bottom:0;background:#f4f7f4;border-top:2px solid #b7dcc4;padding:10px;z-index:2}
 .okTxt{color:#1d4ed8;font-weight:700}.pendTxt{color:#92400e;font-weight:700}
 @media(max-width:700px){.stat b{font-size:20px}.selEst{min-width:170px}.hojaBtns button{flex:1}}
-.topAdmin{display:flex;justify-content:flex-end;margin:-10px 0 8px}.topAdmin button{padding:9px 14px;font-size:14px;box-shadow:0 2px 8px #0004}.topAdmin .admin{background:#fff;color:#0e5130}.topAdmin .danger{background:#fee4e2;color:#b42318}</style></head><body>
+.topAdmin{display:flex;justify-content:flex-end;margin:-10px 0 8px}.topAdmin button{padding:9px 14px;font-size:14px;box-shadow:0 2px 8px #0004}.topAdmin .admin{background:#fff;color:#0e5130}.topAdmin .danger{background:#fee4e2;color:#b42318}.sorteoCtl{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:4px}.sorteoCtl>div{flex:1;min-width:220px}.sorteoCtl label.chk{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:15px}.sorteoCtl label.chk input{width:auto}
+#sorteoBody td small{color:#92400e;font-weight:700}
+#srOv{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:100;display:flex;flex-direction:column;align-items:center;overflow:auto;padding:12px;gap:10px}#srOv.hidden{display:none}
+#srCanvas{height:min(74vh,calc((100vw - 24px)*16/9));width:auto;border-radius:14px;background:#000;flex:none}#srCanvas.hidden{display:none}
+#srBar{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;color:#fff;font-size:14px}#srBar.hidden{display:none}
+#srRes{width:100%;max-width:460px;color:#fff;text-align:center}#srRes h3{margin:6px 0 10px}#srRes video{width:100%;max-height:62vh;border-radius:12px;background:#000;margin-bottom:10px}#srRes video.hidden{display:none}
+.srBtns{display:flex;flex-direction:column;gap:8px}.srBtns button{width:100%;margin:0}.srBtns .hidden{display:none}
+</style></head><body>
 <header><div class="topAdmin"><button id="loginAdminTop" class="admin">🔐 Administrador</button><button id="logoutAdminTop" class="danger hidden">🔓 Cerrar administrador</button></div><h1>🎁 Tómbola Pro Banda — 2 Canastas de Comida</h1><p><b>Banda Yadira Jiral — C.E.B.G. El Jiral</b></p><p>Boleto: <b>B/.1.00</b> · Sorteo: <b>30 de octubre de 2026</b> · Cada integrante debe vender mínimo <b>3 boletos</b>.</p></header>
 <div class="wrap"><div class="notice"><b>🥫 Aporte de alimentos:</b> entregar el <b>sábado 24 de octubre de 2026</b> a <b>Alina Guerra</b>, WhatsApp <b>6265-1238</b>. El objetivo es preparar <b>dos canastas básicas</b>.</div>
 <div class="grid"><section class="card"><h2>Registrar venta</h2><label>Integrante que vende</label><select id="vendedor"></select><label>Nombre de quien compra</label><input id="comprador" placeholder="Nombre y apellido"><label>Teléfono / WhatsApp del comprador</label><input id="telefono" inputmode="tel" placeholder="Ej. 6123-4567"><label>Cantidad de boletos</label><input id="cantidad" type="number" min="1" value="1"><button class="primary" id="guardar">Guardar venta y enviar agradecimiento</button><p class="small">El teléfono se guarda de forma privada y nunca aparece en la lista pública.</p></section>
 <section class="card"><h2>Avance de la banda</h2><div style="margin:6px 0"><b style="font-size:13px">↕️ Ordenar:</b> <select id="ordenResumen" style="width:auto;max-width:100%;padding:8px"><option value="ventas">Más boletos vendidos primero</option><option value="nombre">Por nombre (A–Z)</option><option value="pendiente">Con más pendiente primero</option></select></div><div id="filtroDiaBox" class="hidden" style="margin:6px 0 10px"><b style="font-size:13px">📅 Ver por día:</b> <select id="filtroDia" style="width:auto;max-width:100%;padding:8px"></select></div><div id="resumen"></div><hr><button class="admin" id="loginAdmin">🔐 Administrador</button><button class="danger hidden" id="logoutAdmin">Cerrar administrador</button><p class="small">Solo el administrador puede modificar o eliminar una venta ya registrada.</p></section></div>
 <div class="stats"><div class="stat"><small>🎟️ Boletos vendidos</small><b id="totalBoletos">0</b></div><div class="stat"><small>💵 Recaudado</small><b>B/.<span id="totalDinero">0.00</span></b></div><div class="stat"><small>👥 Ventas registradas</small><b id="totalVentas">0</b></div><div class="stat bluestat"><small>💙 Entregado al administrador</small><b>B/.<span id="totalPagado">0.00</span></b></div><div class="stat pendstat"><small>⏳ Pendiente de entregar</small><b>B/.<span id="totalPendiente">0.00</span></b></div></div><div class="gprog"><div class="gbar"><i id="gbarFill"></i></div><span id="gbarTxt"></span></div>
 <section class="card hidden" id="resumenDia" style="margin-bottom:16px"><h2>📅 Resumen por día (solo administrador)</h2><div id="diasBody"></div></section>
+<section class="card hidden noprint" id="sorteoCard" style="margin-bottom:16px">
+<h2>🎰 Sorteo de las canastas</h2>
+<p class="small">Participan <b>solo los boletos cuyo dinero ya fue entregado al administrador</b>. Cada boleto entregado es una oportunidad. Si una venta tiene entrega parcial, participan los primeros boletos del rango hasta completar el monto entregado.</p>
+<div class="stats" id="sorteoStats"></div>
+<div class="sorteoCtl">
+<div><label for="sorteoN">Canastas a sortear</label><select id="sorteoN"><option value="2">2 canastas (2 ganadores)</option><option value="1">1 canasta (1 ganador)</option></select></div>
+<label class="chk"><input type="checkbox" id="sorteoGrabar" checked> 🎥 Grabar video del sorteo</label>
+</div>
+<button class="primary" id="btnSortear">🎰 Sortear ganador</button>
+<p class="small" id="sorteoAviso"></p>
+<details open style="margin-top:14px"><summary id="sorteoListaTit" style="cursor:pointer;font-weight:700"></summary>
+<div style="margin:10px 0"><button class="wa" id="sorteoCopiarLista">📋 Copiar listado para WhatsApp</button></div>
+<div class="table"><table><thead><tr><th>#</th><th>Boletos que participan</th><th>Comprador</th><th>Vendedor</th><th>Entregado</th></tr></thead><tbody id="sorteoBody"></tbody></table></div>
+</details>
+</section>
+<div id="srOv" class="hidden"><canvas id="srCanvas" width="720" height="1280"></canvas>
+<div id="srBar"><span id="srEstado"></span><button class="danger" id="srCancel">✖ Cancelar</button></div>
+<div id="srRes" class="hidden"><h3>✅ Sorteo terminado</h3><video id="srVideo" controls playsinline class="hidden"></video>
+<div class="srBtns"><button id="srDown" class="primary hidden">⬇️ Descargar video</button><button id="srShare" class="wa hidden">📲 Compartir video</button><button id="srCopy" class="wa">📋 Copiar resultado</button><button id="srClose" class="admin">Cerrar</button></div>
+<p class="small" id="srNota" style="color:#ccc"></p></div></div>
 <section class="card hidden noprint" id="listasCompartir" style="margin-bottom:16px"></section><section class="card" id="hojaWrap">
 <div class="hojaHead"><div><h2>📊 Hoja de control de ventas</h2><p class="small">Escribe para buscar, filtra por cualquier columna y toca los encabezados para ordenar. El administrador cambia el estado de cada venta con la lista desplegable.</p></div>
 <div class="hojaBtns"><button class="admin" id="btnVistaFull">🖥️ Ver todo en una página</button><span id="adminTools" class="hidden"><button class="xl" id="btnExcel">📥 Descargar Excel</button><button class="wa" id="pdfSi">📄 PDF: ya entregaron</button><button class="danger" id="pdfNo">📄 PDF: no han entregado</button></span></div></div>
@@ -656,6 +683,225 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')cerrarVista()});docu
   await load();
   toast('Modo administrador cerrado. Teléfonos ocultos.');
 };document.querySelector('#loginAdminTop').onclick=()=>document.querySelector('#loginAdmin').click();document.querySelector('#logoutAdminTop').onclick=()=>document.querySelector('#logoutAdmin').click();
+/* ================= SORTEO DE LAS CANASTAS ================= */
+(function(){
+const $=id=>document.getElementById(id);
+const FONT='Arial,"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+const W=720,H=1280;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const keyNombre=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase().replace(/\s+/g,' ');
+// Aleatorio seguro (sin sesgo) con el generador criptográfico del navegador
+function rnd(n){const lim=Math.floor(4294967296/n)*n,b=new Uint32Array(1);do{crypto.getRandomValues(b)}while(b[0]>=lim);return b[0]%n}
+const fechaHoy=()=>new Date().toLocaleDateString('es-PA',{timeZone:TZ,day:'numeric',month:'long',year:'numeric'});
+
+// Boletos con dinero entregado. Entrega parcial: cuentan los primeros boletos del rango.
+function datos(){
+  const part=[],filas=[];let sinNumero=0;
+  ventas.forEach(v=>{
+    const x=Math.floor(montoPagado(v)+1e-9);
+    if(x<=0)return;
+    if(v.boleto_desde==null){sinNumero+=x;return}
+    const a=Number(v.boleto_desde);
+    for(let i=0;i<x;i++)part.push({num:a+i,comprador:v.comprador,vendedor:v.vendedor});
+    filas.push({v,x,a,b:a+x-1,total:Number(v.cantidad||0)});
+  });
+  part.sort((p,q)=>p.num-q.num);filas.sort((p,q)=>p.a-q.a);
+  return{part,filas,sinNumero};
+}
+let listaTxt='';
+function renderSorteo(){
+  const card=$('sorteoCard');card.classList.toggle('hidden',!isAdmin);
+  if(!isAdmin)return;
+  const{part,filas,sinNumero}=datos();
+  const compradores=new Set(part.map(p=>keyNombre(p.comprador))).size;
+  const vendedores=new Set(filas.map(f=>f.v.vendedor)).size;
+  $('sorteoStats').innerHTML=`<div class="stat bluestat"><small>🎟️ Boletos que participan</small><b>${part.length}</b></div><div class="stat"><small>👥 Compradores</small><b>${compradores}</b></div><div class="stat"><small>🧑‍🤝‍🧑 Vendedores que entregaron</small><b>${vendedores}</b></div>`;
+  $('sorteoListaTit').textContent=`📋 Listado de quienes ya entregaron el dinero (${filas.length} ventas)`;
+  $('sorteoBody').innerHTML=filas.map((f,i)=>`<tr><td>${i+1}</td><td><b>${f.a===f.b?'#'+f.a:'#'+f.a+' al #'+f.b}</b>${f.x<f.total?`<br><small>parcial: ${f.x} de ${f.total}</small>`:''}</td><td>${esc(f.v.comprador)}</td><td>${esc(f.v.vendedor)}</td><td>${money(f.x)}</td></tr>`).join('')||'<tr><td colspan="5" class="small">Aún no hay dinero entregado al administrador.</td></tr>';
+  listaTxt=`🎁 *LISTADO DE BOLETOS PARTICIPANTES — Tómbola Pro Banda*\n(dinero ya entregado)\n\n`+filas.map((f,i)=>`${i+1}. ${f.a===f.b?'#'+f.a:'#'+f.a+' al #'+f.b} — ${f.v.comprador} (vendió ${f.v.vendedor})`).join('\n')+`\n\nTotal de boletos que participan: ${part.length}`;
+  $('sorteoAviso').textContent=sinNumero>0?`⚠️ ${sinNumero} boleto(s) con dinero entregado no tienen número asignado y no participan.`:'';
+  $('btnSortear').disabled=!part.length;
+}
+window.renderSorteo=renderSorteo;
+// Refrescar el listado cada vez que la página se redibuja
+const _render=render;render=function(){_render.apply(this,arguments);try{renderSorteo()}catch(e){console.error(e)}};
+
+/* ---------- Canvas ---------- */
+const cv=$('srCanvas'),cx=cv.getContext('2d');
+let st=null,raf=0,conf=[];
+function rr(x,y,w,h,r){cx.beginPath();cx.moveTo(x+r,y);cx.arcTo(x+w,y,x+w,y+h,r);cx.arcTo(x+w,y+h,x,y+h,r);cx.arcTo(x,y+h,x,y,r);cx.arcTo(x,y,x+w,y,r);cx.closePath()}
+function txt(t,x,y,px,color,w='bold',max=W-70){let s=px;do{cx.font=`${w} ${s}px ${FONT}`;if(cx.measureText(t).width<=max)break;s-=2}while(s>16);cx.fillStyle=color;cx.textAlign='center';cx.textBaseline='middle';cx.fillText(t,x,y)}
+const easeBack=t=>{const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2)};
+function confeti(n=160){for(let i=0;i<n;i++)conf.push({x:Math.random()*W,y:-20-Math.random()*300,vx:(Math.random()-.5)*3,vy:2+Math.random()*5,r:Math.random()*6,vr:(Math.random()-.5)*.3,s:8+Math.random()*10,c:['#f2b705','#ffffff','#25D366','#ff5d73','#4da3ff'][i%5]})}
+function bola(y,num,nombre,dorado,esc2=1){
+  cx.save();cx.translate(W/2,y);cx.scale(esc2,esc2);
+  if(dorado){cx.shadowColor='#f2b705';cx.shadowBlur=50}
+  rr(-300,-130,600,260,34);cx.fillStyle='#fff';cx.fill();cx.shadowBlur=0;
+  cx.lineWidth=dorado?12:6;cx.strokeStyle=dorado?'#f2b705':'#9bd3ae';cx.stroke();
+  cx.fillStyle='#fff';txt('BOLETO',0,-92,26,'#6b7d70');txt('#'+num,0,10,150,'#0e5130','900',560);
+  cx.restore();
+}
+function draw(now){
+  raf=requestAnimationFrame(draw);
+  const g=cx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0a4426');g.addColorStop(1,'#22844b');cx.fillStyle=g;cx.fillRect(0,0,W,H);
+  cx.save();cx.globalAlpha=.07;cx.fillStyle='#fff';for(let i=0;i<12;i++){const a=now/5000+i*Math.PI/6;cx.beginPath();cx.moveTo(W/2,620);cx.lineTo(W/2+Math.cos(a)*1600,620+Math.sin(a)*1600);cx.lineTo(W/2+Math.cos(a+.16)*1600,620+Math.sin(a+.16)*1600);cx.closePath();cx.fill()}cx.restore();
+  txt('🎁 TÓMBOLA PRO BANDA',W/2,80,46,'#fff');
+  txt('Banda Yadira Jiral · C.E.B.G. El Jiral',W/2,132,26,'#ffe28a','normal');
+  if(st){
+    const t=Math.min(1,(now-st.t0)/600);
+    if(st.fase==='intro'){
+      const p=1+Math.sin(now/260)*.04;cx.save();cx.translate(W/2,430);cx.scale(p,p);txt('🎟️',0,0,150,'#fff');cx.restore();
+      txt(st.n===1?'SORTEO DE 1 CANASTA':'SORTEO DE '+st.n+' CANASTAS',W/2,610,52,'#f2b705');
+      txt('DE COMIDA',W/2,672,52,'#f2b705');
+      txt(st.total+' boletos participan',W/2,800,44,'#fff');
+      txt('Solo boletos con dinero entregado',W/2,860,28,'#d6f0de','normal');
+      txt(st.compradores+' compradores',W/2,910,28,'#d6f0de','normal');
+    }else if(st.fase==='spin'||st.fase==='reveal'){
+      const rev=st.fase==='reveal';
+      txt(`🧺 CANASTA ${st.idx+1} DE ${st.n}`,W/2,260,46,'#f2b705');
+      if(rev){const p=1+Math.sin(now/180)*.05;cx.save();cx.translate(W/2,350);cx.scale(p,p);txt('🎉 ¡GANADOR! 🎉',0,0,56,'#fff');cx.restore()}
+      else txt('Sorteando…',W/2,350,36,'#d6f0de','normal');
+      bola(rev?640:620,st.num,st.nombre,rev,rev?easeBack(t):1);
+      cx.save();if(rev){cx.globalAlpha=Math.min(1,t*1.6)}
+      rr(40,830,W-80,150,26);cx.fillStyle='rgba(255,255,255,.14)';cx.fill();
+      txt(st.nombre||'',W/2,rev?880:905,rev?58:50,'#fff','bold',W-110);
+      if(rev)txt('Boleto vendido por '+st.vendedor,W/2,942,28,'#ffe28a','normal',W-110);
+      cx.restore();
+    }else if(st.fase==='final'){
+      txt('🏆 GANADORES',W/2,250,58,'#f2b705');
+      const n=st.ganadores.length,h=n===1?300:270,y0=n===1?560:330;
+      st.ganadores.forEach((w,i)=>{
+        const y=y0+i*(h+20),k=Math.min(1,Math.max(0,(now-st.t0-i*500)/500));
+        cx.save();cx.globalAlpha=k;
+        rr(40,y,W-80,h,30);cx.fillStyle='rgba(255,255,255,.95)';cx.fill();cx.lineWidth=6;cx.strokeStyle='#f2b705';cx.stroke();
+        txt(`🧺 CANASTA ${i+1}`,W/2,y+42,30,'#6b7d70');
+        txt('#'+w.num,W/2,y+120,110,'#0e5130','900',560);
+        txt(w.comprador,W/2,y+205,48,'#17211b','bold',W-120);
+        txt('Vendió: '+w.vendedor,W/2,y+246,24,'#6b7d70','normal',W-120);
+        cx.restore();
+      });
+    }
+  }
+  txt(`Participan ${st?st.total:0} boletos con dinero entregado · ${fechaHoy()}`,W/2,1230,24,'#d6f0de','normal');
+  conf=conf.filter(p=>p.y<H+30);
+  conf.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillStyle=p.c;cx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);cx.restore()});
+}
+
+/* ---------- Sonido (también se graba en el video) ---------- */
+let ac=null,dest=null;
+function initAudio(){try{ac=new(window.AudioContext||window.webkitAudioContext)();dest=ac.createMediaStreamDestination();if(ac.state==='suspended')ac.resume()}catch(e){ac=null;dest=null}}
+function tono(f,d=.08,tipo='square',v=.07,cuando=0){if(!ac)return;try{const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime+cuando;o.type=tipo;o.frequency.value=f;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(ac.destination);if(dest)g.connect(dest);o.start(t);o.stop(t+d+.03)}catch(e){}}
+const fanfarria=()=>{[523,659,784,1047,1319].forEach((f,i)=>tono(f,.35,'triangle',.12,i*.13));tono(1047,.9,'triangle',.1,.7);tono(1319,.9,'triangle',.08,.7)};
+
+/* ---------- Grabación ---------- */
+let rec=null,chunks=[],mime='';
+function elegirMime(){if(!window.MediaRecorder)return'';return['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'].find(t=>MediaRecorder.isTypeSupported(t))||''}
+function iniciarGrab(){
+  rec=null;chunks=[];mime='';
+  if(!$('sorteoGrabar').checked)return;
+  if(!window.MediaRecorder||!cv.captureStream){toast('Este navegador no puede grabar video. El sorteo se hará sin grabación.');return}
+  try{
+    const stream=cv.captureStream(30);
+    if(dest)dest.stream.getAudioTracks().forEach(t=>stream.addTrack(t));
+    mime=elegirMime();
+    rec=new MediaRecorder(stream,mime?{mimeType:mime,videoBitsPerSecond:4000000}:{videoBitsPerSecond:4000000});
+    rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+    rec.start(500);
+  }catch(e){console.warn(e);rec=null;toast('No se pudo iniciar la grabación. El sorteo seguirá sin video.')}
+}
+function pararGrab(){return new Promise(res=>{if(!rec||rec.state==='inactive'){res(null);return}rec.onstop=()=>{const tipo=(rec.mimeType||mime||'video/webm').split(';')[0];res(chunks.length?new Blob(chunks,{type:tipo}):null)};try{rec.stop()}catch(e){res(null)}})}
+
+/* ---------- Sorteo ---------- */
+let run=null,wake=null,blobUrl='',resultadoTxt='',videoBlob=null;
+const espera=async ms=>{await sleep(ms);if(run.abort)throw new Error('abort')};
+async function girar(part,ganador){
+  const dur=6500,t0=performance.now();
+  while(performance.now()-t0<dur){
+    const el=performance.now()-t0,p=part[rnd(part.length)];
+    st.num=p.num;st.nombre=p.comprador;tono(500+rnd(500),.05,'square',.05);
+    await espera(45+Math.pow(el/dur,2.2)*520);
+  }
+  st.num=ganador.num;st.nombre=ganador.comprador;tono(300,.2,'square',.09);
+  await espera(700);
+}
+async function iniciar(){
+  if(!isAdmin||run)return;
+  const{part}=datos();
+  if(!part.length)return toast('No hay boletos con dinero entregado.');
+  const pedidos=Number($('sorteoN').value);
+  if(!confirm(`¿Iniciar el sorteo ahora?\n\nParticipan ${part.length} boletos con dinero entregado.\nSe sortean ${pedidos} canasta(s).${$('sorteoGrabar').checked?'\nSe grabará un video: no cambies de pestaña ni bloquees la pantalla hasta que termine (≈'+(pedidos===2?'35':'20')+' segundos).':''}`))return;
+  // Ganadores (aleatorio seguro). Una misma persona no gana dos canastas.
+  let pool=part.slice();const ganadores=[];
+  for(let i=0;i<pedidos&&pool.length;i++){const w=pool[rnd(pool.length)];ganadores.push(w);const k=keyNombre(w.comprador);pool=pool.filter(p=>keyNombre(p.comprador)!==k)}
+  const n=ganadores.length;
+  if(n<pedidos)toast(`Solo hay ${n} comprador(es) distinto(s): se sortea(n) ${n} canasta(s).`);
+  run={abort:false};conf=[];
+  initAudio();iniciarGrab();
+  try{wake=await navigator.wakeLock?.request('screen')}catch(e){wake=null}
+  $('srRes').classList.add('hidden');$('srCanvas').classList.remove('hidden');$('srBar').classList.remove('hidden');$('srVideo').classList.add('hidden');
+  $('srOv').classList.remove('hidden');document.body.style.overflow='hidden';
+  const comp=new Set(part.map(p=>keyNombre(p.comprador))).size;
+  st={fase:'intro',t0:performance.now(),n,total:part.length,compradores:comp,idx:0,num:'',nombre:'',vendedor:'',ganadores};
+  cancelAnimationFrame(raf);raf=requestAnimationFrame(draw);
+  $('srEstado').textContent=(rec?'🔴 Grabando · ':'')+'No cambies de pestaña ni bloquees la pantalla';
+  let abortado=false;
+  try{
+    [392,523,659].forEach((f,i)=>tono(f,.3,'triangle',.1,i*.15));
+    await espera(3500);
+    for(let i=0;i<n;i++){
+      st={...st,fase:'spin',idx:i,t0:performance.now(),num:'—',nombre:''};
+      await girar(part,ganadores[i]);
+      st={...st,fase:'reveal',t0:performance.now(),num:ganadores[i].num,nombre:ganadores[i].comprador,vendedor:ganadores[i].vendedor};
+      fanfarria();confeti();
+      await espera(5500);
+    }
+    st={...st,fase:'final',t0:performance.now()};
+    fanfarria();confeti(220);
+    await espera(6500);
+  }catch(e){if(e.message==='abort')abortado=true;else{console.error(e);abortado=true;toast('Error en el sorteo: '+e.message)}}
+  try{wake&&wake.release()}catch(e){}wake=null;
+  const blob=await pararGrab();
+  if(abortado){cerrar();return}
+  terminar(ganadores,part.length,blob);
+}
+function terminar(ganadores,total,blob){
+  resultadoTxt=`🎁 *RESULTADO DEL SORTEO — Tómbola Pro Banda*\nBanda Yadira Jiral — C.E.B.G. El Jiral\n📅 ${fechaHoy()}\n🎟️ Boletos participantes: ${total} (dinero entregado)\n\n`+ganadores.map((w,i)=>`🏆 Canasta ${i+1}: Boleto #${w.num} — *${w.comprador}* (vendido por ${w.vendedor})`).join('\n')+`\n\n¡Felicidades a los ganadores! 🎉`;
+  $('srBar').classList.add('hidden');$('srRes').classList.remove('hidden');
+  videoBlob=blob;
+  const v=$('srVideo');
+  if(blobUrl){URL.revokeObjectURL(blobUrl);blobUrl=''}
+  if(blob){
+    blobUrl=URL.createObjectURL(blob);v.src=blobUrl;v.classList.remove('hidden');$('srCanvas').classList.add('hidden');cancelAnimationFrame(raf);
+    $('srDown').classList.remove('hidden');
+    $('srShare').classList.toggle('hidden',!(navigator.canShare&&navigator.share));
+    $('srNota').textContent=blob.type.includes('mp4')?'Video listo. Puedes descargarlo y enviarlo por WhatsApp.':'Video listo en formato WebM. Si WhatsApp no lo reproduce, ábrelo en el navegador o conviértelo a MP4.';
+  }else{
+    $('srDown').classList.add('hidden');$('srShare').classList.add('hidden');v.classList.add('hidden');
+    $('srNota').textContent=$('sorteoGrabar').checked?'No se obtuvo video. Copia el resultado y envíalo por WhatsApp.':'Copia el resultado y envíalo por WhatsApp.';
+  }
+}
+function cerrar(){
+  if(run)run.abort=true;
+  cancelAnimationFrame(raf);st=null;conf=[];
+  $('srOv').classList.add('hidden');document.body.style.overflow='';
+  const v=$('srVideo');v.pause();v.removeAttribute('src');v.load();
+  if(blobUrl){URL.revokeObjectURL(blobUrl);blobUrl=''}
+  videoBlob=null;try{ac&&ac.close()}catch(e){}ac=null;dest=null;run=null;
+}
+const nombreArchivo=()=>{const d=new Date().toLocaleDateString('en-CA',{timeZone:TZ});return`sorteo-canastas-${d}.${videoBlob&&videoBlob.type.includes('mp4')?'mp4':'webm'}`};
+$('btnSortear').onclick=iniciar;
+$('srCancel').onclick=()=>{if(confirm('¿Cancelar el sorteo? Se descartará el video.')){run&&(run.abort=true)}};
+$('srClose').onclick=cerrar;
+$('srDown').onclick=()=>{if(!videoBlob)return;const a=document.createElement('a');a.href=blobUrl;a.download=nombreArchivo();document.body.append(a);a.click();a.remove()};
+$('srShare').onclick=async()=>{
+  if(!videoBlob)return;
+  const f=new File([videoBlob],nombreArchivo(),{type:videoBlob.type});
+  try{if(navigator.canShare({files:[f]}))await navigator.share({files:[f],title:'Resultado del sorteo',text:resultadoTxt});else toast('Este dispositivo no permite compartir el archivo. Usa Descargar video.')}catch(e){if(e.name!=='AbortError')toast('No se pudo compartir. Usa Descargar video.')}
+};
+$('srCopy').onclick=async()=>{try{await navigator.clipboard.writeText(resultadoTxt);toast('📋 Resultado copiado')}catch(e){prompt('Copia el resultado:',resultadoTxt)}};
+$('sorteoCopiarLista').onclick=async()=>{try{await navigator.clipboard.writeText(listaTxt);toast('📋 Listado copiado')}catch(e){prompt('Copia el listado:',listaTxt)}};
+})();
+
 load();setInterval(()=>{const a=document.activeElement;if(a&&a.closest&&a.closest('#hojaWrap')&&['SELECT','INPUT'].includes(a.tagName))return;load()},15000);
 if(new URLSearchParams(location.search).get('vista')==='todo'){document.querySelector('#vfClose').textContent='← Ir a la página principal';abrirVista()}
 </script></body></html>
