@@ -559,7 +559,7 @@ function renderHoja(){
   if(all){const n=lista.filter(v=>hoja.sel.has(String(v.id))).length;all.checked=lista.length>0&&n===lista.length;all.indeterminate=n>0&&n<lista.length}
   // barra de acciones para lo seleccionado
   const bulk=document.getElementById('hBulk');bulk.classList.toggle('hidden',!(a&&hoja.sel.size));
-  if(a&&hoja.sel.size)bulk.innerHTML=`<b>${hoja.sel.size} seleccionada(s)</b><button class="bSi" id="hBulkSi">☑️ Marcar como entregado al administrador</button><button class="bNo" id="hBulkNo">⏳ Marcar como pendiente</button><button class="ghost" id="hBulkClr">Quitar selección</button>`;
+  if(a&&hoja.sel.size)bulk.innerHTML=`<b>${hoja.sel.size} seleccionada(s)</b><button class="bSi" id="hBulkSi">☑️ Marcar como entregado al administrador</button><button class="bNo" id="hBulkNo">⏳ Marcar como pendiente</button><button class="ghost" id="hBulkClr">Quitar selección</button><button class="bNo" id="hBulkDelete" style="background:#b91c1c;color:white;border-color:#b91c1c">🗑️ Eliminar seleccionadas</button>`;
   document.getElementById('hojaInfo').textContent=a?'Tip: marca varias casillas y usa la barra verde para cambiar muchas ventas a la vez.':'';
 }
 async function cambiarEstado(id,val,selEl){
@@ -584,6 +584,27 @@ async function bulkEstado(modo){
   if(!items.length){toast('Sin cambios: ya tenían ese estado.');return}
   if(!confirm(`¿Marcar ${items.length} venta(s) como ${modo==='entregado'?'ENTREGADAS al administrador':'PENDIENTES'}?`))return;
   if(await enviarPagos(items)){toast(`${items.length} venta(s) actualizadas`);hoja.sel.clear();await load()}
+}
+async function eliminarSeleccionadasHoja(){
+  if(!isAdmin||!adminPass)return alert('Debe iniciar sesión como administrador.');
+  const items=ventas.filter(v=>hoja.sel.has(String(v.id)));
+  if(!items.length)return toast('Seleccione al menos una venta.');
+  const detalle=items.slice(0,8).map(v=>`${rangoBoletos(v)} — ${v.comprador}`).join('\n');
+  if(!confirm(`¿ELIMINAR DEFINITIVAMENTE ${items.length} venta(s)?\n\n${detalle}${items.length>8?'\n...':''}\n\nEsta acción no se puede deshacer. Los boletos quedarán libres.`))return;
+  const clave=prompt('Para confirmar, escriba ELIMINAR en mayúsculas:');
+  if(clave!=='ELIMINAR')return toast('Eliminación cancelada.');
+  const boton=document.getElementById('hBulkDelete');if(boton)boton.disabled=true;
+  let eliminadas=0,errores=[];
+  for(const v of items){
+    const {error}=await db.rpc('admin_eliminar_venta_canasta',{p_id:v.id,p_clave:adminPass});
+    if(error){errores.push(`${rangoBoletos(v)}: ${error.message}`);continue}
+    eliminadas++;
+    hoja.sel.delete(String(v.id));
+    if((pagoVenta[v.id]||0)>0)await enviarPagos([{venta_id:String(v.id),vendedor:v.vendedor,monto:0}],false);
+  }
+  await load();
+  if(errores.length)alert(`${eliminadas} eliminada(s). ${errores.length} error(es):\n${errores.join('\n')}`);
+  else toast(`🗑️ ${eliminadas} venta(s) eliminadas correctamente`);
 }
 function exportarHoja(){
   const lista=filasHoja();
@@ -635,6 +656,7 @@ function actualizarProgreso(total,pag){
     else if(t.id==='hBulkSi')bulkEstado('entregado');
     else if(t.id==='hBulkNo')bulkEstado('pendiente');
     else if(t.id==='hBulkClr'){hoja.sel.clear();renderHoja()}
+    else if(t.id==='hBulkDelete')eliminarSeleccionadasHoja()
     else if(t.id==='btnExcel')exportarHoja();
   });
 })();
